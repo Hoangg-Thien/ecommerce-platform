@@ -41,4 +41,3 @@ build/
 # OS files
 .DS_Store
 Thumbs.db
-src/main/resources/application.yaml
