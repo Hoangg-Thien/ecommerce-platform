@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-commerce Backend — Roadmap</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent: #7c5cfc;
+    --accent2: #00d4aa;
+    --accent3: #ff6b6b;
+    --accent4: #ffd166;
+    --text: #e0e0f0;
+    --muted: #5a5a7a;
+    --done-bg: #0d1f1a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    padding: 40px 20px 80px;
+    position: relative;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,92,252,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,92,252,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .container { max-width: 860px; margin: 0 auto; position: relative; z-index: 1; }
+  .header { margin-bottom: 48px; padding-bottom: 32px; border-bottom: 1px solid var(--border); }
+  .badge {
+    display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--accent2); border: 1px solid var(--accent2);
+    padding: 4px 10px; border-radius: 2px; margin-bottom: 16px;
+  }
+  h1 {
+    font-family: 'Syne', sans-serif; font-size: clamp(28px, 5vw, 48px); font-weight: 800;
+    line-height: 1.1; margin-bottom: 12px;
+    background: linear-gradient(135deg, #fff 40%, var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .subtitle { color: var(--muted); font-size: 13px; line-height: 1.6; }
+  .stats-row { display: flex; gap: 24px; margin-top: 24px; flex-wrap: wrap; }
+  .stat { display: flex; flex-direction: column; gap: 4px; }
+  .stat-value { font-size: 22px; font-weight: 700; color: var(--accent); font-family: 'Syne', sans-serif; }
+  .stat-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  .progress-wrap { margin: 24px 0 0; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+  .progress-track { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill {
+    height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px; transition: width 0.4s ease; width: 0%;
+  }
+  .phase { margin-bottom: 32px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color 0.2s; }
+  .phase:hover { border-color: #2a2a40; }
+  .phase-header {
+    display: flex; align-items: center; gap: 16px; padding: 20px 24px;
+    background: var(--surface); cursor: pointer; user-select: none; border-bottom: 1px solid var(--border);
+  }
+  .phase-num {
+    width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center;
+    justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0;
+  }
+  .phase-title { flex: 1; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; }
+  .phase-meta { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .phase-time { font-size: 11px; color: var(--muted); letter-spacing: 1px; }
+  .phase-count { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+  .phase-toggle { color: var(--muted); font-size: 12px; transition: transform 0.2s; }
+  .phase.collapsed .phase-toggle { transform: rotate(-90deg); }
+  .phase-body { padding: 8px 0; }
+  .phase.collapsed .phase-body { display: none; }
+  .check-item {
+    display: flex; align-items: flex-start; gap: 14px; padding: 10px 24px;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .check-item:hover { background: rgba(255,255,255,0.02); }
+  .check-item.done { background: var(--done-bg); }
+  .check-item.done .check-label { color: var(--muted); text-decoration: line-through; }
+  .checkbox {
+    width: 18px; height: 18px; border-radius: 3px; border: 1.5px solid var(--muted);
+    flex-shrink: 0; margin-top: 1px; display: flex; align-items: center;
+    justify-content: center; transition: all 0.15s; font-size: 11px;
+  }
+  .check-item.done .checkbox { border-color: var(--accent2); background: var(--accent2); color: #000; }
+  .check-label { font-size: 13px; line-height: 1.5; color: var(--text); transition: color 0.15s; flex: 1; }
+  .check-tag { font-size: 10px; padding: 2px 7px; border-radius: 3px; flex-shrink: 0; font-weight: 600; letter-spacing: 0.5px; margin-top: 2px; }
+  .checkpoint {
+    margin: 4px 24px 8px; padding: 10px 14px; border-left: 2px solid var(--accent2);
+    background: rgba(0,212,170,0.05); border-radius: 0 4px 4px 0; font-size: 12px; color: var(--accent2);
+  }
+  .checkpoint::before { content: '✓ CHECKPOINT: '; font-weight: 700; letter-spacing: 1px; }
+  .p1 .phase-num { background: rgba(124,92,252,0.15); color: var(--accent); }
+  .p2 .phase-num { background: rgba(0,212,170,0.15); color: var(--accent2); }
+  .p3 .phase-num { background: rgba(255,107,107,0.15); color: var(--accent3); }
+  .p4 .phase-num { background: rgba(255,209,102,0.15); color: var(--accent4); }
+  .p5 .phase-num { background: rgba(124,92,252,0.15); color: var(--accent); }
+  .p1 .phase-count { background: rgba(124,92,252,0.15); color: var(--accent); }
+  .p2 .phase-count { background: rgba(0,212,170,0.15); color: var(--accent2); }
+  .p3 .phase-count { background: rgba(255,107,107,0.15); color: var(--accent3); }
+  .p4 .phase-count { background: rgba(255,209,102,0.15); color: var(--accent4); }
+  .p5 .phase-count { background: rgba(124,92,252,0.15); color: var(--accent); }
+  .tag-spring { background: rgba(124,92,252,0.15); color: var(--accent); }
+  .tag-db     { background: rgba(0,212,170,0.15); color: var(--accent2); }
+  .tag-auth   { background: rgba(255,107,107,0.15); color: var(--accent3); }
+  .tag-devops { background: rgba(255,209,102,0.15); color: var(--accent4); }
+  .tag-test   { background: rgba(160,160,200,0.15); color: #aab; }
+  .tag-docs   { background: rgba(160,160,200,0.15); color: #aab; }
+  .note {
+    background: rgba(255,107,107,0.06); border: 1px solid rgba(255,107,107,0.2);
+    border-radius: 6px; padding: 16px 20px; font-size: 12px; color: #cc9;
+    margin-bottom: 16px; line-height: 1.7;
+  }
+  .note strong { color: var(--accent3); }
+  .stack-info {
+    background: rgba(124,92,252,0.06); border: 1px solid rgba(124,92,252,0.2);
+    border-radius: 6px; padding: 16px 20px; font-size: 12px; color: var(--muted);
+    margin-bottom: 32px; line-height: 2;
+  }
+  .stack-info strong { color: var(--accent); }
+  .stack-info span { color: var(--text); }
+  .footer { text-align: center; font-size: 11px; color: var(--muted); margin-top: 48px; letter-spacing: 1px; }
+  @media (max-width: 600px) { .phase-time { display: none; } .check-tag { display: none; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="badge">Solo Project — DevOps Track</div>
+    <h1>E-commerce Backend<br>Roadmap</h1>
+    <p class="subtitle">Java 21 · Spring Boot 3 · PostgreSQL (Docker local → Supabase production) · DBeaver · GitHub Actions<br>Học đến đâu → làm đến đó. Không cần đợi học xong hết.</p>
+    <div class="stats-row">
+      <div class="stat"><span class="stat-value" id="total-count">0</span><span class="stat-label">Tổng task</span></div>
+      <div class="stat"><span class="stat-value" id="done-count">0</span><span class="stat-label">Hoàn thành</span></div>
+      <div class="stat"><span class="stat-value">~2</span><span class="stat-label">Tháng</span></div>
+      <div class="stat"><span class="stat-value">5</span><span class="stat-label">Giai đoạn</span></div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-label"><span>Tiến độ</span><span id="progress-pct">0%</span></div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+  </div>
+
+  <div class="stack-info">
+    <strong>🛠 Tech Stack</strong><br>
+    Language: <span>Java 21</span> &nbsp;|&nbsp; Framework: <span>Spring Boot 3, Spring Security, Spring Data JPA</span><br>
+    Libraries: <span>JWT (JJWT), Lombok, Hibernate Validator</span><br>
+    DB local: <span>PostgreSQL 16 via Docker + DBeaver</span> &nbsp;|&nbsp; DB production: <span>Supabase (PostgreSQL)</span><br>
+    DevOps: <span>Docker, GitHub Actions, Render / Railway</span>
+  </div>
+
+  <div class="note">
+    <strong>⚠️ Vibe coding rule:</strong> Dùng AI để gợi ý, giải thích, debug — nhưng phải hiểu code mình đang chạy. Phỏng vấn intern hay hỏi thẳng <em>"giải thích JWT flow trong project đi"</em> — không hiểu là tự loại.
+  </div>
+
+  <!-- PHASE 1 -->
+  <div class="phase p1" id="phase1">
+    <div class="phase-header" onclick="togglePhase('phase1')">
+      <div class="phase-num">01</div>
+      <div class="phase-title">Nền tảng — Setup + Spring JPA + CRUD</div>
+      <div class="phase-meta">
+        <span class="phase-time">~2 tuần</span>
+        <span class="phase-count" id="count-phase1">0/10</span>
+        <span class="phase-toggle">▾</span>
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Setup Spring Boot project trên Spring Initializr: thêm Spring Web, Spring Data JPA, PostgreSQL Driver, Lombok, Validation</div>
+        <span class="check-tag tag-spring">Spring</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Viết docker-compose.yml: chạy PostgreSQL 16 local (port 5432, đặt POSTGRES_DB=ecommerce, thêm volume để data không mất khi restart)</div>
+        <span class="check-tag tag-devops">DevOps</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Chạy "docker-compose up -d", kết nối DBeaver vào localhost:5432, kiểm tra database ecommerce tạo thành công</div>
+        <span class="check-tag tag-db">DB</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Cấu hình application.properties: datasource URL jdbc:postgresql://localhost:5432/ecommerce, PostgreSQL dialect, ddl-auto=update, show-sql=true</div>
+        <span class="check-tag tag-spring">Spring</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Tạo entity Category (id, name, description) + CategoryRepository extends JpaRepository</div>
+        <span class="check-tag tag-db">DB</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Tạo entity Product (id, name, price, stock, description, @ManyToOne category) + ProductRepository</div>
+        <span class="check-tag tag-db">DB</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Viết CRUD Category: Controller → Service → Repository (GET all, GET by id, POST, PUT, DELETE)</div>
+        <span class="check-tag tag-spring">Spring</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Viết CRUD Product tương tự, có thêm filter theo category</div>
+        <span class="check-tag tag-spring">Spring</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Exception handling: ResourceNotFoundException + GlobalExceptionHandler (@RestControllerAdvice) trả về JSON lỗi chuẩn</div>
+        <span class="check-tag tag-spring">Spring</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Test toàn bộ API trên Postman, export collection, push code lên GitHub, viết README cơ bản</div>
+        <span class="check-tag tag-test">Test</span>
+      </div>
+      <div class="checkpoint">Postman gọi được API Product &amp; Category, data lưu vào PostgreSQL, xem được trong DBeaver</div>
+    </div>
+  </div>
+
+  <!-- PHASE 2 -->
+  <div class="phase p2" id="phase2">
+    <div class="phase-header" onclick="togglePhase('phase2')">
+      <div class="phase-num">02</div>
+      <div class="phase-title">Authentication — JWT + Spring Security</div>
+      <div class="phase-meta">
+        <span class="phase-time">~2 tuần</span>
+        <span class="phase-count" id="count-phase2">0/8</span>
+        <span class="phase-toggle">▾</span>
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Thêm dependency: spring-boot-starter-security + jjwt-api, jjwt-impl, jjwt-jackson (io.jsonwebtoken)</div>
+        <span class="check-tag tag-auth">Auth</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Tạo entity User (id, email, password, role: ADMIN/USER) + UserRepository</div>
+        <span class="check-tag tag-db">DB</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">API POST /auth/register → validate input → hash password bằng BCrypt → lưu DB</div>
+        <span class="check-tag tag-auth">Auth</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">API POST /auth/login → kiểm tra email + password → tạo JWT token → trả về client</div>
+        <span class="check-tag tag-auth">Auth</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Viết JwtFilter (OncePerRequestFilter): đọc token từ header Authorization, validate, set SecurityContext</div>
+        <span class="check-tag tag-auth">Auth</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Cấu hình SecurityConfig: permit /auth/**, chặn các endpoint còn lại, disable CSRF, thêm JwtFilter vào chain</div>
+        <span class="check-tag tag-auth">Auth</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Phân quyền: chỉ ADMIN mới được POST/PUT/DELETE product &amp; category — USER chỉ GET</div>
+        <span class="check-tag tag-auth">Auth</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Test Postman: không có token → 401, sai role → 403, đúng token ADMIN → 200</div>
+        <span class="check-tag tag-test">Test</span>
+      </div>
+      <div class="checkpoint">Đăng ký → đăng nhập → lấy JWT token → gọi API protected thành công</div>
+    </div>
+  </div>
+
+  <!-- PHASE 3 -->
+  <div class="phase p3" id="phase3">
+    <div class="phase-header" onclick="togglePhase('phase3')">
+      <div class="phase-num">03</div>
+      <div class="phase-title">Core Business — Cart, Order, Payment</div>
+      <div class="phase-meta">
+        <span class="phase-time">~2 tuần</span>
+        <span class="phase-count" id="count-phase3">0/10</span>
+        <span class="phase-toggle">▾</span>
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Tạo entity Cart + CartItem (cart @OneToOne với User, cartItem @ManyToOne Product, có quantity)</div>
+        <span class="check-tag tag-db">DB</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">API POST /cart/add → thêm product vào giỏ, nếu product đã có thì tăng quantity lên</div>
+        <span class="check-tag tag-spring">Spring</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">API GET /cart → xem giỏ hàng + tổng tiền của user đang login (lấy user từ JWT)</div>
+        <span class="check-tag tag-spring">Spring</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">API DELETE /cart/{itemId} → xóa 1 item khỏi giỏ hàng</div>
+        <span class="check-tag tag-spring">Spring</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Tạo entity Order + OrderItem + enum OrderStatus (PENDING, CONFIRMED, SHIPPING, DONE, CANCELLED)</div>
+        <span class="check-tag tag-db">DB</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">API POST /orders → tạo Order từ Cart → copy CartItem thành OrderItem → trừ stock → xóa Cart</div>
+        <span class="check-tag tag-spring">Spring</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">API GET /orders → xem lịch sử đơn hàng của user đang login</div>
+        <span class="check-tag tag-spring">Spring</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">API PATCH /orders/{id}/status → ADMIN cập nhật trạng thái đơn hàng</div>
+        <span class="check-tag tag-spring">Spring</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">API POST /payment/mock → nhận orderId → cập nhật order status CONFIRMED → trả về payment success (không cần VNPay/Momo thật)</div>
+        <span class="check-tag tag-spring">Spring</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Edge case: đặt hàng khi stock = 0 → throw exception, trả về lỗi JSON rõ ràng, không tạo order</div>
+        <span class="check-tag tag-test">Test</span>
+      </div>
+      <div class="checkpoint">Flow end-to-end: login → thêm giỏ → đặt hàng → mock payment → xem lịch sử đơn</div>
+    </div>
+  </div>
+
+  <!-- PHASE 4 -->
+  <div class="phase p4" id="phase4">
+    <div class="phase-header" onclick="togglePhase('phase4')">
+      <div class="phase-num">04</div>
+      <div class="phase-title">DevOps — Docker + CI/CD + Deploy</div>
+      <div class="phase-meta">
+        <span class="phase-time">~1 tuần</span>
+        <span class="phase-count" id="count-phase4">0/8</span>
+        <span class="phase-toggle">▾</span>
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Viết Dockerfile cho Spring Boot app (multi-stage: stage 1 build jar bằng Maven, stage 2 chạy jar bằng JRE nhẹ)</div>
+        <span class="check-tag tag-devops">DevOps</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Tạo application-prod.properties: cấu hình datasource trỏ sang Supabase (tách biệt với local), dùng env variables cho secrets</div>
+        <span class="check-tag tag-devops">DevOps</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Cập nhật docker-compose.yml: chỉ còn service app khi production (DB dùng Supabase cloud), truyền env variables vào container</div>
+        <span class="check-tag tag-devops">DevOps</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Test build Docker image local: docker build → docker run → API chạy được, kết nối Supabase thành công</div>
+        <span class="check-tag tag-test">Test</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Viết GitHub Actions workflow CI: push code → checkout → setup Java 21 → mvn build → chạy unit test tự động</div>
+        <span class="check-tag tag-devops">DevOps</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">GitHub Actions CD: build Docker image → đăng nhập Docker Hub → push image (thêm DOCKERHUB_USERNAME + DOCKERHUB_TOKEN vào repo secrets)</div>
+        <span class="check-tag tag-devops">DevOps</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Deploy lên Render hoặc Railway (free tier): kết nối GitHub repo, cấu hình env variables (DB_URL, JWT_SECRET)</div>
+        <span class="check-tag tag-devops">DevOps</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Test toàn bộ API trên URL production bằng Postman, đảm bảo flow login → order chạy đúng</div>
+        <span class="check-tag tag-test">Test</span>
+      </div>
+      <div class="checkpoint">Push code lên GitHub → Actions tự build + push Docker image → API live trên internet</div>
+    </div>
+  </div>
+
+  <!-- PHASE 5 -->
+  <div class="phase p5" id="phase5">
+    <div class="phase-header" onclick="togglePhase('phase5')">
+      <div class="phase-num">05</div>
+      <div class="phase-title">Hoàn thiện CV — README + Docs + Demo</div>
+      <div class="phase-meta">
+        <span class="phase-time">~1 tuần</span>
+        <span class="phase-count" id="count-phase5">0/5</span>
+        <span class="phase-toggle">▾</span>
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Viết README.md đầy đủ: mô tả project, tech stack, tính năng, hướng dẫn chạy local bằng Docker, link live URL</div>
+        <span class="check-tag tag-docs">Docs</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Vẽ architecture diagram bằng draw.io: Client → Controller → Service → Repository → PostgreSQL, thêm vào README</div>
+        <span class="check-tag tag-docs">Docs</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Vẽ ERD database bằng dbdiagram.io: User, Product, Category, Cart, CartItem, Order, OrderItem và quan hệ giữa các bảng</div>
+        <span class="check-tag tag-docs">Docs</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Export Postman collection → để vào thư mục /docs trong repo, ghi link vào README</div>
+        <span class="check-tag tag-docs">Docs</span>
+      </div>
+      <div class="check-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="check-label">Quay video demo 2-3 phút: flow đăng ký → login → thêm giỏ → đặt hàng → xem đơn → ADMIN update status</div>
+        <span class="check-tag tag-docs">Docs</span>
+      </div>
+      <div class="checkpoint">Project hoàn chỉnh, README đẹp, có live URL — sẵn sàng ghi vào CV 🎉</div>
+    </div>
+  </div>
+
+  <div class="footer">E-COMMERCE BACKEND · JAVA 21 + SPRING BOOT 3 · SOLO PROJECT · ~2 THÁNG · GOOD LUCK 🚀</div>
+</div>
+
+<script>
+  const saved = JSON.parse(localStorage.getItem('ecom-checklist-v2') || '{}');
+
+  function saveState() {
+    const state = {};
+    document.querySelectorAll('.check-item').forEach((item, i) => {
+      state[i] = item.classList.contains('done');
+    });
+    localStorage.setItem('ecom-checklist-v2', JSON.stringify(state));
+  }
+
+  function toggle(el) {
+    el.classList.toggle('done');
+    el.querySelector('.checkbox').textContent = el.classList.contains('done') ? '✓' : '';
+    updateProgress();
+    saveState();
+  }
+
+  function togglePhase(id) {
+    document.getElementById(id).classList.toggle('collapsed');
+  }
+
+  function updateProgress() {
+    const all = document.querySelectorAll('.check-item');
+    const done = document.querySelectorAll('.check-item.done');
+    const pct = Math.round((done.length / all.length) * 100);
+    document.getElementById('total-count').textContent = all.length;
+    document.getElementById('done-count').textContent = done.length;
+    document.getElementById('progress-pct').textContent = pct + '%';
+    document.getElementById('progress-fill').style.width = pct + '%';
+    ['phase1','phase2','phase3','phase4','phase5'].forEach(pid => {
+      const phase = document.getElementById(pid);
+      const pAll = phase.querySelectorAll('.check-item');
+      const pDone = phase.querySelectorAll('.check-item.done');
+      const countEl = document.getElementById('count-' + pid);
+      if (countEl) countEl.textContent = pDone.length + '/' + pAll.length;
+    });
+  }
+
+  document.querySelectorAll('.check-item').forEach((item, i) => {
+    if (saved[i]) {
+      item.classList.add('done');
+      item.querySelector('.checkbox').textContent = '✓';
+    }
+  });
+
+  updateProgress();
+</script>
+</body>
+</html>
