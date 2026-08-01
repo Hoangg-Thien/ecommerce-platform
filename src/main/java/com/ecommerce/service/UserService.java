@@ -1,5 +1,45 @@
 package com.ecommerce.service;
 
+import com.ecommerce.dto.request.RegisterRequest;
+import com.ecommerce.dto.respone.UserRespone;
+import com.ecommerce.entity.User;
+import com.ecommerce.mapper.UserMapper;
+import com.ecommerce.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
 public class UserService {
-    
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
+
+    @Transactional
+    public UserRespone register(RegisterRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email is already registered");
+        }
+
+        User user = new User();
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        if (request.getRoles() != null && !request.getRoles().isEmpty()) {
+            user.setRoles(request.getRoles());
+        } else {
+            user.getRoles().add("USER");
+        }
+
+        User savedUser = userRepository.save(user);
+        return userMapper.toUserRespone(savedUser);
+    }
+
+    public UserRespone findById(Long id) {
+        return userMapper.toUserRespone(userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id)));
+    }
 }
