@@ -1,6 +1,7 @@
 package com.ecommerce.service;
 
-import com.ecommerce.dto.CategoryRequest;
+import com.ecommerce.dto.request.CategoryRequest;
+import com.ecommerce.dto.respone.CategoryRespone;
 import com.ecommerce.entity.Category;
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.repository.CategoryRepository;
@@ -16,34 +17,43 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
 
-    public List<Category> findAll() {
-        return categoryRepository.findAll();
+    public List<CategoryRespone> findAll() {
+        return categoryRepository.findAll()
+                .stream()
+                .map(CategoryRespone::new)
+                .toList();
     }
 
-    public Category findById(Long id) {
+    public CategoryRespone findById(Long id) {
+        return new CategoryRespone(getCategory(id));
+    }
+
+    private Category getCategory(Long id) {
         return categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category", id));
     }
 
     @Transactional
-    public Category create(CategoryRequest request) {
+    public CategoryRespone create(CategoryRequest request) {
         Category category = new Category();
         category.setName(request.getName());
         category.setDescription(request.getDescription());
-        return categoryRepository.save(category);
+        category = categoryRepository.save(category);
+        return new CategoryRespone(category);
     }
 
     @Transactional
-    public Category update(Long id, CategoryRequest request) {
-        Category category = findById(id);
+    public CategoryRespone update(Long id, CategoryRequest request) {
+        Category category = getCategory(id);
         category.setName(request.getName());
         category.setDescription(request.getDescription());
-        return categoryRepository.save(category);
+        category = categoryRepository.save(category);
+        return new CategoryRespone(category);
     }
 
     @Transactional
     public void delete(Long id) {
-        Category category = findById(id);
+        Category category = getCategory(id);
         categoryRepository.delete(category);
     }
 }

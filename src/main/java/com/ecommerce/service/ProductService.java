@@ -1,7 +1,7 @@
 package com.ecommerce.service;
 
-import com.ecommerce.dto.ProductRequest;
-import com.ecommerce.dto.ProductResponse;
+import com.ecommerce.dto.request.ProductRequest;
+import com.ecommerce.dto.respone.ProductResponse;
 import com.ecommerce.entity.Category;
 import com.ecommerce.entity.Product;
 import com.ecommerce.exception.ResourceNotFoundException;
