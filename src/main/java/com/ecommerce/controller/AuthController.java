@@ -8,6 +8,7 @@ import com.ecommerce.service.JwtService;
 import com.ecommerce.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -45,7 +46,7 @@ public class AuthController {
                 userRespone.getRoles()
         );
         
-        return ResponseEntity.ok(authRespone);
+        return ResponseEntity.status(HttpStatus.CREATED).body(authRespone);
     }
 
     @PostMapping("/login")
