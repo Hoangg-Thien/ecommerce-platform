@@ -21,7 +21,7 @@ public class UserService {
     @Transactional
     public UserRespone register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email is already registered");
+            throw new com.ecommerce.exception.EmailAlreadyExistsException("Email is already registered");
         }
 
         User user = new User();

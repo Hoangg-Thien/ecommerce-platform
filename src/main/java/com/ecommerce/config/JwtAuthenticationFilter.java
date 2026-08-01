@@ -40,32 +40,36 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        // remove the string "Bearer" to get the correct token
-        jwt = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(jwt);
+        try {
+            // remove the string "Bearer" to get the correct token
+            jwt = authHeader.substring(7);
+            userEmail = jwtService.extractUsername(jwt);
 
-        // if the email is extracted but the user has not been autheticated
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            // if the email is extracted but the user has not been autheticated
+            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            // retrive user information from the database
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+                // retrive user information from the database
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
-            // verify token is valid
-            if (jwtService.isTokenValid(jwt, userDetails)) {
+                // verify token is valid
+                if (jwtService.isTokenValid(jwt, userDetails)) {
 
-                // create an Authentication object.
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities());
+                    // create an Authentication object.
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities());
 
-                // add more details taken from the request
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request));
+                    // add more details taken from the request
+                    authToken.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request));
 
-                // save to SecurityContext
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                    // save to SecurityContext
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
+        } catch (Exception e) {
+            System.err.println("JWT Authentication failed: " + e.getMessage());
         }
 
         // continue chain filter
