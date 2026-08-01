@@ -3,6 +3,7 @@ package com.ecommerce.service;
 import com.ecommerce.dto.request.RegisterRequest;
 import com.ecommerce.dto.response.UserResponse;
 import com.ecommerce.entity.User;
+import com.ecommerce.enums.Role;
 import com.ecommerce.mapper.UserMapper;
 import com.ecommerce.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ public class UserService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        user.getRoles().add("USER");
+        user.setRole(Role.USER);
 
         User savedUser = userRepository.save(user);
         return userMapper.toUserRespone(savedUser);

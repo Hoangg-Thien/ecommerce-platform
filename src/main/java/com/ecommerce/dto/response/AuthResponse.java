@@ -1,5 +1,6 @@
 package com.ecommerce.dto.response;
 
+import com.ecommerce.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,6 +13,6 @@ public class AuthResponse {
     
     private String token;
     private Long id;
-    private String email;
-    private Set<String> roles;
+    private String email;    
+    private Role role;
 }

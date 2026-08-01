@@ -43,7 +43,7 @@ public class AuthController {
                 token,
                 userRespone.getId(),
                 userRespone.getEmail(),
-                userRespone.getRoles()
+                userRespone.getRole()
         );
         
         return ResponseEntity.status(HttpStatus.CREATED).body(authRespone);
@@ -71,7 +71,7 @@ public class AuthController {
                 token,
                 user.getId(),
                 user.getEmail(),
-                user.getRoles()
+                user.getRole()
         );
         
         return ResponseEntity.ok(authRespone);
