@@ -5,6 +5,7 @@ import com.ecommerce.dto.response.ProductResponse;
 import com.ecommerce.entity.Category;
 import com.ecommerce.entity.Product;
 import com.ecommerce.exception.ResourceNotFoundException;
+import com.ecommerce.mapper.ProductMapper;
 import com.ecommerce.repository.CategoryRepository;
 import com.ecommerce.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,25 +20,28 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductMapper productMapper;
 
     public List<ProductResponse> findAll(Long categoryId) {
         List<Product> products = categoryId != null
                 ? productRepository.findByCategoryId(categoryId)
                 : productRepository.findAll();
-        return products.stream().map(ProductResponse::new).toList();
+        return products.stream()
+                .map(productMapper::toProductResponse)
+                .toList();
     }
 
     public ProductResponse findById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", id));
-        return new ProductResponse(product);
+        return productMapper.toProductResponse(product);
     }
 
     @Transactional
     public ProductResponse create(ProductRequest request) {
         Product product = new Product();
         mapRequestToProduct(request, product);
-        return new ProductResponse(productRepository.save(product));
+        return productMapper.toProductResponse(productRepository.save(product));
     }
 
     @Transactional
@@ -45,7 +49,7 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", id));
         mapRequestToProduct(request, product);
-        return new ProductResponse(productRepository.save(product));
+        return productMapper.toProductResponse(productRepository.save(product));
     }
 
     @Transactional

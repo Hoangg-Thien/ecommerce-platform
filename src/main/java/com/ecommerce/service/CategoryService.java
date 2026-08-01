@@ -3,8 +3,11 @@ package com.ecommerce.service;
 import com.ecommerce.dto.request.CategoryRequest;
 import com.ecommerce.dto.response.CategoryResponse;
 import com.ecommerce.entity.Category;
+import com.ecommerce.dto.response.CategoryResponse;
+import com.ecommerce.entity.Category;
 import com.ecommerce.exception.DuplicateResourceException;
 import com.ecommerce.exception.ResourceNotFoundException;
+import com.ecommerce.mapper.CategoryMapper;
 import com.ecommerce.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,16 +20,17 @@ import java.util.List;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final CategoryMapper categoryMapper;
 
     public List<CategoryResponse> findAll() {
         return categoryRepository.findAll()
                 .stream()
-                .map(CategoryResponse::new)
+                .map(categoryMapper::toCategoryResponse)
                 .toList();
     }
 
     public CategoryResponse findById(Long id) {
-        return new CategoryResponse(getCategory(id));
+        return categoryMapper.toCategoryResponse(getCategory(id));
     }
 
     private Category getCategory(Long id) {
@@ -43,7 +47,7 @@ public class CategoryService {
         category.setName(request.getName());
         category.setDescription(request.getDescription());
         category = categoryRepository.save(category);
-        return new CategoryResponse(category);
+        return categoryMapper.toCategoryResponse(category);
     }
 
     @Transactional
@@ -57,7 +61,7 @@ public class CategoryService {
         category.setName(request.getName());
         category.setDescription(request.getDescription());
         category = categoryRepository.save(category);
-        return new CategoryResponse(category);
+        return categoryMapper.toCategoryResponse(category);
     }
 
     @Transactional
