@@ -42,4 +42,9 @@ public class UserService {
         return userMapper.toUserRespone(userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id)));
     }
+
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+    }
 }
