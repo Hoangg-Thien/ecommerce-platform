@@ -11,6 +11,9 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -42,15 +45,16 @@ public class GlobalExceptionHandler {
     }
 
     // 409 - conflict
-    @ExceptionHandler(EmailAlreadyExistsException.class)
-    public ResponseEntity<Map<String, Object>> handleEmailExists(EmailAlreadyExistsException ex) {
+    @ExceptionHandler({EmailAlreadyExistsException.class, DuplicateResourceException.class})
+    public ResponseEntity<Map<String, Object>> handleDuplicateResource(RuntimeException ex) {
         return buildError(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     // 500 - generic fallback
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
-        return buildError(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error: " + ex.getMessage());
+        log.error("Unhandled exception occurred", ex);
+        return buildError(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred. Please try again later.");
     }
 
     private ResponseEntity<Map<String, Object>> buildError(HttpStatus status, String message) {
