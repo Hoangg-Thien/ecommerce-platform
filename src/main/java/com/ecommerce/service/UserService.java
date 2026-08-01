@@ -28,11 +28,7 @@ public class UserService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        if (request.getRoles() != null && !request.getRoles().isEmpty()) {
-            user.setRoles(request.getRoles());
-        } else {
-            user.getRoles().add("USER");
-        }
+        user.getRoles().add("USER");
 
         User savedUser = userRepository.save(user);
         return userMapper.toUserRespone(savedUser);
