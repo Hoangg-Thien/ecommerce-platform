@@ -1,7 +1,7 @@
 package com.ecommerce.service;
 
 import com.ecommerce.dto.request.CategoryRequest;
-import com.ecommerce.dto.respone.CategoryRespone;
+import com.ecommerce.dto.response.CategoryResponse;
 import com.ecommerce.entity.Category;
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.repository.CategoryRepository;
@@ -47,7 +47,7 @@ class CategoryServiceTest {
     void findAll_ShouldReturnListOfCategoryRespone() {
         when(categoryRepository.findAll()).thenReturn(List.of(category));
 
-        List<CategoryRespone> result = categoryService.findAll();
+        List<CategoryResponse> result = categoryService.findAll();
 
         assertNotNull(result);
         assertEquals(1, result.size());
@@ -59,7 +59,7 @@ class CategoryServiceTest {
     void findById_WhenCategoryExists_ShouldReturnCategoryRespone() {
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
 
-        CategoryRespone result = categoryService.findById(1L);
+        CategoryResponse result = categoryService.findById(1L);
 
         assertNotNull(result);
         assertEquals(category.getId(), result.getId());
@@ -79,7 +79,7 @@ class CategoryServiceTest {
     void create_ShouldReturnCategoryRespone() {
         when(categoryRepository.save(any(Category.class))).thenReturn(category);
 
-        CategoryRespone result = categoryService.create(categoryRequest);
+        CategoryResponse result = categoryService.create(categoryRequest);
 
         assertNotNull(result);
         assertEquals(category.getName(), result.getName());
@@ -91,7 +91,7 @@ class CategoryServiceTest {
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
         when(categoryRepository.save(any(Category.class))).thenReturn(category);
 
-        CategoryRespone result = categoryService.update(1L, categoryRequest);
+        CategoryResponse result = categoryService.update(1L, categoryRequest);
 
         assertNotNull(result);
         assertEquals(category.getName(), result.getName());

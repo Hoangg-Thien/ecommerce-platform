@@ -1,7 +1,7 @@
 package com.ecommerce.service;
 
 import com.ecommerce.dto.request.RegisterRequest;
-import com.ecommerce.dto.respone.UserRespone;
+import com.ecommerce.dto.response.UserResponse;
 import com.ecommerce.entity.User;
 import com.ecommerce.mapper.UserMapper;
 import com.ecommerce.repository.UserRepository;
@@ -19,7 +19,7 @@ public class UserService {
     private final UserMapper userMapper;
 
     @Transactional
-    public UserRespone register(RegisterRequest request) {
+    public UserResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new com.ecommerce.exception.EmailAlreadyExistsException("Email is already registered");
         }
@@ -34,7 +34,7 @@ public class UserService {
         return userMapper.toUserRespone(savedUser);
     }
 
-    public UserRespone findById(Long id) {
+    public UserResponse findById(Long id) {
         return userMapper.toUserRespone(userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id)));
     }

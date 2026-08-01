@@ -2,8 +2,8 @@ package com.ecommerce.controller;
 
 import com.ecommerce.dto.request.LoginRequest;
 import com.ecommerce.dto.request.RegisterRequest;
-import com.ecommerce.dto.respone.AuthRespone;
-import com.ecommerce.dto.respone.UserRespone;
+import com.ecommerce.dto.response.AuthResponse;
+import com.ecommerce.dto.response.UserResponse;
 import com.ecommerce.service.JwtService;
 import com.ecommerce.service.UserService;
 import jakarta.validation.Valid;
@@ -30,16 +30,16 @@ public class AuthController {
     private final UserDetailsService userDetailsService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthRespone> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         // Register user and get UserRespone
-        UserRespone userRespone = userService.register(request);
+        UserResponse userRespone = userService.register(request);
         
         // Load UserDetails to generate token
         UserDetails userDetails = userDetailsService.loadUserByUsername(userRespone.getEmail());
         String token = jwtService.generateToken(userDetails);
         
         // Return AuthRespone
-        AuthRespone authRespone = new AuthRespone(
+        AuthResponse authRespone = new AuthResponse(
                 token,
                 userRespone.getId(),
                 userRespone.getEmail(),
@@ -50,7 +50,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthRespone> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         // Authenticate credentials
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -67,7 +67,7 @@ public class AuthController {
         com.ecommerce.entity.User user = userService.findByEmail(request.getEmail());
         
         // Return AuthRespone
-        AuthRespone authRespone = new AuthRespone(
+        AuthResponse authRespone = new AuthResponse(
                 token,
                 user.getId(),
                 user.getEmail(),

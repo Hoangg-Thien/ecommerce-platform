@@ -1,4 +1,4 @@
-package com.ecommerce.dto.respone;
+package com.ecommerce.dto.response;
 
 import com.ecommerce.entity.Product;
 import lombok.Getter;

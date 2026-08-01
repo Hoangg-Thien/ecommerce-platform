@@ -1,7 +1,7 @@
 package com.ecommerce.controller;
 
 import com.ecommerce.dto.request.CategoryRequest;
-import com.ecommerce.dto.respone.CategoryRespone;
+import com.ecommerce.dto.response.CategoryResponse;
 import com.ecommerce.service.CategoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,25 +20,25 @@ public class CategoryController {
 
     // GET /api/categories
     @GetMapping
-    public ResponseEntity<List<CategoryRespone>> getAll() {
+    public ResponseEntity<List<CategoryResponse>> getAll() {
         return ResponseEntity.ok(categoryService.findAll());
     }
 
     // GET /api/categories/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<CategoryRespone> getById(@PathVariable Long id) {
+    public ResponseEntity<CategoryResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(categoryService.findById(id));
     }
 
     // POST /api/categories
     @PostMapping
-    public ResponseEntity<CategoryRespone> create(@Valid @RequestBody CategoryRequest request) {
+    public ResponseEntity<CategoryResponse> create(@Valid @RequestBody CategoryRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(categoryService.create(request));
     }
 
     // PUT /api/categories/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<CategoryRespone> update(@PathVariable Long id, @Valid @RequestBody CategoryRequest request) {
+    public ResponseEntity<CategoryResponse> update(@PathVariable Long id, @Valid @RequestBody CategoryRequest request) {
         return ResponseEntity.ok(categoryService.update(id, request));
     }
 

@@ -1,7 +1,7 @@
 package com.ecommerce.service;
 
 import com.ecommerce.dto.request.CategoryRequest;
-import com.ecommerce.dto.respone.CategoryRespone;
+import com.ecommerce.dto.response.CategoryResponse;
 import com.ecommerce.entity.Category;
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.repository.CategoryRepository;
@@ -17,15 +17,15 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
 
-    public List<CategoryRespone> findAll() {
+    public List<CategoryResponse> findAll() {
         return categoryRepository.findAll()
                 .stream()
-                .map(CategoryRespone::new)
+                .map(CategoryResponse::new)
                 .toList();
     }
 
-    public CategoryRespone findById(Long id) {
-        return new CategoryRespone(getCategory(id));
+    public CategoryResponse findById(Long id) {
+        return new CategoryResponse(getCategory(id));
     }
 
     private Category getCategory(Long id) {
@@ -34,21 +34,21 @@ public class CategoryService {
     }
 
     @Transactional
-    public CategoryRespone create(CategoryRequest request) {
+    public CategoryResponse create(CategoryRequest request) {
         Category category = new Category();
         category.setName(request.getName());
         category.setDescription(request.getDescription());
         category = categoryRepository.save(category);
-        return new CategoryRespone(category);
+        return new CategoryResponse(category);
     }
 
     @Transactional
-    public CategoryRespone update(Long id, CategoryRequest request) {
+    public CategoryResponse update(Long id, CategoryRequest request) {
         Category category = getCategory(id);
         category.setName(request.getName());
         category.setDescription(request.getDescription());
         category = categoryRepository.save(category);
-        return new CategoryRespone(category);
+        return new CategoryResponse(category);
     }
 
     @Transactional
