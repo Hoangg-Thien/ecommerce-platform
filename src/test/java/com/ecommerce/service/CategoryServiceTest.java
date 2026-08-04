@@ -4,12 +4,14 @@ import com.ecommerce.dto.request.CategoryRequest;
 import com.ecommerce.dto.response.CategoryResponse;
 import com.ecommerce.entity.Category;
 import com.ecommerce.exception.ResourceNotFoundException;
+import com.ecommerce.mapper.CategoryMapper;
 import com.ecommerce.repository.CategoryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
@@ -24,6 +26,9 @@ class CategoryServiceTest {
 
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Spy
+    private CategoryMapper categoryMapper;
 
     @InjectMocks
     private CategoryService categoryService;
