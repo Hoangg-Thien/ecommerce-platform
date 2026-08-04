@@ -4,6 +4,7 @@ import com.ecommerce.dto.request.RegisterRequest;
 import com.ecommerce.dto.response.UserResponse;
 import com.ecommerce.entity.User;
 import com.ecommerce.enums.Role;
+import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.mapper.UserMapper;
 import com.ecommerce.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,11 +38,11 @@ public class UserService {
 
     public UserResponse findById(Long id) {
         return userMapper.toUserRespone(userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id)));
+                .orElseThrow(() -> new ResourceNotFoundException("User", id)));
     }
 
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
     }
 }
