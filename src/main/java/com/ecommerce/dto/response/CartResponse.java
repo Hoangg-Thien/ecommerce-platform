@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CartResponse {
     private Long id;
-    private Long userID;
+    private Long userId;
     private List<CartItemResponse> items;
     private BigDecimal totalPrice; // extoring money from the entire cart
 }
