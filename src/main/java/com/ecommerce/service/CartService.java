@@ -36,8 +36,8 @@ public class CartService {
         .orElseThrow(() -> new ResourceNotFoundException("User", "email", userEmail));
         
         // tim product va kiem tra ton kho
-        Product product = productRepository.findById(request.getProductID())
-        .orElseThrow(() -> new ResourceNotFoundException("Product", request.getProductID()));
+        Product product = productRepository.findById(request.getProductId())
+        .orElseThrow(() -> new ResourceNotFoundException("Product", request.getProductId()));
         
         if(product.getStock() < request.getQuantity()){
             throw new IllegalArgumentException("Not enough stock for product: " + product.getName());
@@ -73,5 +73,22 @@ public class CartService {
             }
         Cart savedCart = cartRepository.save(cart);
         return cartMapper.toCartResponse(savedCart);
+    }
+
+    @Transactional
+    public CartResponse getCart(String userEmail){
+
+        // tim user qua email
+        User user = userRepository.findByEmail(userEmail)
+        .orElseThrow(() -> new ResourceNotFoundException("User", "email", userEmail));
+
+        // tim cart cua user, chua co thi khoi tao gio rong
+        Cart cart = cartRepository.findByUserId(user.getId())
+        .orElseGet(() ->{
+            Cart newCart = new Cart();
+            newCart.setUser(user);
+            return cartRepository.save(newCart);
+        });
+        return cartMapper.toCartResponse(cart);
     }
 }

@@ -25,6 +25,7 @@ public class CartMapper {
                .id(cartItem.getId())
                .productId(cartItem.getProduct().getId())
                .productName(cartItem.getProduct().getName())
+               .productPrice(price)
                .quantity(cartItem.getQuantity())
                .subTotal(subTotal)
                .build();

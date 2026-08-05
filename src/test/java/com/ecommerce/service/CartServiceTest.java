@@ -68,7 +68,7 @@ class CartServiceTest {
         cart.setItems(new ArrayList<>());
 
         request = new AddToCartRequest();
-        request.setProductID(1L); // hoặc setProductId(1L)
+        request.setProductId(1L); // hoặc setProductId(1L)
         request.setQuantity(2);
     }
 
@@ -168,4 +168,32 @@ class CartServiceTest {
         when(userRepository.findByEmail("user@gmail.com")).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> cartService.addToCart("user@gmail.com", request));
     }
+
+    // Test xem giỏ hàng thành công khi user đã có giỏ
+    @Test
+    void getCart_WhenCartExists_ShouldReturnCartResponse() {
+        when(userRepository.findByEmail("user@gmail.com")).thenReturn(Optional.of(user));
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+
+        CartResponse result = cartService.getCart("user@gmail.com");
+
+        assertNotNull(result);
+        assertEquals(1L, result.getUserId());
+        verify(cartRepository, times(1)).findByUserId(1L);
+    }
+
+    // Test xem giỏ hàng khi user chưa có giỏ -> tự tạo giỏ rỗng và trả về
+    @Test
+    void getCart_WhenCartDoesNotExist_ShouldCreateAndReturnEmptyCart() {
+        when(userRepository.findByEmail("user@gmail.com")).thenReturn(Optional.of(user));
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.empty());
+        when(cartRepository.save(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        CartResponse result = cartService.getCart("user@gmail.com");
+
+        assertNotNull(result);
+        assertTrue(result.getItems().isEmpty());
+        assertEquals(BigDecimal.ZERO, result.getTotalPrice());
+    }
+
 }

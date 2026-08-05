@@ -16,10 +16,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 
 @RestController
-@RequestMapping("/api/cart")
+@RequestMapping("/api/carts")
 @RequiredArgsConstructor
 public class CartController {
     private final UserDetailsService userDetailsService;
@@ -31,6 +34,14 @@ public class CartController {
         @Valid @RequestBody AddToCartRequest request
     ){
         CartResponse response = cartService.addToCart(userdetails.getUsername(), request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping()
+    public ResponseEntity<CartResponse> getCart(
+        @AuthenticationPrincipal UserDetails userDetails
+    ){
+        CartResponse response = cartService.getCart(userDetails.getUsername());
         return ResponseEntity.ok(response);
     }
     
