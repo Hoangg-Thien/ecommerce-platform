@@ -63,6 +63,7 @@ public class CartService {
             if(newQuantity > product.getStock()){
                 throw new IllegalArgumentException("Cannot add more. Total in cart exceeds available stock");
             }
+            item.setQuantity(newQuantity);
             } else { // chua co thi tao item moi va them vao items cua cart
                 CartItem newItem = new CartItem();
                 newItem.setCart(cart);

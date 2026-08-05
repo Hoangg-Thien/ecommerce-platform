@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RequiredArgsConstructor
 public class CartController {
     private final UserDetailsService userDetailsService;
-    private CartService cartService;
+    private final CartService cartService;
 
     @PostMapping("/add")
     public ResponseEntity<CartResponse> addToCart(
