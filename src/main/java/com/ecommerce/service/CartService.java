@@ -15,8 +15,6 @@ import com.ecommerce.repository.CartRepository;
 import com.ecommerce.repository.ProductRepository;
 import com.ecommerce.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 @Service
@@ -91,4 +89,29 @@ public class CartService {
         });
         return cartMapper.toCartResponse(cart);
     }
+
+    @Transactional
+    public CartResponse removeCartItem(String userEmail, long itemId){
+
+    // tim user qua email
+    User user = userRepository.findByEmail(userEmail)
+    .orElseThrow(() -> new ResourceNotFoundException("User", "email", userEmail));
+
+    // tim cart cua user
+    Cart cart = cartRepository.findByUserId(user.getId())
+    .orElseThrow(() -> new ResourceNotFoundException("Can not found user: " + userEmail));
+
+    // tim cartItems theo itemId trong gio hang cua user
+    CartItem itemToRemove = cart.getItems().stream()
+    .filter(item -> item.getId().equals(itemId))
+    .findFirst()
+    .orElseThrow(() -> new ResourceNotFoundException("CartItem", itemId));
+
+    cart.getItems().remove(itemToRemove);
+
+    Cart savedCart = cartRepository.save(cart);
+    return cartMapper.toCartResponse(savedCart);
+    }
+
+
 }

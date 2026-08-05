@@ -16,8 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PathVariable;
 
 
 
@@ -42,6 +43,16 @@ public class CartController {
         @AuthenticationPrincipal UserDetails userDetails
     ){
         CartResponse response = cartService.getCart(userDetails.getUsername());
+        return ResponseEntity.ok(response);
+    }
+
+    // DELETE /api/carts/{itemId}
+    @DeleteMapping("/{itemId}")
+    public ResponseEntity<CartResponse> removeCartItem(
+        @AuthenticationPrincipal UserDetails userDetails,
+        @PathVariable Long itemId
+    ){
+        CartResponse response = cartService.removeCartItem(userDetails.getUsername(), itemId);
         return ResponseEntity.ok(response);
     }
     

@@ -1,14 +1,10 @@
 package com.ecommerce.dto.response;
 
-import com.ecommerce.entity.User;
 import com.ecommerce.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import java.util.Set;
 
 @Data
 @Builder
