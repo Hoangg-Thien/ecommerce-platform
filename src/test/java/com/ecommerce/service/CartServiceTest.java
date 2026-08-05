@@ -196,4 +196,37 @@ class CartServiceTest {
         assertEquals(BigDecimal.ZERO, result.getTotalPrice());
     }
 
+    // Xóa thành công item trong giỏ
+    @Test
+    void removeCartItem_WhenItemExists_ShouldRemoveItemAndReturnUpdatedCart() {
+        CartItem item = new CartItem();
+        item.setId(10L);
+        item.setCart(cart);
+        item.setProduct(product);
+        item.setQuantity(2);
+        cart.getItems().add(item);
+
+        when(userRepository.findByEmail("user@gmail.com")).thenReturn(Optional.of(user));
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+        when(cartRepository.save(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        CartResponse result = cartService.removeCartItem("user@gmail.com", 10L);
+
+        assertNotNull(result);
+        assertTrue(result.getItems().isEmpty()); // Giỏ hàng sau khi xóa đã trống
+        assertEquals(BigDecimal.ZERO, result.getTotalPrice());
+        verify(cartRepository, times(1)).save(cart);
+    }
+
+    // Báo lỗi khi itemId không nằm trong giỏ hàng của user
+    @Test
+    void removeCartItem_WhenItemNotFoundInCart_ShouldThrowException() {
+        when(userRepository.findByEmail("user@gmail.com")).thenReturn(Optional.of(user));
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+
+        assertThrows(ResourceNotFoundException.class, () -> cartService.removeCartItem("user@gmail.com", 999L));
+        verify(cartRepository, never()).save(any());
+    }
+
+
 }
