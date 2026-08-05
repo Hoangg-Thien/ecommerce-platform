@@ -30,17 +30,20 @@ public class CartMapper {
                .build();
     }
 
-    public CartResponse tCartResponse(Cart cart){
+    public CartResponse toCartResponse(Cart cart){
         if(cart == null){
             return null;
         }
 
-        List<CartItemResponse> itemResponses = cart.getItems().stream()
+        List<CartItemResponse> itemResponses = cart.getItems()
+        .stream()
         .map(this::toCartItemResponse)
         .toList();
 
-        BigDecimal totalPrice = itemResponses.stream()
-        .map(CartItemResponse::getSubTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalPrice = itemResponses
+        .stream()
+        .map(CartItemResponse::getSubTotal)
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return CartResponse.builder()
                .id(cart.getId())
