@@ -72,14 +72,17 @@ public class OrderService {
         OrderItem orderItem = new OrderItem();
         orderItem.setOrder(order);
         orderItem.setProduct(product);
-        
         orderItem.setQuantity(cartItem.getQuantity());
         orderItem.setPrice(product.getPrice()); // luu gia tai thoi diem mua
 
+        order.getItems().add(orderItem);
+
         // cong don tien: price * quantity
         BigDecimal subTotal = product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()));
-        totalPrice = subTotal.add(subTotal);
+        totalPrice = totalPrice.add(subTotal);
         }
+
+        order.setTotalPrice(totalPrice);
 
         // luu order
         Order savedOrder = orderRepository.save(order);

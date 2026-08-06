@@ -47,9 +47,10 @@ public class OrderMapper {
 
         return OrderResponse.builder()
         .id(order.getId())
-        .id(order.getUser().getId())
+        .userId(order.getUser().getId())
         .status(order.getStatus())
         .totalPrice(order.getTotalPrice())
+        .createdAt(order.getCreateAt())
         .items(itemsResponses)
         .build();
     }
