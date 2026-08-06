@@ -1,5 +1,6 @@
 package com.ecommerce.service;
 
+import java.util.*;
 import com.ecommerce.dto.response.OrderResponse;
 import com.ecommerce.entity.*;
 import com.ecommerce.enums.OrderStatus;
@@ -184,4 +185,93 @@ class OrderServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> orderService.createOrder("user@gmail.com"));
         verify(orderRepository, never()).save(any());
     }
+
+    // ==========================================
+    // TEST GET USER ORDERS (Lịch sử đơn hàng)
+    // ==========================================
+
+    @Test
+    void getUserOrders_WhenUserExists_ShouldReturnListOfOrderResponses() {
+        Order order = new Order();
+        order.setId(100L);
+        order.setUser(user);
+        order.setStatus(OrderStatus.PENDING);
+        order.setTotalPrice(BigDecimal.valueOf(2000));
+
+        when(userRepository.findByEmail("user@gmail.com")).thenReturn(Optional.of(user));
+        when(orderRepository.findByUserId(1L)).thenReturn(List.of(order));
+
+        List<OrderResponse> results = orderService.getUserOrders("user@gmail.com");
+
+        assertNotNull(results);
+        assertEquals(1, results.size());
+        assertEquals(100L, results.get(0).getId());
+        verify(orderRepository, times(1)).findByUserId(1L);
+    }
+
+    @Test
+    void getUserOrders_WhenUserNotFound_ShouldThrowException() {
+        when(userRepository.findByEmail("notfound@gmail.com")).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> orderService.getUserOrders("notfound@gmail.com"));
+        verify(orderRepository, never()).findByUserId(any());
+    }
+
+    // ==========================================
+    // TEST UPDATE ORDER STATUS (Admin duyệt đơn)
+    // ==========================================
+
+    @Test
+    void updateOrderStatus_WhenValidTransition_ShouldUpdateStatusSuccessfully() {
+        Order order = new Order();
+        order.setId(100L);
+        order.setUser(user);
+        order.setStatus(OrderStatus.PENDING);
+        order.setTotalPrice(BigDecimal.valueOf(1000));
+
+        when(orderRepository.findById(100L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        OrderResponse result = orderService.updateOrderStatus(100L, OrderStatus.CONFIRMED);
+
+        assertNotNull(result);
+        assertEquals(OrderStatus.CONFIRMED, result.getStatus());
+        verify(orderRepository, times(1)).save(order);
+    }
+
+    @Test
+    void updateOrderStatus_WhenOrderAlreadyDone_ShouldThrowException() {
+        Order order = new Order();
+        order.setId(100L);
+        order.setStatus(OrderStatus.DONE); // Đơn đã hoàn tất
+
+        when(orderRepository.findById(100L)).thenReturn(Optional.of(order));
+
+        assertThrows(IllegalArgumentException.class, () -> orderService.updateOrderStatus(100L, OrderStatus.CANCELLED));
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    void updateOrderStatus_WhenCancelled_ShouldRestockProducts() {
+        Order order = new Order();
+        order.setId(100L);
+        order.setStatus(OrderStatus.PENDING);
+
+        OrderItem item = new OrderItem();
+        item.setProduct(product); // product có stock = 10
+        item.setQuantity(2);
+        order.getItems().add(item);
+
+        when(orderRepository.findById(100L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        OrderResponse result = orderService.updateOrderStatus(100L, OrderStatus.CANCELLED);
+
+        assertNotNull(result);
+        assertEquals(OrderStatus.CANCELLED, result.getStatus());
+        // Kiểm tra đã hoàn lại 2 sản phẩm vào kho: 10 + 2 = 12
+        assertEquals(12, product.getStock());
+        verify(productRepository, times(1)).save(product);
+    }
+
 }
