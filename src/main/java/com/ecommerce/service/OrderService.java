@@ -111,4 +111,29 @@ public class OrderService {
         .toList();
     }
 
+    @Transactional
+    public OrderResponse updateOrderStatus(Long orderId, OrderStatus newStatus){
+        
+        // tim order theo id
+        Order order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+
+        // ko cho doi trang thai neu DONE va CANCELLED
+        if(order.getStatus() == OrderStatus.CANCELLED || order.getStatus() == OrderStatus.DONE){
+            throw new IllegalArgumentException("Cannot change status of an order that is already " + order.getStatus());
+        }
+
+        // neu CANCELLED thi hoan lai so luong ton kho (restock)
+        if(newStatus == OrderStatus.CANCELLED){
+            for(OrderItem orderItem : order.getItems()){ // duyet qua het tat ca san pham cua don hang
+                Product product = orderItem.getProduct();
+                product.setStock(product.getStock() + orderItem.getQuantity());
+                productRepository.save(product);
+            }
+        }
+        // cap nhat va luu
+        order.setStatus(newStatus);
+        Order updatedOrder = orderRepository.save(order);
+        return orderMapper.tOrderResponse(updatedOrder);
+    }
 }
