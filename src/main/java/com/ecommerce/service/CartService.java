@@ -99,7 +99,7 @@ public class CartService {
 
     // tim cart cua user
     Cart cart = cartRepository.findByUserId(user.getId())
-    .orElseThrow(() -> new ResourceNotFoundException("Can not found user: " + userEmail));
+    .orElseThrow(() -> new ResourceNotFoundException("Can not found for user: " + userEmail));
 
     // tim cartItems theo itemId trong gio hang cua user
     CartItem itemToRemove = cart.getItems().stream()
