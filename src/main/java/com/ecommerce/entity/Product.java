@@ -34,6 +34,9 @@ public class Product {
     @Column(nullable = false)
     private Integer stock = 0;
 
+    @Version
+    private Long version;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 

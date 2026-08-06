@@ -56,6 +56,16 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    // 409 - Concurrency Conflict (conflicts arising when multiple people place orders simultaneously)
+    @ExceptionHandler({org.springframework.orm.ObjectOptimisticLockingFailureException.class,
+    jakarta.persistence.OptimisticLockException.class})
+    public ResponseEntity<Map<String, Object>> handleOptimisticLocking(Exception ex) {
+        return buildError(
+            HttpStatus.CONFLICT, 
+            "The product is being purchased by another customer at the same time. Please try again!"
+        );
+    }
+
     // 500 - generic fallback
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
