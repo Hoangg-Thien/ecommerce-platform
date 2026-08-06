@@ -2,6 +2,7 @@ package com.ecommerce.service;
 
 import java.math.BigDecimal;
 
+import java.util.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -93,4 +94,21 @@ public class OrderService {
 
         return orderMapper.tOrderResponse(savedOrder);
     }
+
+    @Transactional
+    public List<OrderResponse> getUserOrders(String userEmail){
+
+        // tim user
+        User user = userRepository.findByEmail(userEmail)
+        .orElseThrow(() -> new ResourceNotFoundException("User", "email", userEmail));
+
+        // tim tu userRepository, do la list <>
+        List<Order> orders = orderRepository.findByUserId(user.getId());
+
+        // map danh sach order sang List<OrderResponse>
+        return orders.stream()
+        .map(orderMapper::tOrderResponse)
+        .toList();
+    }
+
 }
