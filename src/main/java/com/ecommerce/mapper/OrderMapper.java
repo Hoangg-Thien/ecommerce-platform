@@ -13,11 +13,6 @@ import com.ecommerce.entity.OrderItem;
 
 @Component
 public class OrderMapper {
-    private final OrderRepository orderRepository;
-
-    OrderMapper(OrderRepository orderRepository) {
-        this.orderRepository = orderRepository;
-    }
 
     public OrderItemResponse tOrderItemResponse(OrderItem orderItem){
         if(orderItem == null){
