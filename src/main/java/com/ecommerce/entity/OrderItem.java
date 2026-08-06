@@ -2,8 +2,6 @@ package com.ecommerce.entity;
 
 import java.math.BigDecimal;
 
-import org.aspectj.weaver.ast.Or;
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
