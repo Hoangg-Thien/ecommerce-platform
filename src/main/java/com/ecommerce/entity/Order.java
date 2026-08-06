@@ -8,6 +8,7 @@ import java.util.List;
 import org.hibernate.annotations.CreationTimestamp;
 
 import com.ecommerce.enums.OrderStatus;
+import com.ecommerce.enums.PaymentMethod;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -38,6 +39,13 @@ public class Order {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrderStatus status = OrderStatus.PENDING;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method", nullable = false)
+    private PaymentMethod paymentMethod;    // save here for quick query
+
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Payment payment;      
 
     @CreationTimestamp
     @Column(name = "create_at", updatable = false)

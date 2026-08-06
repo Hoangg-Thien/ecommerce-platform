@@ -41,6 +41,10 @@ public class Payment {
     @Column(nullable = false)
     private BigDecimal amount; // order.totalPrice
 
+    private String transactionId;  // MoMo return (null with COD)
+    private String momoRequestId;  // requestId send to MoMo (null with COD)
+    private String momoOrderId;    // orderId MoMo (null with COD)
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
