@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.ecommerce.enums.OrderStatus;
+import com.ecommerce.enums.PaymentMethod;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,6 +21,7 @@ public class OrderResponse {
     private Long userId;
     private OrderStatus status;
     private BigDecimal totalPrice;
+    private PaymentMethod paymentMethod;
     private List<OrderItemResponse> items;
     private LocalDateTime createdAt;
 }

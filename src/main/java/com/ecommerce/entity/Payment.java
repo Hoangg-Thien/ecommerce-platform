@@ -1,6 +1,5 @@
 package com.ecommerce.entity;
 
-import java.lang.annotation.ElementType;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 

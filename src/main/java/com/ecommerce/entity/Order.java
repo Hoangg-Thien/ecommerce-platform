@@ -45,7 +45,7 @@ public class Order {
     private PaymentMethod paymentMethod;    // save here for quick query
 
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Payment payment;      
+    private Payment payment;
 
     @CreationTimestamp
     @Column(name = "create_at", updatable = false)

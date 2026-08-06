@@ -45,6 +45,7 @@ public class OrderMapper {
         .userId(order.getUser().getId())
         .status(order.getStatus())
         .totalPrice(order.getTotalPrice())
+        .paymentMethod(order.getPaymentMethod())
         .createdAt(order.getCreateAt())
         .items(itemsResponses)
         .build();
