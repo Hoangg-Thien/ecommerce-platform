@@ -1,5 +1,6 @@
-package com.ecommerce.service;
+package com.ecommerce.unit;
 
+import com.ecommerce.service.ProductService;
 import com.ecommerce.dto.request.ProductRequest;
 import com.ecommerce.dto.response.ProductResponse;
 import com.ecommerce.entity.Category;

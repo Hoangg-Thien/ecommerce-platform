@@ -1,5 +1,6 @@
-package com.ecommerce.controller;
+package com.ecommerce.integration;
 
+import com.ecommerce.controller.AuthController;
 import com.ecommerce.config.JwtAuthenticationFilter;
 import com.ecommerce.dto.request.LoginRequest;
 import com.ecommerce.dto.request.RegisterRequest;

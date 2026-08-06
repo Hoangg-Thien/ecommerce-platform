@@ -1,4 +1,4 @@
-package com.ecommerce.service;
+package com.ecommerce.unit;
 
 import com.ecommerce.dto.request.RegisterRequest;
 import com.ecommerce.dto.response.UserResponse;
@@ -7,6 +7,8 @@ import com.ecommerce.enums.Role;
 import com.ecommerce.exception.EmailAlreadyExistsException;
 import com.ecommerce.mapper.UserMapper;
 import com.ecommerce.repository.UserRepository;
+import com.ecommerce.service.UserService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -3,5 +3,6 @@ package com.ecommerce.enums;
 public enum PaymentStatus {
     PENDING,
     PAID,
-    FAILED
+    FAILED,
+    REFUNDED // de mo rong sau nay 
 }
