@@ -22,3 +22,10 @@ application:
     jwt:
       secret-key: ${JWT_SECRET_KEY}
       expiration: 86400000
+momo:
+  partner-code: ${MOMO_PARTNER_CODE}
+  access-key: ${MOMO_ACCESS_KEY}
+  secret-key: ${MOMO_SECRET_KEY}
+  api-url: https://test-payment.momo.vn/v2/gateway/api/create
+  redirect-url: ${MOMO_REDIRECT_URL}
+  ipn-url: ${MOMO_IPN_URL}
