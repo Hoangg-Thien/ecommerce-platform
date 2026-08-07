@@ -7,6 +7,8 @@ import com.ecommerce.entity.Cart;
 import com.ecommerce.entity.Order;
 import com.ecommerce.entity.Payment;
 import com.ecommerce.enums.OrderStatus;
+import com.ecommerce.enums.PaymentMethod;
+import com.ecommerce.enums.PaymentStatus;
 import com.ecommerce.mapper.PaymentMapper;
 import com.ecommerce.repository.OrderRepository;
 import com.ecommerce.repository.PaymentRepository;
@@ -35,9 +37,9 @@ public class MomoPaymentStrategy implements PaymentStrategy{
         // Tạo Payment record (PENDING — chưa có tiền)
         Payment payment = new Payment();
         payment.setOrder(savedOrder);
-        payment.setPaymentMethod(payment.getPaymentMethod());
-        payment.setPaymentStatus(payment.getPaymentStatus());
-        payment.setAmount(payment.getAmount());
+        payment.setPaymentMethod(PaymentMethod.MOMO);
+        payment.setPaymentStatus(PaymentStatus.PENDING);
+        payment.setAmount(savedOrder.getTotalPrice());
         Payment savedPayment = paymentRepository.save(payment);
 
         // Gọi MoMo API để lấy URL thanh toán

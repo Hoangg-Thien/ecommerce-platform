@@ -69,6 +69,9 @@ public class CheckoutService {
             orderItem.setQuantity(cartItem.getQuantity());
             orderItem.setPrice(product.getPrice());
             order.getItems().add(orderItem);
+
+            BigDecimal subTotal = product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()));
+            totalPrice = totalPrice.add(subTotal);
         }
 
         order.setTotalPrice(totalPrice);
