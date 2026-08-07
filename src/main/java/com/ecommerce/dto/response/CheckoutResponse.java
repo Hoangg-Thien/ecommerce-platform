@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CheckoutResponse {
-    private Long id;
+    private Long orderId;
     private OrderStatus orderStatus;
     private BigDecimal totalPrice;
     private PaymentResponse paymentResponse; // information payment just created
