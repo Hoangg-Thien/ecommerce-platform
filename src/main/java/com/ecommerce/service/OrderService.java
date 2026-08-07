@@ -123,12 +123,17 @@ public class OrderService {
             throw new IllegalArgumentException("Cannot change status of an order that is already " + order.getStatus());
         }
 
-        // neu CANCELLED thi hoan lai so luong ton kho (restock)
-        if(newStatus == OrderStatus.CANCELLED){
-            for(OrderItem orderItem : order.getItems()){ // duyet qua het tat ca san pham cua don hang
-                Product product = orderItem.getProduct();
-                product.setStock(product.getStock() + orderItem.getQuantity());
-                productRepository.save(product);
+        // Chỉ restock khi stock đã thực sự bị trừ trước đó
+        // Stock bị trừ khi: COD (khi PENDING, CONFIRMED...) hoặc MoMo (khi CONFIRMED trở đi)
+        // Stock CHƯA bị trừ khi: MoMo đang AWAITING_PAYMENT
+        if (newStatus == OrderStatus.CANCELLED) {
+        boolean stockWasDeducted = order.getStatus() != OrderStatus.AWAITING_PAYMENT;
+        if (stockWasDeducted) {
+            for (OrderItem orderItem : order.getItems()) {
+                    Product product = orderItem.getProduct();
+                    product.setStock(product.getStock() + orderItem.getQuantity());
+                    productRepository.save(product);
+                }
             }
         }
         // cap nhat va luu

@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ecommerce.dto.request.CheckoutRequest;
 import com.ecommerce.dto.response.CheckoutResponse;
-import com.ecommerce.service.payment.CheckoutService;
+import com.ecommerce.service.CheckoutService;
 
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.validation.Valid;
