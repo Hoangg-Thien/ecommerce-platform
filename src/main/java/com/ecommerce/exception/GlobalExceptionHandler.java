@@ -50,6 +50,19 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.UNAUTHORIZED, "Invalid email or password");
     }
 
+    // 402 Payment Required — error from payment gateway
+    @ExceptionHandler(PaymentException.class)
+    public ResponseEntity<Map<String, Object>> handlePaymentError(PaymentException ex) {
+        return buildError(HttpStatus.PAYMENT_REQUIRED, ex.getMessage());
+    }
+
+    // 400 Bad Request — Invalid MoMo signature (fake callback)
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<Map<String, Object>> handleSecurityError(SecurityException ex) {
+        log.warn("Security violation: {}", ex.getMessage());
+        return buildError(HttpStatus.BAD_REQUEST, "Invalid request signature");
+    }
+
     // 409 - conflict
     @ExceptionHandler({EmailAlreadyExistsException.class, DuplicateResourceException.class})
     public ResponseEntity<Map<String, Object>> handleDuplicateResource(RuntimeException ex) {
