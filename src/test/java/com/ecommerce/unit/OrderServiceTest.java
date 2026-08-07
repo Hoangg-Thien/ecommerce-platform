@@ -257,11 +257,15 @@ class OrderServiceTest {
         Order order = new Order();
         order.setId(100L);
         order.setStatus(OrderStatus.PENDING);
+        order.setUser(user); // OrderMapper.tOrderResponse() cần user để gọi getUser().getId()
+
 
         OrderItem item = new OrderItem();
         item.setProduct(product); // product có stock = 10
         item.setQuantity(2);
+        item.setPrice(product.getPrice()); // cần set price để OrderMapper không NPE
         order.getItems().add(item);
+
 
         when(orderRepository.findById(100L)).thenReturn(Optional.of(order));
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
