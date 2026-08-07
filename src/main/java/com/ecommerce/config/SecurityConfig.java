@@ -41,6 +41,12 @@ public class SecurityConfig {
 
                 .requestMatchers(HttpMethod.PATCH, "/api/orders/*/status").hasAuthority("ADMIN")
                 
+                // MoMo IPN 
+                .requestMatchers(HttpMethod.POST, "/api/payments/momo/ipn").permitAll()
+
+                // MoMo Return
+                .requestMatchers(HttpMethod.GET, "/api/payments/momo/return").permitAll()
+
                 // Any other request requires authentication
                 .anyRequest().authenticated()
             )
