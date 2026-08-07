@@ -18,7 +18,9 @@ import com.ecommerce.repository.PaymentRepository;
 import com.ecommerce.repository.ProductRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class CodPaymentStrategy implements PaymentStrategy{
@@ -31,6 +33,8 @@ public class CodPaymentStrategy implements PaymentStrategy{
 
     @Override
     public CheckoutResponse processPayment(Order order, Cart cart){
+        log.info("Processing COD checkout for user id={}, totalAmount={}",
+        order.getUser().getId(), order.getTotalPrice());
 
         // set trang thai
         order.setStatus(OrderStatus.PENDING);
@@ -49,11 +53,15 @@ public class CodPaymentStrategy implements PaymentStrategy{
             Product product = item.getProduct();
             product.setStock(product.getStock() - item.getQuantity());
             productRepository.save(product);
+
         }
 
         // xoa cart sau khi dat hang thanh cong
         cart.getItems().clear();
         cartRepository.save(cart);
+        
+        log.info("COD order processed successfully: orderId={}, paymentId={}, status={}",
+        savedOrder.getId(), savedPayment.getId(), savedOrder.getStatus());
 
         // tra ve response ko co url
         return CheckoutResponse.builder()

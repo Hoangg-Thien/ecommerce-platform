@@ -22,7 +22,9 @@ import com.ecommerce.repository.ProductRepository;
 import com.ecommerce.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -35,6 +37,7 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(String userEmail){
+        log.info("Initiating order creation for user: {}", userEmail);
 
         // tim user
         User user = userRepository.findByEmail(userEmail)
@@ -46,6 +49,7 @@ public class OrderService {
 
         // gio hang co rong ko
         if(cart.getItems().isEmpty()){
+            log.warn("Order creation failed: Cart is empty for user: {}", userEmail);
             throw new IllegalArgumentException("Can not create order from an empty cart");
         }
 
@@ -62,6 +66,8 @@ public class OrderService {
 
         // kiem tra ton kho
         if(product.getStock() < cartItem.getQuantity()){
+            log.warn("Order creation failed: Insufficient stock for product '{}' (requested: {}, available: {})",
+            product.getName(), cartItem.getQuantity(), product.getStock());
             throw new IllegalArgumentException("Not enough stock for product: " + product.getName());
         }
 
@@ -92,6 +98,10 @@ public class OrderService {
         cart.getItems().clear();
         cartRepository.save(cart);
 
+        log.info("Order created successfully : orderId={}, userId={}, totalItems={}, totalPrice={}", 
+            savedOrder.getId(), user.getId(), savedOrder.getItems().size(), savedOrder.getTotalPrice()
+        );
+
         return orderMapper.tOrderResponse(savedOrder);
     }
 
@@ -113,6 +123,7 @@ public class OrderService {
 
     @Transactional
     public OrderResponse updateOrderStatus(Long orderId, OrderStatus newStatus){
+        log.info("Admin requesting status update for orderId={}, newStatus={}", orderId, newStatus);
         
         // tim order theo id
         Order order = orderRepository.findById(orderId)
@@ -120,6 +131,8 @@ public class OrderService {
 
         // ko cho doi trang thai neu DONE va CANCELLED
         if(order.getStatus() == OrderStatus.CANCELLED || order.getStatus() == OrderStatus.DONE){
+            log.warn("Cannot change status for orderId={} because it is already {}", 
+            orderId, order.getStatus());
             throw new IllegalArgumentException("Cannot change status of an order that is already " + order.getStatus());
         }
 
@@ -133,12 +146,15 @@ public class OrderService {
                     Product product = orderItem.getProduct();
                     product.setStock(product.getStock() + orderItem.getQuantity());
                     productRepository.save(product);
+                    log.info("Restocked {} units for product '{}' (id={}) due to order cancellation",
+                    orderItem.getQuantity(), product.getName(), product.getId());
                 }
             }
         }
         // cap nhat va luu
         order.setStatus(newStatus);
         Order updatedOrder = orderRepository.save(order);
+        log.info("Order status updated successfully: orderId={}, status={}", updatedOrder.getId(), updatedOrder.getStatus());
         return orderMapper.tOrderResponse(updatedOrder);
     }
 }

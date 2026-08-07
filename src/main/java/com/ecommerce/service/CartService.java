@@ -15,8 +15,11 @@ import com.ecommerce.repository.CartRepository;
 import com.ecommerce.repository.ProductRepository;
 import com.ecommerce.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CartService {
@@ -28,6 +31,9 @@ public class CartService {
 
     @Transactional
     public CartResponse addToCart(String userEmail, AddToCartRequest request){
+
+        log.info("Adding to cart: user='{}', productId={}, quantity={}",
+        userEmail, request.getProductId(), request.getQuantity());
 
         // tim user qua email dang nhap
         User user = userRepository.findByEmail(userEmail)
@@ -56,19 +62,27 @@ public class CartService {
 
         if(existingItem.isPresent()){ // co thi tang so luong len
             CartItem item = existingItem.get();
-            int newQuantity = item.getQuantity() + request.getQuantity();
+            int oldQuantity = item.getQuantity();
+            int newQuantity = oldQuantity + request.getQuantity();
 
             if(newQuantity > product.getStock()){
+                log.warn("Cannot add to cart: Total quantity {} exceeds available stock {} for product '{}'",
+                newQuantity, product.getStock(), product.getName());
                 throw new IllegalArgumentException("Cannot add more. Total in cart exceeds available stock");
             }
             item.setQuantity(newQuantity);
-            } else { // chua co thi tao item moi va them vao items cua cart
-                CartItem newItem = new CartItem();
-                newItem.setCart(cart);
-                newItem.setProduct(product);
-                newItem.setQuantity(request.getQuantity());
-                cart.getItems().add(newItem);
-            }
+
+            log.info("Updated quantity for product {} in user '{}' cart: {} -> {}",
+            product.getId(), userEmail, oldQuantity, newQuantity);
+            
+        } else { // chua co thi tao item moi va them vao items cua cart
+            CartItem newItem = new CartItem();
+            newItem.setCart(cart);
+            newItem.setProduct(product);
+            newItem.setQuantity(request.getQuantity());
+            cart.getItems().add(newItem);
+            log.info("Added new item (productId={}) to cart of user '{}'", product.getId(), userEmail);
+        }
         Cart savedCart = cartRepository.save(cart);
         return cartMapper.toCartResponse(savedCart);
     }
@@ -92,6 +106,7 @@ public class CartService {
 
     @Transactional
     public CartResponse removeCartItem(String userEmail, long itemId){
+    log.info("Removing cart item id={} for user '{}'", itemId, userEmail);
 
     // tim user qua email
     User user = userRepository.findByEmail(userEmail)
@@ -109,6 +124,8 @@ public class CartService {
 
     cart.getItems().remove(itemToRemove);
 
+    log.info("Successfully removed cart item id={} for user '{}'", itemId, userEmail);
+    
     Cart savedCart = cartRepository.save(cart);
     return cartMapper.toCartResponse(savedCart);
     }

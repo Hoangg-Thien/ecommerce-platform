@@ -8,10 +8,13 @@ import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.mapper.UserMapper;
 import com.ecommerce.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -22,7 +25,11 @@ public class UserService {
 
     @Transactional
     public UserResponse register(RegisterRequest request) {
+
+        log.info("Attempting to register new user with email: {}", request.getEmail());
+
         if (userRepository.existsByEmail(request.getEmail())) {
+            log.warn("Registration rejected: Email '{}' already exists", request.getEmail());
             throw new com.ecommerce.exception.EmailAlreadyExistsException("Email is already registered");
         }
 
@@ -33,6 +40,8 @@ public class UserService {
         user.setRole(Role.USER);
 
         User savedUser = userRepository.save(user);
+        log.info("User registered successfully: id={}, email={}, role={}",
+        savedUser.getId(), savedUser.getEmail(), savedUser.getRole());
         return userMapper.toUserRespone(savedUser);
     }
 

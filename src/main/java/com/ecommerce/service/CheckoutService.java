@@ -22,7 +22,9 @@ import com.ecommerce.service.payment.PaymentStrategy;
 import com.ecommerce.service.payment.PaymentStrategyFactory;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CheckoutService {
@@ -34,6 +36,8 @@ public class CheckoutService {
     
     @Transactional
     public CheckoutResponse checkout(String userEmail, CheckoutRequest request){
+        log.info("User '{}' initiated checkout with paymentMethod: {}", userEmail, request.getPaymentMethod());
+
         // tim user
         User user = userRepository.findByEmail(userEmail)
         .orElseThrow(() -> new ResourceNotFoundException("User", "email", userEmail));
@@ -44,6 +48,7 @@ public class CheckoutService {
 
         // validate cart co rong ko
         if(cart.getItems().isEmpty()){
+            log.warn("Checkout rejected: Cart is empty for user '{}'", userEmail);
             throw new IllegalArgumentException("Cannot checkout from an empty cart");
         }
 
@@ -59,6 +64,8 @@ public class CheckoutService {
 
             // validate stock
             if(product.getStock() < cartItem.getQuantity()){
+                log.warn("Checkout rejected: Product '{}' out of stock (requested: {}, available: {})",
+                product.getName(), cartItem.getQuantity(), product.getStock());
                 throw new IllegalArgumentException("Not enough stock for product: " + product.getName());
             }
 
@@ -82,6 +89,10 @@ public class CheckoutService {
         //    - Trừ stock hay không
         //    - Xóa cart hay không
         //    - Gọi API ngoài (MoMo) hay không
+
+        log.info("Order prepared for checkout: user='{}', itemsCount={}, estimatedTotal={}",
+        userEmail, order.getItems().size(), order.getTotalPrice());
+        
         PaymentStrategy strategy = strategyFactory.getPaymentStrategy(request.getPaymentMethod());
         return strategy.processPayment(order, cart);
     }

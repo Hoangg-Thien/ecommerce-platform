@@ -8,11 +8,13 @@ import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.mapper.CategoryMapper;
 import com.ecommerce.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CategoryService {
@@ -39,13 +41,15 @@ public class CategoryService {
     @Transactional
     public CategoryResponse create(CategoryRequest request) {
         if (categoryRepository.existsByName(request.getName())) {
+            log.warn("Category creation failed: Name '{}' already exists", request.getName());
             throw new DuplicateResourceException("Category name already exists");
         }
         Category category = new Category();
         category.setName(request.getName());
         category.setDescription(request.getDescription());
-        category = categoryRepository.save(category);
-        return categoryMapper.toCategoryResponse(category);
+        Category saved = categoryRepository.save(category);
+        log.info("Category created successfully: id={}, name='{}'", saved.getId(), saved.getName());
+        return categoryMapper.toCategoryResponse(saved);
     }
 
     @Transactional
@@ -53,18 +57,21 @@ public class CategoryService {
         Category category = getCategory(id);
         
         if (!category.getName().equals(request.getName()) && categoryRepository.existsByName(request.getName())) {
+            log.warn("Category update failed: Name '{}' already exists", request.getName());
             throw new DuplicateResourceException("Category name already exists");
         }
         
         category.setName(request.getName());
         category.setDescription(request.getDescription());
-        category = categoryRepository.save(category);
-        return categoryMapper.toCategoryResponse(category);
+        Category saved = categoryRepository.save(category);
+        log.info("Category updated successfully: id={}, name='{}'", saved.getId(), saved.getName());
+        return categoryMapper.toCategoryResponse(saved);
     }
 
     @Transactional
     public void delete(Long id) {
         Category category = getCategory(id);
         categoryRepository.delete(category);
+        log.info("Category deleted successfully: id={}, name='{}'", id, category.getName());
     }
 }

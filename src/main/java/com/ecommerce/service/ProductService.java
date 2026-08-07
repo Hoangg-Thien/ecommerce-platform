@@ -9,11 +9,14 @@ import com.ecommerce.mapper.ProductMapper;
 import com.ecommerce.repository.CategoryRepository;
 import com.ecommerce.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductService {
@@ -41,22 +44,26 @@ public class ProductService {
     public ProductResponse create(ProductRequest request) {
         Product product = new Product();
         mapRequestToProduct(request, product);
-        return productMapper.toProductResponse(productRepository.save(product));
+        Product saved = productRepository.save(product);
+        log.info("Product created successfully: id={}, name='{}', price={}", saved.getId(), saved.getName(), saved.getPrice());
+        return productMapper.toProductResponse(saved);
     }
 
     @Transactional
     public ProductResponse update(Long id, ProductRequest request) {
-        Product product = productRepository.findById(id)
+        Product saved = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", id));
-        mapRequestToProduct(request, product);
-        return productMapper.toProductResponse(productRepository.save(product));
+        mapRequestToProduct(request, saved);
+        log.info("Product updated successfully: id={}, name='{}'", saved.getId(), saved.getName());
+        return productMapper.toProductResponse(productRepository.save(saved));
     }
 
     @Transactional
     public void delete(Long id) {
-        Product product = productRepository.findById(id)
+        Product deleted = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", id));
-        productRepository.delete(product);
+        productRepository.delete(deleted);
+        log.info("Product deleted successfully: id={}, name='{}'", id, deleted.getName());
     }
 
     private void mapRequestToProduct(ProductRequest request, Product product) {
