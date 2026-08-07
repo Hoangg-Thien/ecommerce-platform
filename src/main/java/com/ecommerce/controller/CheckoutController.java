@@ -4,6 +4,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -11,7 +13,6 @@ import com.ecommerce.dto.request.CheckoutRequest;
 import com.ecommerce.dto.response.CheckoutResponse;
 import com.ecommerce.service.CheckoutService;
 
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -19,8 +20,9 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/checkout")
 @RequiredArgsConstructor
 public class CheckoutController {
-    private CheckoutService checkoutService;
+    private final CheckoutService checkoutService;
 
+    @PostMapping
     public ResponseEntity<CheckoutResponse> checkout(
         @AuthenticationPrincipal UserDetails userDetails,
         @Valid @RequestBody CheckoutRequest request
@@ -29,3 +31,4 @@ public class CheckoutController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
+

@@ -61,7 +61,8 @@ public class PaymentController {
 
     // Xem trạng thái payment theo orderId
     // Yêu cầu authentication (user đăng nhập)
-    @GetMapping("/api/oders/{orderId}")
+    @GetMapping("/order/{orderId}")
+
     public ResponseEntity<PaymentResponse> getPaymentByOrderId(
         @AuthenticationPrincipal UserDetails userDetails,
         @PathVariable Long orderId
