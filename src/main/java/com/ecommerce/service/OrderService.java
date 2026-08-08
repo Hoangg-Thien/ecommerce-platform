@@ -14,6 +14,7 @@ import com.ecommerce.entity.OrderItem;
 import com.ecommerce.entity.Product;
 import com.ecommerce.entity.User;
 import com.ecommerce.enums.OrderStatus;
+import com.ecommerce.enums.PaymentMethod;
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.mapper.OrderMapper;
 import com.ecommerce.repository.CartRepository;
@@ -57,6 +58,7 @@ public class OrderService {
         Order order = new Order();
         order.setUser(user);
         order.setStatus(OrderStatus.PENDING);
+        order.setPaymentMethod(PaymentMethod.COD);
 
         BigDecimal totalPrice = BigDecimal.ZERO;
 

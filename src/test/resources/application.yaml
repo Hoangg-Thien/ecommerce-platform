@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: ecommerce-backend-test
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+
+application:
+  security:
+    jwt:
+      secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      expiration: 86400000
+
+momo:
+  partner-code: test_partner
+  access-key: test_access_key
+  secret-key: test_secret_key
+  api-url: https://test-payment.momo.vn/v2/gateway/api/create
+  redirect-url: http://localhost:8080/api/payment/momo/callback
+  ipn-url: http://localhost:8080/api/payment/momo/ipn
