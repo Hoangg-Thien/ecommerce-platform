@@ -4,9 +4,9 @@ spring:
   application:
     name: ecommerce-backend
   datasource:
-    url: jdbc:postgresql://localhost:5433/ecommerce
-    username: postgres
-    password: ${DB_PASSWORD}
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/ecommerce}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
