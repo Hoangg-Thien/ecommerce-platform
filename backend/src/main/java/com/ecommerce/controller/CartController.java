@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 
 @RestController
-@RequestMapping("/api/carts")
+@RequestMapping("/api/v1/carts")
 @RequiredArgsConstructor
 public class CartController {
     private final UserDetailsService userDetailsService;

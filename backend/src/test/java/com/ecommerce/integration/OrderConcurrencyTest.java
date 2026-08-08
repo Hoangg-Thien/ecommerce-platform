@@ -156,7 +156,7 @@ public class OrderConcurrencyTest {
                     // Cả 2 thread đợi lệnh xuất phát đồng thời
                     startLatch.await();
 
-                    MvcResult result = mockMvc.perform(post("/api/orders/create")
+                    MvcResult result = mockMvc.perform(post("/api/v1/orders/create")
                                     .with(user(userEmail))
                                     .contentType(MediaType.APPLICATION_JSON))
                             .andReturn();
@@ -225,7 +225,7 @@ public class OrderConcurrencyTest {
                     readyLatch.countDown();
                     startLatch.await();
 
-                    MvcResult result = mockMvc.perform(post("/api/checkout")
+                    MvcResult result = mockMvc.perform(post("/api/v1/checkout")
                                     .with(user(userEmail))
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(objectMapper.writeValueAsString(checkoutRequest)))

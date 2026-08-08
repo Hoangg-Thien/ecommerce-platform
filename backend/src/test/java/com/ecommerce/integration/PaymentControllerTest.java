@@ -51,7 +51,7 @@ class PaymentControllerTest {
         MomoIpnRequest ipn = buildIpnRequest(0);
         doNothing().when(momoIpnService).handleIpn(any(MomoIpnRequest.class));
 
-        mockMvc.perform(post("/api/payments/momo/ipn")
+        mockMvc.perform(post("/api/v1/payments/momo/ipn")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(ipn)))
                 .andExpect(status().isOk());
@@ -63,7 +63,7 @@ class PaymentControllerTest {
         doThrow(new SecurityException("Invalid MoMo signature"))
                 .when(momoIpnService).handleIpn(any(MomoIpnRequest.class));
 
-        mockMvc.perform(post("/api/payments/momo/ipn")
+        mockMvc.perform(post("/api/v1/payments/momo/ipn")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(ipn)))
                 .andExpect(status().isBadRequest());
@@ -85,7 +85,7 @@ class PaymentControllerTest {
         when(paymentRepository.findByOrderId(5L)).thenReturn(Optional.of(payment));
         when(paymentMapper.toPaymentResponse(payment)).thenReturn(paymentResponse);
 
-        mockMvc.perform(get("/api/payments/order/5"))
+        mockMvc.perform(get("/api/v1/payments/order/5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.orderId").value(5))
                 .andExpect(jsonPath("$.paymentMethod").value("MOMO"))
@@ -97,7 +97,7 @@ class PaymentControllerTest {
     void getPaymentByOrderId_WhenNotExists_ShouldReturn404() throws Exception {
         when(paymentRepository.findByOrderId(999L)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/api/payments/order/999"))
+        mockMvc.perform(get("/api/v1/payments/order/999"))
                 .andExpect(status().isNotFound());
     }
 

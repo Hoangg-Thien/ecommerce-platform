@@ -66,7 +66,7 @@ class CheckoutControllerTest {
         when(checkoutService.checkout(any(), any(CheckoutRequest.class)))
                 .thenReturn(checkoutResponse);
 
-        mockMvc.perform(post("/api/checkout")
+        mockMvc.perform(post("/api/v1/checkout")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -92,7 +92,7 @@ class CheckoutControllerTest {
         when(checkoutService.checkout(any(), any(CheckoutRequest.class)))
                 .thenReturn(checkoutResponse);
 
-        mockMvc.perform(post("/api/checkout")
+        mockMvc.perform(post("/api/v1/checkout")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -107,7 +107,7 @@ class CheckoutControllerTest {
         // paymentMethod = null (không set gì cả)
         request.setPaymentMethod(null);
 
-        mockMvc.perform(post("/api/checkout")
+        mockMvc.perform(post("/api/v1/checkout")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())

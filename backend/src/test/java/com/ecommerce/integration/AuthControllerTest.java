@@ -71,7 +71,7 @@ class AuthControllerTest {
         when(userDetailsService.loadUserByUsername("user@example.com")).thenReturn(springUser);
         when(jwtService.generateToken(any())).thenReturn("dummy-jwt-token");
 
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -85,7 +85,7 @@ class AuthControllerTest {
         request.setEmail("invalid-email-format");
         request.setPassword("password123");
 
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -100,7 +100,7 @@ class AuthControllerTest {
         request.setEmail("");
         request.setPassword("password123");
 
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -114,7 +114,7 @@ class AuthControllerTest {
         request.setEmail("user@example.com");
         request.setPassword("12345"); // < 8 characters
 
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -132,7 +132,7 @@ class AuthControllerTest {
         when(userService.register(any(RegisterRequest.class)))
                 .thenThrow(new EmailAlreadyExistsException("Email is already registered"));
 
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
@@ -163,7 +163,7 @@ class AuthControllerTest {
         when(jwtService.generateToken(any())).thenReturn("dummy-jwt-token");
         when(userService.findByEmail("user@example.com")).thenReturn(user);
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -180,7 +180,7 @@ class AuthControllerTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new BadCredentialsException("Bad credentials"));
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
@@ -194,7 +194,7 @@ class AuthControllerTest {
         request.setEmail("invalid-email");
         request.setPassword("password123");
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -208,7 +208,7 @@ class AuthControllerTest {
         request.setEmail("user@example.com");
         request.setPassword("");
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())

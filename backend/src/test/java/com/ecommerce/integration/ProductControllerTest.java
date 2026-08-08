@@ -68,7 +68,7 @@ class ProductControllerTest {
         when(productService.findAll(eq(1L), any(Pageable.class)))
                 .thenReturn(pageResponse);
 
-        mockMvc.perform(get("/api/products")
+        mockMvc.perform(get("/api/v1/products")
                         .param("categoryId", "1")
                         .param("page", "0")
                         .param("size", "10")

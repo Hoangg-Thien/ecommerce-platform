@@ -22,11 +22,10 @@ import com.ecommerce.mapper.PaymentMapper;
 import com.ecommerce.repository.PaymentRepository;
 import com.ecommerce.service.MomoIpnService;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/payments")
+@RequestMapping("/api/v1/payments")
 @RequiredArgsConstructor
 public class PaymentController {
 

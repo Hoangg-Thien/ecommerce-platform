@@ -24,28 +24,28 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 // Public auth endpoints
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/v1/auth/**").permitAll()
                 
                 // Public GET endpoints for categories and products
-                .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
                 
                 // Admin only endpoints for modifying categories and products
-                .requestMatchers(HttpMethod.POST, "/api/categories/**").hasAuthority("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasAuthority("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/categories/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/categories/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/categories/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/categories/**").hasAuthority("ADMIN")
                 
-                .requestMatchers(HttpMethod.POST, "/api/products/**").hasAuthority("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/products/**").hasAuthority("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/products/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/products/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/products/**").hasAuthority("ADMIN")
 
-                .requestMatchers(HttpMethod.PATCH, "/api/orders/*/status").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/api/v1/orders/*/status").hasAuthority("ADMIN")
                 
                 // MoMo IPN 
-                .requestMatchers(HttpMethod.POST, "/api/payments/momo/ipn").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/payments/momo/ipn").permitAll()
 
                 // MoMo Return
-                .requestMatchers(HttpMethod.GET, "/api/payments/momo/return").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/payments/momo/return").permitAll()
 
                 // Any other request requires authentication
                 .anyRequest().authenticated()

@@ -42,8 +42,8 @@ class MomoServiceImplTest {
     private static final String TEST_SECRET_KEY  = "K951B6PE1waDMi640xX08PD3vg6EkVlz";
     private static final String TEST_ACCESS_KEY  = "F8BBA842ECF85";
     private static final String TEST_PARTNER_CODE = "MOMO_TEST";
-    private static final String TEST_IPN_URL     = "http://localhost:8080/api/payments/momo/ipn";
-    private static final String TEST_REDIRECT_URL = "http://localhost:8080/api/payments/momo/return";
+    private static final String TEST_IPN_URL     = "http://localhost:8080/api/v1/payments/momo/ipn";
+    private static final String TEST_REDIRECT_URL = "http://localhost:8080/api/v1/payments/momo/return";
     private static final String TEST_API_URL     = "https://test-payment.momo.vn/v2/gateway/api/create";
 
     @BeforeEach
