@@ -3,6 +3,7 @@ package com.ecommerce.integration;
 import com.ecommerce.controller.AuthController;
 import com.ecommerce.config.JwtAuthenticationFilter;
 import com.ecommerce.dto.request.LoginRequest;
+import com.ecommerce.dto.request.RefeshTokenRequest;
 import com.ecommerce.dto.request.RegisterRequest;
 import com.ecommerce.dto.response.UserResponse;
 import com.ecommerce.entity.User;
@@ -70,12 +71,14 @@ class AuthControllerTest {
         when(userService.register(any(RegisterRequest.class))).thenReturn(userResponse);
         when(userDetailsService.loadUserByUsername("user@example.com")).thenReturn(springUser);
         when(jwtService.generateToken(any())).thenReturn("dummy-jwt-token");
+        when(jwtService.generateRefeshToken(any())).thenReturn("dummy-refresh-token");
 
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.token").value("dummy-jwt-token"))
+                .andExpect(jsonPath("$.accessToken").value("dummy-jwt-token"))
+                .andExpect(jsonPath("$.refeshToken").value("dummy-refresh-token"))
                 .andExpect(jsonPath("$.email").value("user@example.com"));
     }
 
@@ -161,13 +164,15 @@ class AuthControllerTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(null);
         when(userDetailsService.loadUserByUsername("user@example.com")).thenReturn(springUser);
         when(jwtService.generateToken(any())).thenReturn("dummy-jwt-token");
+        when(jwtService.generateRefeshToken(any())).thenReturn("dummy-refresh-token");
         when(userService.findByEmail("user@example.com")).thenReturn(user);
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value("dummy-jwt-token"))
+                .andExpect(jsonPath("$.accessToken").value("dummy-jwt-token"))
+                .andExpect(jsonPath("$.refeshToken").value("dummy-refresh-token"))
                 .andExpect(jsonPath("$.email").value("user@example.com"));
     }
 
@@ -209,6 +214,82 @@ class AuthControllerTest {
         request.setPassword("");
 
         mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Validation Failed"));
+    }
+
+    // ==========================================
+    // REFRESH TOKEN TESTS
+    // ==========================================
+
+    @Test
+    void refeshToken_WithValidToken_ShouldReturn200AndNewAccessToken() throws Exception {
+        RefeshTokenRequest request = new RefeshTokenRequest("valid-refresh-token");
+
+        User user = new User();
+        user.setId(1L);
+        user.setEmail("user@example.com");
+        user.setRole(Role.USER);
+
+        org.springframework.security.core.userdetails.User springUser =
+                new org.springframework.security.core.userdetails.User("user@example.com", "pass", java.util.List.of());
+
+        when(jwtService.extractUsername("valid-refresh-token")).thenReturn("user@example.com");
+        when(userDetailsService.loadUserByUsername("user@example.com")).thenReturn(springUser);
+        when(jwtService.isTokenValid("valid-refresh-token", springUser)).thenReturn(true);
+        when(jwtService.generateToken(springUser)).thenReturn("new-access-token");
+        when(userService.findByEmail("user@example.com")).thenReturn(user);
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("new-access-token"))
+                .andExpect(jsonPath("$.refeshToken").value("valid-refresh-token"))
+                .andExpect(jsonPath("$.email").value("user@example.com"));
+    }
+
+    @Test
+    void refeshToken_WhenTokenExpiredOrInvalid_ShouldReturn401Unauthorized() throws Exception {
+        RefeshTokenRequest request = new RefeshTokenRequest("expired-refresh-token");
+
+        org.springframework.security.core.userdetails.User springUser =
+                new org.springframework.security.core.userdetails.User("user@example.com", "pass", java.util.List.of());
+
+        when(jwtService.extractUsername("expired-refresh-token")).thenReturn("user@example.com");
+        when(userDetailsService.loadUserByUsername("user@example.com")).thenReturn(springUser);
+        when(jwtService.isTokenValid("expired-refresh-token", springUser)).thenReturn(false);
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.message").value("Refresh token is expired or invalid"));
+    }
+
+    @Test
+    void refeshToken_WhenTokenMalformed_ShouldReturn401Unauthorized() throws Exception {
+        RefeshTokenRequest request = new RefeshTokenRequest("malformed-token");
+
+        when(jwtService.extractUsername("malformed-token")).thenThrow(new RuntimeException("Malformed token"));
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.message").value("Invalid refresh token format or signature"));
+    }
+
+    @Test
+    void refeshToken_WhenTokenBlank_ShouldReturn400BadRequest() throws Exception {
+        RefeshTokenRequest request = new RefeshTokenRequest("");
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())

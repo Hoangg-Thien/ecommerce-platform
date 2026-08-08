@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -69,6 +68,7 @@ public class AuthController {
         
         // Load UserDetails to generate token
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
+
         String accessToken = jwtService.generateToken(userDetails);
         String refreshToken = jwtService.generateRefeshToken(userDetails);
         
@@ -106,7 +106,7 @@ public class AuthController {
         // Load the user from the database and check if the token is valid
         UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
         if(!jwtService.isTokenValid(refreshToken, userDetails)){
-                throw new InvalidTokenException("Refresh token is expired or invalid");
+            throw new InvalidTokenException("Refresh token is expired or invalid");
         }
 
         // Create a new access token
