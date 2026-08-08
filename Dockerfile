@@ -5,14 +5,14 @@ FROM maven:3.9.9-eclipse-temurin-21-alpine AS builder
 
 WORKDIR /build
 
-# 1. Tận dụng Docker layer caching: Copy pom.xml trước để download dependencies
-COPY pom.xml .
+# 1. Tận dụng Docker layer caching: Copy backend/pom.xml trước để download dependencies
+COPY backend/pom.xml .
 
 # Download dependencies offline (layer này sẽ được cache nếu pom.xml không đổi)
 RUN mvn dependency:go-offline -B
 
-# 2. Copy source code và tiến hành build package
-COPY src ./src
+# 2. Copy source code từ backend/src và tiến hành build package
+COPY backend/src ./src
 
 # Build JAR file (skip tests vì đã test trên CI pipeline)
 RUN mvn clean package -DskipTests

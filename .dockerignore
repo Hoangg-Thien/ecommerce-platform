@@ -4,6 +4,8 @@
 **/.idea
 **/.vscode
 target/
+**/target/
+frontend/
 *.log
 .env
 .env.*
@@ -11,8 +13,8 @@ target/
 !.env.prod.example
 docs/
 *.md
-mvnw
-mvnw.cmd
-.mvn
+backend/mvnw
+backend/mvnw.cmd
+backend/.mvn
 Dockerfile
 docker-compose*.yml
