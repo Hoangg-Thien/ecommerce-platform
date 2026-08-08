@@ -50,6 +50,12 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.UNAUTHORIZED, "Invalid email or password");
     }
 
+    // 401 - Invalid or Expired Token (Access token / Refresh token)
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidToken(InvalidTokenException ex){
+        return buildError(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
+
     // 402 Payment Required — error from payment gateway
     @ExceptionHandler(PaymentException.class)
     public ResponseEntity<Map<String, Object>> handlePaymentError(PaymentException ex) {

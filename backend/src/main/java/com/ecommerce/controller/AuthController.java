@@ -1,16 +1,21 @@
 package com.ecommerce.controller;
 
 import com.ecommerce.dto.request.LoginRequest;
+import com.ecommerce.dto.request.RefeshTokenRequest;
 import com.ecommerce.dto.request.RegisterRequest;
 import com.ecommerce.dto.response.AuthResponse;
 import com.ecommerce.dto.response.UserResponse;
+import com.ecommerce.exception.InvalidTokenException;
 import com.ecommerce.service.JwtService;
 import com.ecommerce.service.UserService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -36,15 +41,18 @@ public class AuthController {
         
         // Load UserDetails to generate token
         UserDetails userDetails = userDetailsService.loadUserByUsername(userRespone.getEmail());
-        String token = jwtService.generateToken(userDetails);
+
+        String accessToken = jwtService.generateToken(userDetails);
+        String refreshToken = jwtService.generateRefeshToken(userDetails);
         
         // Return AuthRespone
-        AuthResponse authRespone = new AuthResponse(
-                token,
-                userRespone.getId(),
-                userRespone.getEmail(),
-                userRespone.getRole()
-        );
+        AuthResponse authRespone = AuthResponse.builder()
+        .accessToken(accessToken)
+        .refeshToken(refreshToken)
+        .id(userRespone.getId())
+        .email(userRespone.getEmail())
+        .role(userRespone.getRole())
+        .build();
         
         return ResponseEntity.status(HttpStatus.CREATED).body(authRespone);
     }
@@ -61,19 +69,58 @@ public class AuthController {
         
         // Load UserDetails to generate token
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
-        String token = jwtService.generateToken(userDetails);
+        String accessToken = jwtService.generateToken(userDetails);
+        String refreshToken = jwtService.generateRefeshToken(userDetails);
         
         // Fetch user from DB to get ID and roles
         com.ecommerce.entity.User user = userService.findByEmail(request.getEmail());
         
         // Return AuthRespone
-        AuthResponse authRespone = new AuthResponse(
-                token,
-                user.getId(),
-                user.getEmail(),
-                user.getRole()
-        );
+        AuthResponse authRespone = AuthResponse.builder()
+        .accessToken(accessToken)
+        .refeshToken(refreshToken)
+        .id(user.getId())
+        .email(user.getEmail())
+        .role(user.getRole())
+        .build();
         
         return ResponseEntity.ok(authRespone);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refeshToken(@Valid @RequestBody RefeshTokenRequest request){
+        String refreshToken = request.getRefeshToken();
+
+        // Extract email from refresh token
+        String userEmail;
+        try{
+            userEmail = jwtService.extractUsername(refreshToken);
+        }catch (Exception e) {
+            throw new InvalidTokenException("Invalid refresh token format or signature");
+        }
+
+        if(userEmail == null) {
+            throw new InvalidTokenException("Invalid refresh token: email not found");
+        }
+
+        // Load the user from the database and check if the token is valid
+        UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+        if(!jwtService.isTokenValid(refreshToken, userDetails)){
+                throw new InvalidTokenException("Refresh token is expired or invalid");
+        }
+
+        // Create a new access token
+        String newAccessToken = jwtService.generateToken(userDetails);
+        com.ecommerce.entity.User user = userService.findByEmail(userEmail);
+
+        AuthResponse authResponse = AuthResponse.builder()
+        .accessToken(newAccessToken)
+        .refeshToken(refreshToken)
+        .id(user.getId())
+        .email(user.getEmail())
+        .role(user.getRole())
+        .build();
+
+        return ResponseEntity.ok(authResponse);
     }
 }

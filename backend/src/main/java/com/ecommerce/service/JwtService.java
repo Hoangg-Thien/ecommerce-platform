@@ -20,8 +20,11 @@ public class JwtService {
     @Value("${application.security.jwt.secret-key}")
     private String secretKey;
 
-    @Value("${application.security.jwt.expiration:86400000}")
+    @Value("${application.security.jwt.expiration:900000}")
     private long jwtExpiration;
+
+    @Value("${application.security.jwt.refesh-token.expiration:604800000}")
+    private long refeshExpiration;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -32,12 +35,18 @@ public class JwtService {
         return claimsResolver.apply(claims);
     }
 
+    // 15 minutes
     public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails);
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return buildToken(extraClaims, userDetails, jwtExpiration);
+    }
+
+    // 7 days
+    public String generateRefeshToken(UserDetails userDetails){
+        return buildToken(new HashMap<>(), userDetails, refeshExpiration);
     }
 
     private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {
@@ -65,10 +74,10 @@ public class JwtService {
 
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
-                .verifyWith(getSignInKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        .verifyWith(getSignInKey())
+        .build()
+        .parseSignedClaims(token)
+        .getPayload();
     }
 
     private SecretKey getSignInKey() {

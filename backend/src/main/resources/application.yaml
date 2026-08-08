@@ -21,7 +21,10 @@ application:
   security:
     jwt:
       secret-key: ${JWT_SECRET_KEY}
-      expiration: 86400000
+      expiration: 900000 # 15 minutes (access token)
+      refesh-token:
+        expiration: 604800000 # 7 days
+
 momo:
   partner-code: ${MOMO_PARTNER_CODE}
   access-key: ${MOMO_ACCESS_KEY}
