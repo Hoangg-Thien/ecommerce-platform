@@ -3,6 +3,7 @@ package com.ecommerce.unit;
 import com.ecommerce.service.OrderService;
 import java.util.*;
 import com.ecommerce.dto.response.OrderResponse;
+import com.ecommerce.dto.response.PageResponse;
 import com.ecommerce.entity.*;
 import com.ecommerce.enums.OrderStatus;
 import com.ecommerce.exception.ResourceNotFoundException;
@@ -18,6 +19,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -192,30 +197,38 @@ class OrderServiceTest {
     // ==========================================
 
     @Test
-    void getUserOrders_WhenUserExists_ShouldReturnListOfOrderResponses() {
+    void getUserOrders_WhenUserExists_ShouldReturnPageResponse() {
         Order order = new Order();
         order.setId(100L);
         order.setUser(user);
         order.setStatus(OrderStatus.PENDING);
         order.setTotalPrice(BigDecimal.valueOf(2000));
 
-        when(userRepository.findByEmail("user@gmail.com")).thenReturn(Optional.of(user));
-        when(orderRepository.findByUserId(1L)).thenReturn(List.of(order));
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Order> orderPage = new PageImpl<>(List.of(order), pageable, 1);
 
-        List<OrderResponse> results = orderService.getUserOrders("user@gmail.com");
+        when(userRepository.findByEmail("user@gmail.com")).thenReturn(Optional.of(user));
+        when(orderRepository.findByUserId(1L, pageable)).thenReturn(orderPage);
+
+        PageResponse<OrderResponse> results = orderService.getUserOrders("user@gmail.com", pageable);
 
         assertNotNull(results);
-        assertEquals(1, results.size());
-        assertEquals(100L, results.get(0).getId());
-        verify(orderRepository, times(1)).findByUserId(1L);
+        assertEquals(1, results.getTotalElements());
+        assertEquals(1, results.getTotalPages());
+        assertEquals(0, results.getPageNo());
+        assertEquals(10, results.getPageSize());
+        assertEquals(1, results.getContent().size());
+        assertEquals(100L, results.getContent().get(0).getId());
+        verify(orderRepository, times(1)).findByUserId(1L, pageable);
     }
 
     @Test
     void getUserOrders_WhenUserNotFound_ShouldThrowException() {
+        Pageable pageable = PageRequest.of(0, 10);
         when(userRepository.findByEmail("notfound@gmail.com")).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> orderService.getUserOrders("notfound@gmail.com"));
-        verify(orderRepository, never()).findByUserId(any());
+        assertThrows(ResourceNotFoundException.class, () -> orderService.getUserOrders("notfound@gmail.com", pageable));
+        verify(orderRepository, never()).findByUserId(any(), any());
     }
 
     // ==========================================

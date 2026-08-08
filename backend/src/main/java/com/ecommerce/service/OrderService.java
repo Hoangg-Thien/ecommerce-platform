@@ -2,9 +2,12 @@ package com.ecommerce.service;
 
 import java.math.BigDecimal;
 
-import java.util.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.ecommerce.dto.response.PageResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.ecommerce.dto.response.OrderResponse;
 import com.ecommerce.entity.Cart;
@@ -107,20 +110,14 @@ public class OrderService {
         return orderMapper.tOrderResponse(savedOrder);
     }
 
-    @Transactional
-    public List<OrderResponse> getUserOrders(String userEmail){
-
-        // tim user
+    @Transactional(readOnly = true)
+    public PageResponse<OrderResponse> getUserOrders(String userEmail, Pageable pageable) {
         User user = userRepository.findByEmail(userEmail)
         .orElseThrow(() -> new ResourceNotFoundException("User", "email", userEmail));
 
-        // tim tu userRepository, do la list <>
-        List<Order> orders = orderRepository.findByUserId(user.getId());
+        Page<Order> orders = orderRepository.findByUserId(user.getId(), pageable);
 
-        // map danh sach order sang List<OrderResponse>
-        return orders.stream()
-        .map(orderMapper::tOrderResponse)
-        .toList();
+        return PageResponse.of(orders.map(orderMapper::tOrderResponse));
     }
 
     @Transactional
