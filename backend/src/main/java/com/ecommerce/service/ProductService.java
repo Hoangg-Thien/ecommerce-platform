@@ -11,10 +11,13 @@ import com.ecommerce.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+
+import com.ecommerce.dto.response.PageResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Slf4j
 @Service
@@ -25,13 +28,11 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final ProductMapper productMapper;
 
-    public List<ProductResponse> findAll(Long categoryId) {
-        List<Product> products = categoryId != null
-                ? productRepository.findByCategoryId(categoryId)
-                : productRepository.findAll();
-        return products.stream()
-                .map(productMapper::toProductResponse)
-                .toList();
+    public PageResponse<ProductResponse> findAll(Long categoryId, Pageable pageable) {
+        Page<Product> productPage = categoryId != null
+                ? productRepository.findByCategoryId(categoryId, pageable)
+                : productRepository.findAll(pageable);
+        return PageResponse.of(productPage.map(productMapper::toProductResponse));
     }
 
     public ProductResponse findById(Long id) {

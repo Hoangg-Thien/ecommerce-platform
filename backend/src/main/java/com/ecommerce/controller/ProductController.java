@@ -5,11 +5,13 @@ import com.ecommerce.dto.response.ProductResponse;
 import com.ecommerce.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import com.ecommerce.dto.response.PageResponse;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
@@ -18,11 +20,30 @@ public class ProductController {
 
     private final ProductService productService;
 
-    // GET /api/products?categoryId=1   (optional filter)
+    // GET /api/products?page=0&size=10&sortBy=id&sortDir=asc&categoryId=1
     @GetMapping
-    public ResponseEntity<List<ProductResponse>> getAll(
-            @RequestParam(required = false) Long categoryId) {
-        return ResponseEntity.ok(productService.findAll(categoryId));
+    public ResponseEntity<PageResponse<ProductResponse>> getAll(
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+
+        if (page < 0) {
+            page = 0;
+        }
+        if (size <= 0) {
+            size = 10;
+        } else if (size > 50) {
+            size = 50;
+        }
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.DESC.name())
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return ResponseEntity.ok(productService.findAll(categoryId, pageable));
     }
 
     // GET /api/products/{id}

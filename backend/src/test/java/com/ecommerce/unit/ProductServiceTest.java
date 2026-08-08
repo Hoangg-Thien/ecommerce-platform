@@ -1,6 +1,7 @@
 package com.ecommerce.unit;
 
 import com.ecommerce.service.ProductService;
+import com.ecommerce.dto.response.PageResponse;
 import com.ecommerce.dto.request.ProductRequest;
 import com.ecommerce.dto.response.ProductResponse;
 import com.ecommerce.entity.Category;
@@ -16,6 +17,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -67,29 +72,41 @@ class ProductServiceTest {
     }
 
     @Test
-    void findAll_WithCategoryId_ShouldReturnListOfProductResponse() {
-        when(productRepository.findByCategoryId(1L)).thenReturn(List.of(product));
+    void findAll_WithCategoryId_ShouldReturnPageResponse() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Product> page = new PageImpl<>(List.of(product), pageable, 1);
+        when(productRepository.findByCategoryId(1L, pageable)).thenReturn(page);
 
-        List<ProductResponse> result = productService.findAll(1L);
+        PageResponse<ProductResponse> result = productService.findAll(1L, pageable);
 
         assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(product.getName(), result.get(0).getName());
-        verify(productRepository, times(1)).findByCategoryId(1L);
-        verify(productRepository, never()).findAll();
+        assertEquals(1, result.getTotalElements());
+        assertEquals(1, result.getTotalPages());
+        assertEquals(0, result.getPageNo());
+        assertEquals(10, result.getPageSize());
+        assertEquals(1, result.getContent().size());
+        assertEquals(product.getName(), result.getContent().get(0).getName());
+        verify(productRepository, times(1)).findByCategoryId(1L, pageable);
+        verify(productRepository, never()).findAll(any(Pageable.class));
     }
 
     @Test
-    void findAll_WithoutCategoryId_ShouldReturnListOfProductResponse() {
-        when(productRepository.findAll()).thenReturn(List.of(product));
+    void findAll_WithoutCategoryId_ShouldReturnPageResponse() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Product> page = new PageImpl<>(List.of(product), pageable, 1);
+        when(productRepository.findAll(pageable)).thenReturn(page);
 
-        List<ProductResponse> result = productService.findAll(null);
+        PageResponse<ProductResponse> result = productService.findAll(null, pageable);
 
         assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(product.getName(), result.get(0).getName());
-        verify(productRepository, times(1)).findAll();
-        verify(productRepository, never()).findByCategoryId(any());
+        assertEquals(1, result.getTotalElements());
+        assertEquals(1, result.getTotalPages());
+        assertEquals(0, result.getPageNo());
+        assertEquals(10, result.getPageSize());
+        assertEquals(1, result.getContent().size());
+        assertEquals(product.getName(), result.getContent().get(0).getName());
+        verify(productRepository, times(1)).findAll(pageable);
+        verify(productRepository, never()).findByCategoryId(any(), any());
     }
 
     @Test
