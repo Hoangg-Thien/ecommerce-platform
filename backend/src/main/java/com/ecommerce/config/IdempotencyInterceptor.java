@@ -44,29 +44,7 @@ public class IdempotencyInterceptor implements HandlerInterceptor{
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing Idempotency-Key header");
             return false; // chan lai
         }
-
-        // kiem tra key nay da duoc gui len chua
-        try {
-            if(idempotencyKeyRepository.existsById(idempotencyKey)){
-                log.warn("Idempotency-Key {} already exists. Blocking duplicate request", idempotencyKey);
-
-                response.sendError(HttpServletResponse.SC_CONFLICT, "Request is already processing or completed");
-                return false; // ton tai thi chan tao trung don
-            }
-            
-            // neu chua co thi luu vao database va danh dau 
-            IdempotencyKey keyEntity = new IdempotencyKey(idempotencyKey, LocalDateTime.now());
-            idempotencyKeyRepository.save(keyEntity);
-
-            return true; // cho phep vao controller tao don
-            
-        } catch (Exception e) {
-            // 2 truong hop gui request cung luc (race condition)
-            // database nem loi trung primary key
-
-            log.warn("Concurrent requests detected for key {}. Blocking duplicate.", idempotencyKey);
-            response.sendError(HttpServletResponse.SC_CONFLICT, "Concurrent request detected");
-            return false;
-        }
+        // chi kiem tra header, tra ve true cho di tiep vao controller
+        return true;
     }
 }

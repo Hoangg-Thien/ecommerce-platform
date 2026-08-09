@@ -5,16 +5,19 @@ import java.math.BigDecimal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ecommerce.config.IdempotencyInterceptor;
 import com.ecommerce.dto.request.CheckoutRequest;
 import com.ecommerce.dto.response.CheckoutResponse;
 import com.ecommerce.entity.Cart;
 import com.ecommerce.entity.CartItem;
+import com.ecommerce.entity.IdempotencyKey;
 import com.ecommerce.entity.Order;
 import com.ecommerce.entity.OrderItem;
 import com.ecommerce.entity.Product;
 import com.ecommerce.entity.User;
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.repository.CartRepository;
+import com.ecommerce.repository.IdempotencyKeyRepository;
 import com.ecommerce.repository.OrderRepository;
 import com.ecommerce.repository.UserRepository;
 import com.ecommerce.service.payment.PaymentStrategy;
@@ -31,10 +34,20 @@ public class CheckoutService {
     private final CartRepository cartRepository;
     private final OrderRepository orderRepository;
     private final PaymentStrategyFactory strategyFactory;
+    private final IdempotencyKeyRepository idempotencyKeyRepository;
     
     @Transactional
-    public CheckoutResponse checkout(String userEmail, CheckoutRequest request){
+    public CheckoutResponse checkout(String userEmail, CheckoutRequest request, String idempotencyKey){
         log.info("User '{}' initiated checkout with paymentMethod: {}", userEmail, request.getPaymentMethod());
+
+        try {
+            idempotencyKeyRepository.save(new IdempotencyKey(idempotencyKey, java.time.LocalDateTime.now()));
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            log.warn("Idempotency-Key {} already exists. Blocking duplicate request", idempotencyKey);
+
+            // quang loi neu trung key (2 request ban vao cung 1 luc)
+            throw new IllegalStateException("Request is already processing or completed");
+        }
 
         // tim user
         User user = userRepository.findByEmail(userEmail)
