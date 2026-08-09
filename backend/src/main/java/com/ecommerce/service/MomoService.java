@@ -11,4 +11,6 @@ public interface MomoService {
 
     // Verify chữ ký HMAC-SHA256 từ IPN callback
     boolean verifySignature(MomoIpnRequest request);
+
+    void refundPayment(Payment payment);
 }

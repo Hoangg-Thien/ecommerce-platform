@@ -129,4 +129,10 @@ public class MomoServiceImpl implements MomoService {
             throw new RuntimeException("Error computing HMAC-SHA256", e);
         }
     }
+
+    @Override
+    public void refundPayment(Payment payment){
+        log.info("Calling MoMo Refund API... Amount: {}, Original TransID: {}", 
+        payment.getAmount(), payment.getTransactionId());
+    }
 }

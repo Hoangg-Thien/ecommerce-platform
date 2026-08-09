@@ -30,6 +30,7 @@ public class MomoIpnService {
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
     private final MomoService momoService;
+    private final PaymentRefundService paymentRefundService;
 
     @Transactional
     public void handleIpn(MomoIpnRequest request){
@@ -44,12 +45,31 @@ public class MomoIpnService {
         Payment payment = paymentRepository.findByMomoOrderId(request.getOrderId())
         .orElseThrow(() -> new ResourceNotFoundException("Payment not found for MoMo orderId: " + request.getOrderId()));
 
-        // IDEMPOTENCY CHECK — tránh xử lý 2 lần
-        // MoMo có thể gọi IPN nhiều lần nếu server trả về lỗi
-        // Nếu đã xử lý rồi (không còn PENDING) → bỏ qua, vẫn trả 200 OK cho MoMo
+        // IDEMPOTENCY CHECK VÀ XỬ LÝ TRỄ (LATE IPN)
         if(payment.getPaymentStatus() != PaymentStatus.PENDING){
+
+            // 1. Trường hợp IPN về trễ, user ĐÃ THANH TOÁN THÀNH CÔNG (resultCode == 0)
+            // nhưng Order của ta đã bị timeout đánh rớt thành FAILED/CANCELLED trước đó rồi.
+            if(payment.getPaymentStatus() == PaymentStatus.FAILED && request.getResultCode() == 0){
+                log.warn("Late IPN received: Payment was successful but order {} was cancelled. Triggering refund...", request.getOrderId());
+
+                // Cần lưu transId từ request vào payment trước khi refund
+                payment.setTransactionId(String.valueOf(request.getTransId()));
+                paymentRepository.save(payment);
+                paymentRefundService.processRefund(payment.getId());
+                
+                return;
+            }
+
+            // 2. Trường hợp IPN về trễ nhiều lần và ta ĐANG/ĐÃ REFUND rồi thì bỏ qua
+            if(payment.getPaymentStatus() == PaymentStatus.REFUNDING ||  (payment.getPaymentStatus() == PaymentStatus.REFUNDED)){
+                log.info("Duplicate late IPN received. Payment {} is already refunded.", request.getOrderId());
+                return;
+            }
+
+            // 3. Các trường hợp duplicate IPN thông thường (VD: đã PAID rồi)
             log.info("IPN already processed for momoOrderId: {} (status: {})",
-                request.getOrderId(), payment.getPaymentStatus());
+            request.getOrderId(), payment.getPaymentStatus());
             return;
         }
 
@@ -67,6 +87,11 @@ public class MomoIpnService {
         paymentRepository.save(payment);
 
         // Cập nhật Order: CONFIRMED 
+        if(order.getStatus() == OrderStatus.CANCELLED){
+            log.error("Fatal: Trying to set CONFIRMED on CANCELLED order {}.", order.getId());
+            return; // cancel roi ko duoc confirmed
+        }
+
         order.setStatus(OrderStatus.CONFIRMED);
         orderRepository.save(order);
 

@@ -17,7 +17,6 @@ import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.repository.CartRepository;
 import com.ecommerce.repository.OrderRepository;
 import com.ecommerce.repository.UserRepository;
-import com.ecommerce.service.payment.MomoPaymentStrategy;
 import com.ecommerce.service.payment.PaymentStrategy;
 import com.ecommerce.service.payment.PaymentStrategyFactory;
 
@@ -28,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class CheckoutService {
-    private final MomoPaymentStrategy momoPaymentStrategy;
     private final UserRepository userRepository;
     private final CartRepository cartRepository;
     private final OrderRepository orderRepository;
