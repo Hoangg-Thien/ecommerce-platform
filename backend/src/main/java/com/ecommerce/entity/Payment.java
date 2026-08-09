@@ -37,6 +37,9 @@ public class Payment {
     @Column(nullable = false)
     private PaymentStatus paymentStatus;  
 
+    @Version
+    private Long version;
+
     @Column(nullable = false)
     private BigDecimal amount; // order.totalPrice
 

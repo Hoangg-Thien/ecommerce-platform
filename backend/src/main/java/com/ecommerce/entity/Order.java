@@ -40,6 +40,9 @@ public class Order {
     @Column(nullable = false)
     private OrderStatus status = OrderStatus.PENDING;
 
+    @Version
+    private Long version;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", nullable = false)
     private PaymentMethod paymentMethod;    // save here for quick query
