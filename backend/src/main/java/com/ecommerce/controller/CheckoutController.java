@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ecommerce.annotation.Idempotent;
 import com.ecommerce.dto.request.CheckoutRequest;
 import com.ecommerce.dto.response.CheckoutResponse;
 import com.ecommerce.service.CheckoutService;
@@ -22,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 public class CheckoutController {
     private final CheckoutService checkoutService;
 
+    @Idempotent
     @PostMapping
     public ResponseEntity<CheckoutResponse> checkout(
         @AuthenticationPrincipal UserDetails userDetails,
