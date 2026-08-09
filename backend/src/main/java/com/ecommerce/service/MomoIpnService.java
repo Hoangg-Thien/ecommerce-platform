@@ -81,12 +81,35 @@ public class MomoIpnService {
 
     private void handleSuccessfulPayment(Payment payment, Order order, MomoIpnRequest request){
         
-        // Cập nhật Payment: PAID + lưu transaction ID từ MoMo
+        // VALIDATE STOCK TRƯỚC TIÊN
+        for(OrderItem orderItem : order.getItems()){
+            Product product = orderItem.getProduct();
+            if(product.getStock() < orderItem.getQuantity()){
+                log.warn("Out of stock during IPN process for Order {}. Product: {}, Required: {}, Available: {}", 
+                order.getId(), product.getName(), orderItem.getQuantity(), product.getStock());
+
+                // Lưu transactionId từ MoMo để biết mã mà refund
+                payment.setTransactionId(String.valueOf(request.getTransId()));
+
+                // Đánh rớt đơn hàng vì không có hàng để giao
+                payment.setPaymentStatus(PaymentStatus.FAILED);
+                order.setStatus(OrderStatus.CANCELLED);
+                orderRepository.save(order);
+
+                // Kích hoạt tự động hoàn tiền lại cho khách
+                log.info("Triggering automatic refund for Order {} due to OUT OF STOCK", order.getId());
+                paymentRefundService.processRefund(payment.getId());
+
+                return;
+            }
+        }
+
+        // Cập nhật Payment thành công
         payment.setPaymentStatus(PaymentStatus.PAID);
         payment.setTransactionId(String.valueOf(request.getTransId()));
         paymentRepository.save(payment);
 
-        // Cập nhật Order: CONFIRMED 
+        // Cập nhật Order thành công
         if(order.getStatus() == OrderStatus.CANCELLED){
             log.error("Fatal: Trying to set CONFIRMED on CANCELLED order {}.", order.getId());
             return; // cancel roi ko duoc confirmed
