@@ -226,6 +226,7 @@ public class OrderConcurrencyTest {
                     startLatch.await();
 
                     MvcResult result = mockMvc.perform(post("/api/v1/checkout")
+                                    .header("Idempotency-Key", java.util.UUID.randomUUID().toString())
                                     .with(user(userEmail))
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .content(objectMapper.writeValueAsString(checkoutRequest)))

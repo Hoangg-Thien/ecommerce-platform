@@ -8,6 +8,7 @@ import com.ecommerce.dto.response.PaymentResponse;
 import com.ecommerce.enums.OrderStatus;
 import com.ecommerce.enums.PaymentMethod;
 import com.ecommerce.enums.PaymentStatus;
+import com.ecommerce.repository.IdempotencyKeyRepository;
 import com.ecommerce.service.CheckoutService;
 import com.ecommerce.service.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,6 +42,7 @@ class CheckoutControllerTest {
     @MockBean private JwtService jwtService;
     @MockBean private UserDetailsService userDetailsService;
     @MockBean private JwtAuthenticationFilter jwtAuthenticationFilter;
+    @MockBean private IdempotencyKeyRepository idempotencyKeyRepository;
 
     @Test
     @WithMockUser(username = "user@gmail.com")
@@ -66,9 +68,9 @@ class CheckoutControllerTest {
         when(checkoutService.checkout(any(), any(CheckoutRequest.class)))
                 .thenReturn(checkoutResponse);
 
-        mockMvc.perform(post("/api/v1/checkout")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(post("/api/v1/checkout").header("Idempotency-Key", "test-uuid-1234")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.orderId").value(1))
                 .andExpect(jsonPath("$.orderStatus").value("PENDING"))
@@ -92,9 +94,9 @@ class CheckoutControllerTest {
         when(checkoutService.checkout(any(), any(CheckoutRequest.class)))
                 .thenReturn(checkoutResponse);
 
-        mockMvc.perform(post("/api/v1/checkout")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(post("/api/v1/checkout").header("Idempotency-Key", "test-uuid-1234")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.orderId").value(2))
                 .andExpect(jsonPath("$.orderStatus").value("AWAITING_PAYMENT"))
@@ -107,9 +109,9 @@ class CheckoutControllerTest {
         // paymentMethod = null (không set gì cả)
         request.setPaymentMethod(null);
 
-        mockMvc.perform(post("/api/v1/checkout")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(post("/api/v1/checkout").header("Idempotency-Key", "test-uuid-1234")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.error").value("Validation Failed"));

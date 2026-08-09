@@ -9,6 +9,7 @@ import com.ecommerce.dto.response.UserResponse;
 import com.ecommerce.entity.User;
 import com.ecommerce.enums.Role;
 import com.ecommerce.exception.EmailAlreadyExistsException;
+import com.ecommerce.repository.IdempotencyKeyRepository;
 import com.ecommerce.service.JwtService;
 import com.ecommerce.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,6 +54,9 @@ class AuthControllerTest {
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @MockBean 
+    private IdempotencyKeyRepository idempotencyKeyRepository;
 
     // ==========================================
     // REGISTER TESTS

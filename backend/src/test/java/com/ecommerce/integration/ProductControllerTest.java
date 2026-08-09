@@ -4,6 +4,7 @@ import com.ecommerce.config.JwtAuthenticationFilter;
 import com.ecommerce.controller.ProductController;
 import com.ecommerce.dto.response.PageResponse;
 import com.ecommerce.dto.response.ProductResponse;
+import com.ecommerce.repository.IdempotencyKeyRepository;
 import com.ecommerce.service.JwtService;
 import com.ecommerce.service.ProductService;
 import org.junit.jupiter.api.Test;
@@ -44,6 +45,9 @@ class ProductControllerTest {
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @MockBean 
+    private IdempotencyKeyRepository idempotencyKeyRepository;
 
     @Test
     void getAllProducts_WithPaginationParams_ShouldReturn200AndPageResponse() throws Exception {

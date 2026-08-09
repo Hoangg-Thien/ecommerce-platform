@@ -8,6 +8,7 @@ import com.ecommerce.enums.PaymentMethod;
 import com.ecommerce.enums.PaymentStatus;
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.mapper.PaymentMapper;
+import com.ecommerce.repository.IdempotencyKeyRepository;
 import com.ecommerce.repository.PaymentRepository;
 import com.ecommerce.service.JwtService;
 import com.ecommerce.service.MomoIpnService;
@@ -43,6 +44,7 @@ class PaymentControllerTest {
     @MockBean private JwtService jwtService;
     @MockBean private UserDetailsService userDetailsService;
     @MockBean private JwtAuthenticationFilter jwtAuthenticationFilter;
+    @MockBean private IdempotencyKeyRepository idempotencyKeyRepository;
 
     // ===== IPN endpoint =====
 
