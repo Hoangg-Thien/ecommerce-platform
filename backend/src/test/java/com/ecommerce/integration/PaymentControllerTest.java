@@ -6,19 +6,24 @@ import com.ecommerce.dto.request.MomoIpnRequest;
 import com.ecommerce.dto.response.PaymentResponse;
 import com.ecommerce.enums.PaymentMethod;
 import com.ecommerce.enums.PaymentStatus;
-import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.mapper.PaymentMapper;
 import com.ecommerce.repository.IdempotencyKeyRepository;
 import com.ecommerce.repository.PaymentRepository;
 import com.ecommerce.service.JwtService;
 import com.ecommerce.service.MomoIpnService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -43,6 +48,15 @@ class PaymentControllerTest {
     @MockBean private PaymentMapper paymentMapper;
     @MockBean private JwtService jwtService;
     @MockBean private UserDetailsService userDetailsService;
+
+    @BeforeEach
+    void setUp() {
+        UserDetails userDetails = User.withUsername("test@example.com").password("").roles("USER").build();
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities())
+        );
+    }
+
     @MockBean private JwtAuthenticationFilter jwtAuthenticationFilter;
     @MockBean private IdempotencyKeyRepository idempotencyKeyRepository;
 
@@ -83,11 +97,18 @@ class PaymentControllerTest {
                 .transactionId("MOMO_TXN_12345")
                 .build();
 
+        com.ecommerce.entity.User user = new com.ecommerce.entity.User();
+        user.setEmail("test@example.com");
+        com.ecommerce.entity.Order order = new com.ecommerce.entity.Order();
+        order.setUser(user);
         com.ecommerce.entity.Payment payment = new com.ecommerce.entity.Payment();
+        payment.setOrder(order);
+        
         when(paymentRepository.findByOrderId(5L)).thenReturn(Optional.of(payment));
         when(paymentMapper.toPaymentResponse(payment)).thenReturn(paymentResponse);
 
-        mockMvc.perform(get("/api/v1/payments/order/5"))
+        mockMvc.perform(get("/api/v1/payments/order/5")
+                .principal(() -> "test@example.com"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.orderId").value(5))
                 .andExpect(jsonPath("$.paymentMethod").value("MOMO"))
@@ -99,7 +120,8 @@ class PaymentControllerTest {
     void getPaymentByOrderId_WhenNotExists_ShouldReturn404() throws Exception {
         when(paymentRepository.findByOrderId(999L)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/api/v1/payments/order/999"))
+        mockMvc.perform(get("/api/v1/payments/order/999")
+                .principal(() -> "test@example.com"))
                 .andExpect(status().isNotFound());
     }
 

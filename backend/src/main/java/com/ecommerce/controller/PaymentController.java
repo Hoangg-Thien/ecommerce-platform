@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -63,11 +61,16 @@ public class PaymentController {
     @GetMapping("/order/{orderId}")
 
     public ResponseEntity<PaymentResponse> getPaymentByOrderId(
-        @AuthenticationPrincipal UserDetails userDetails,
+        java.security.Principal principal,
         @PathVariable Long orderId
     ){
         Payment payment = paymentRepository.findByOrderId(orderId)
         .orElseThrow(() -> new ResourceNotFoundException("Payment", orderId));
+        
+        // Ownership check: đảm bảo user chỉ xem được payment của chính mình
+        if (principal == null || !payment.getOrder().getUser().getEmail().equals(principal.getName())) {
+            return ResponseEntity.status(403).build(); // 403 Forbidden
+        }
         
         return ResponseEntity.ok(paymentMapper.toPaymentResponse(payment));
     }
