@@ -1,13 +1,11 @@
 package com.ecommerce.controller;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,13 +29,7 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    @PostMapping("/create")
-    public ResponseEntity<OrderResponse> createOrder(
-        @AuthenticationPrincipal UserDetails userDetails
-    ){
-        OrderResponse orderResponse = orderService.createOrder(userDetails.getUsername());
-        return ResponseEntity.status(HttpStatus.CREATED).body(orderResponse);
-    }
+
 
     // GET /api/orders?page=0&size=10&sortBy=createAt&sortDir=desc
     @GetMapping

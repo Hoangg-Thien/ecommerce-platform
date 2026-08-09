@@ -156,9 +156,11 @@ public class OrderConcurrencyTest {
                     // Cả 2 thread đợi lệnh xuất phát đồng thời
                     startLatch.await();
 
-                    MvcResult result = mockMvc.perform(post("/api/v1/orders/create")
+                    MvcResult result = mockMvc.perform(post("/api/v1/checkout")
                                     .with(user(userEmail))
-                                    .contentType(MediaType.APPLICATION_JSON))
+                                    .header("Idempotency-Key", java.util.UUID.randomUUID().toString())
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content("{\"paymentMethod\": \"COD\"}"))
                             .andReturn();
 
                     responseStatuses.add(result.getResponse().getStatus());
