@@ -29,7 +29,6 @@ public class PaymentTimeoutScheduler {
 
     // Chạy mỗi 5 phút, huỷ các MoMo payment PENDING quá 15 phút
     @Scheduled(fixedRate = 300_000) // 300,000ms = 5 phút
-    @Transactional
     public void cancelExpiredMomoPayments(){
         LocalDateTime cutoff = LocalDateTime.now().minusMinutes(15);
 
