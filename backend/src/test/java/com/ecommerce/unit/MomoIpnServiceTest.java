@@ -21,6 +21,7 @@ import com.ecommerce.enums.*;
 import com.ecommerce.repository.*;
 import com.ecommerce.service.MomoIpnService;
 import com.ecommerce.service.MomoService;
+import com.ecommerce.service.PaymentRefundService;
 
 @ExtendWith(MockitoExtension.class)
 class MomoIpnServiceTest {
@@ -30,6 +31,7 @@ class MomoIpnServiceTest {
     @Mock private ProductRepository productRepository;
     @Mock private CartRepository cartRepository;
     @Mock private MomoService momoService;
+    @Mock private PaymentRefundService paymentRefundService;
 
     @InjectMocks
     private MomoIpnService momoIpnService;
@@ -263,5 +265,23 @@ class MomoIpnServiceTest {
         req.setResponseTime(1722955200000L);
         req.setSignature("any-signature");
         return req;
+    }
+
+    @Test
+    void handleIpn_PaymentFailedAndResultCode0_ShouldTriggerRefundAndNotConfirmOrder() {
+        // Arrange
+        payment.setPaymentStatus(PaymentStatus.FAILED);
+        order.setStatus(OrderStatus.CANCELLED);
+        
+        when(momoService.verifySignature(ipnSuccess)).thenReturn(true);
+        when(paymentRepository.findByMomoOrderId(MOMO_ORDER_ID)).thenReturn(Optional.of(payment));
+
+        // Act
+        momoIpnService.handleIpn(ipnSuccess);
+
+        // Assert
+        verify(paymentRefundService).processRefund(payment.getId());
+        verify(orderRepository, never()).save(any(Order.class)); // Order NOT CONFIRMED
+        assertEquals(OrderStatus.CANCELLED, order.getStatus());
     }
 }
