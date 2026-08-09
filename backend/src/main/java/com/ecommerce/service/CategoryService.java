@@ -9,6 +9,9 @@ import com.ecommerce.mapper.CategoryMapper;
 import com.ecommerce.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +25,7 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
 
+    @Cacheable(value = "categories")
     public List<CategoryResponse> findAll() {
         return categoryRepository.findAll()
                 .stream()
@@ -39,6 +43,7 @@ public class CategoryService {
     }
 
     @Transactional
+    @CacheEvict(value = "categories", allEntries = true) // xoa sach toan bo cache
     public CategoryResponse create(CategoryRequest request) {
         if (categoryRepository.existsByName(request.getName())) {
             log.warn("Category creation failed: Name '{}' already exists", request.getName());
@@ -52,7 +57,9 @@ public class CategoryService {
         return categoryMapper.toCategoryResponse(saved);
     }
 
+
     @Transactional
+    @CacheEvict(value = "categories", allEntries = true) // xoa sach toan bo cache
     public CategoryResponse update(Long id, CategoryRequest request) {
         Category category = getCategory(id);
         

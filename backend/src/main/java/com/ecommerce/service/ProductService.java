@@ -13,6 +13,9 @@ import lombok.extern.slf4j.Slf4j;
 
 
 import com.ecommerce.dto.response.PageResponse;
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -35,6 +38,7 @@ public class ProductService {
         return PageResponse.of(productPage.map(productMapper::toProductResponse));
     }
 
+    @Cacheable(value = "product", key = "#id")
     public ProductResponse findById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", id));
@@ -51,6 +55,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = "product", key = "#id")
     public ProductResponse update(Long id, ProductRequest request) {
         Product saved = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", id));
@@ -60,6 +65,7 @@ public class ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = "product", key = "#id")
     public void delete(Long id) {
         Product deleted = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", id));
