@@ -47,6 +47,8 @@ public class SecurityConfig {
                 // MoMo Return
                 .requestMatchers(HttpMethod.GET, "/api/v1/payments/momo/return").permitAll()
 
+                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+
                 // Any other request requires authentication
                 .anyRequest().authenticated()
             )
