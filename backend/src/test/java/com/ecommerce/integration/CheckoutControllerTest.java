@@ -26,7 +26,7 @@ import java.math.BigDecimal;
 
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -65,7 +65,7 @@ class CheckoutControllerTest {
                 .paymentUrl(null)
                 .build();
 
-        when(checkoutService.checkout(any(), any(CheckoutRequest.class)))
+        when(checkoutService.checkout(any(), any(CheckoutRequest.class), anyString()))
                 .thenReturn(checkoutResponse);
 
         mockMvc.perform(post("/api/v1/checkout").header("Idempotency-Key", "test-uuid-1234")
@@ -91,7 +91,7 @@ class CheckoutControllerTest {
                 .paymentUrl("https://test-payment.momo.vn/pay/abc123")
                 .build();
 
-        when(checkoutService.checkout(any(), any(CheckoutRequest.class)))
+        when(checkoutService.checkout(any(), any(CheckoutRequest.class), anyString()))
                 .thenReturn(checkoutResponse);
 
         mockMvc.perform(post("/api/v1/checkout").header("Idempotency-Key", "test-uuid-1234")

@@ -28,8 +28,14 @@ class CheckoutServiceTest {
 
     @Mock private UserRepository userRepository;
     @Mock private CartRepository cartRepository;
-    @Mock private OrderRepository orderRepository;
-    @Mock private PaymentStrategyFactory strategyFactory;
+    @Mock
+    private OrderRepository orderRepository;
+
+    @Mock
+    private IdempotencyKeyRepository idempotencyKeyRepository;
+
+    @Mock
+    private PaymentStrategyFactory strategyFactory;
     @Mock private PaymentStrategy mockStrategy;
 
     // CheckoutService có field momoPaymentStrategy (do bạn inject trực tiếp)
@@ -74,7 +80,7 @@ class CheckoutServiceTest {
         when(userRepository.findByEmail("ghost@gmail.com")).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
-                () -> checkoutService.checkout("ghost@gmail.com", codRequest));
+                () -> checkoutService.checkout("ghost@gmail.com", codRequest, "test-key"));
     }
 
     @Test
@@ -83,7 +89,7 @@ class CheckoutServiceTest {
         when(cartRepository.findByUserId(1L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
-                () -> checkoutService.checkout("user@gmail.com", codRequest));
+                () -> checkoutService.checkout("user@gmail.com", codRequest, "test-key"));
     }
 
     @Test
@@ -94,7 +100,7 @@ class CheckoutServiceTest {
         when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> checkoutService.checkout("user@gmail.com", codRequest));
+                () -> checkoutService.checkout("user@gmail.com", codRequest, "test-key"));
 
         assertTrue(ex.getMessage().contains("empty cart"));
     }
@@ -107,7 +113,7 @@ class CheckoutServiceTest {
         when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> checkoutService.checkout("user@gmail.com", codRequest));
+                () -> checkoutService.checkout("user@gmail.com", codRequest, "test-key"));
 
         assertTrue(ex.getMessage().contains("Not enough stock"));
         assertTrue(ex.getMessage().contains(product.getName()));
@@ -120,7 +126,7 @@ class CheckoutServiceTest {
         when(strategyFactory.getPaymentStrategy(PaymentMethod.COD)).thenReturn(mockStrategy);
         when(mockStrategy.processPayment(any(Order.class), any(Cart.class))).thenReturn(null);
 
-        checkoutService.checkout("user@gmail.com", codRequest);
+        checkoutService.checkout("user@gmail.com", codRequest, "test-key");
 
         verify(mockStrategy, times(1)).processPayment(any(Order.class), eq(cart));
     }

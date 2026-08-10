@@ -284,4 +284,28 @@ class MomoIpnServiceTest {
         verify(orderRepository, never()).save(any(Order.class)); // Order NOT CONFIRMED
         assertEquals(OrderStatus.CANCELLED, order.getStatus());
     }
+    @Test
+    void handleIpn_WhenStockIsZeroAndPaymentSuccessful_ShouldFailOrderAndNotDeductStock() {
+        // Arrange
+        product.setStock(0); // Setup stock=0, simulate another order took it
+        
+        when(momoService.verifySignature(ipnSuccess)).thenReturn(true);
+        when(paymentRepository.findByMomoOrderId(MOMO_ORDER_ID)).thenReturn(Optional.of(payment));
+
+        // Act
+        momoIpnService.handleIpn(ipnSuccess);
+
+        // Assert
+        assertEquals(0, product.getStock(), "Stock MUST NOT be negative!");
+        verify(productRepository, never()).save(any(Product.class)); // Không bao giờ lưu tồn kho âm
+        
+        // Đơn hàng phải bị HỦY và Thanh toán đánh dấu là LỖI
+        assertEquals(OrderStatus.CANCELLED, order.getStatus());
+        assertEquals(PaymentStatus.FAILED, payment.getPaymentStatus());
+        
+        verify(orderRepository).save(order);
+        
+        // Bắt buộc gọi Refund vì tiền đã thu bên MoMo rồi
+        verify(paymentRefundService).processRefund(payment.getId());
+    }
 }
