@@ -115,6 +115,24 @@ class PaymentControllerTest {
                 .andExpect(jsonPath("$.paymentStatus").value("PAID"))
                 .andExpect(jsonPath("$.transactionId").value("MOMO_TXN_12345"));
     }
+    @Test
+    void getPaymentByOrderId_WhenUserIsNotOwner_ShouldReturn403() throws Exception {
+        com.ecommerce.entity.User userB = new com.ecommerce.entity.User();
+        userB.setEmail("userB@example.com"); // Owner of the order is userB
+        
+        com.ecommerce.entity.Order order = new com.ecommerce.entity.Order();
+        order.setUser(userB);
+        
+        com.ecommerce.entity.Payment payment = new com.ecommerce.entity.Payment();
+        payment.setOrder(order);
+        
+        when(paymentRepository.findByOrderId(5L)).thenReturn(Optional.of(payment));
+
+        // The requester is userA (different from userB)
+        mockMvc.perform(get("/api/v1/payments/order/5")
+                .principal(() -> "userA@example.com"))
+                .andExpect(status().isForbidden());
+    }
 
     @Test
     void getPaymentByOrderId_WhenNotExists_ShouldReturn404() throws Exception {

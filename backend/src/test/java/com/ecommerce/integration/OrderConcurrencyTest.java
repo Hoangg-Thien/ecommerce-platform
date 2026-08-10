@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -260,5 +261,38 @@ public class OrderConcurrencyTest {
         Product updatedProduct = productRepository.findById(testProductId).orElseThrow();
         assertEquals(0, updatedProduct.getStock(), "Tồn kho phải là 0!");
         assertEquals(1, orderRepository.count(), "Chỉ có duy nhất 1 đơn hàng được tạo!");
+    }
+
+    @Test
+    @DisplayName("Idempotency Key Rollback Test")
+    void checkout_WhenFails_ShouldRollbackIdempotencyKey() throws Exception {
+        String idempotencyKey = java.util.UUID.randomUUID().toString();
+
+        // 1. Force a failure by setting the product stock to 0
+        Product product = productRepository.findById(testProductId).orElseThrow();
+        product.setStock(0);
+        productRepository.save(product);
+
+        // 2. User 1 calls checkout with the key -> should fail with 400 Bad Request (Insufficient stock)
+        mockMvc.perform(post("/api/v1/checkout")
+                .with(user(USER1_EMAIL))
+                .header("Idempotency-Key", idempotencyKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"paymentMethod\": \"COD\"}"))
+                .andExpect(status().isBadRequest()); 
+        
+        // 3. Fix the product stock back to 1
+        Product latestProduct = productRepository.findById(testProductId).orElseThrow();
+        latestProduct.setStock(1);
+        productRepository.save(latestProduct);
+
+        // 4. Call checkout again with the EXACT SAME KEY -> must SUCCEED (201 Created)
+        // If the key wasn't rolled back, this would fail (409 Conflict or 400 Bad Request due to Duplicate Key)
+        mockMvc.perform(post("/api/v1/checkout")
+                .with(user(USER1_EMAIL))
+                .header("Idempotency-Key", idempotencyKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"paymentMethod\": \"COD\"}"))
+                .andExpect(status().isCreated());
     }
 }
