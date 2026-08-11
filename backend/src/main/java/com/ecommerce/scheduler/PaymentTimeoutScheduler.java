@@ -1,5 +1,6 @@
 package com.ecommerce.scheduler;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,11 +23,12 @@ public class PaymentTimeoutScheduler {
 
     private final OrderRepository orderRepository;
     private final OrderCancellationService orderCancellationService;
+    private final Clock clock;
 
     // Chạy mỗi 5 phút, huỷ các MoMo payment PENDING quá 15 phút
     @Scheduled(fixedRate = 300_000) // 300,000ms = 5 phút
     public void cancelExpiredMomoPayments(){
-        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(15);
+        LocalDateTime cutoff = LocalDateTime.now(clock).minusMinutes(15);
 
         // Tìm tất cả payment PENDING được tạo trước 15 phút
         List<Order> expiredPayments = orderRepository
