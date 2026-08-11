@@ -41,7 +41,7 @@ public class CheckoutService {
         log.info("User '{}' initiated checkout with paymentMethod: {}", userEmail, request.getPaymentMethod());
 
         try {
-            idempotencyKeyRepository.save(new IdempotencyKey(idempotencyKey, java.time.LocalDateTime.now()));
+            idempotencyKeyRepository.saveAndFlush(new IdempotencyKey(idempotencyKey, java.time.LocalDateTime.now()));
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
             log.warn("Idempotency-Key {} already exists. Blocking duplicate request", idempotencyKey);
 

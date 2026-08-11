@@ -6,6 +6,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.dao.DataIntegrityViolationException;
+
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -74,6 +76,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleDuplicateResource(RuntimeException ex) {
         return buildError(HttpStatus.CONFLICT, ex.getMessage());
     }
+
+    // 409 - Conflict (Database Constraint Violation)
+    @ExceptionHandler(DataIntegrityViolationException.class)
+        public ResponseEntity<Map<String, Object>> handleDataIntergrityViolation(RuntimeException ex){
+            log.warn("Database constraint violation caught globally: {}", ex.getMessage());
+            return buildError(HttpStatus.CONFLICT, "The request was rejected due to duplicate data or a violation of system constraints");
+        }
 
     // 409 - Concurrency Conflict (conflicts arising when multiple people place orders simultaneously)
     @ExceptionHandler({org.springframework.orm.ObjectOptimisticLockingFailureException.class,
