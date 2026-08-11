@@ -295,4 +295,59 @@ public class OrderConcurrencyTest {
                 .content("{\"paymentMethod\": \"COD\"}"))
                 .andExpect(status().isCreated());
     }
+
+    @Test
+    @DisplayName("2 threads calling checkout with same Idempotency-Key -> only 1 creates order, other receives 400/409")
+    void concurrentCheckout_WithSameIdempotencyKey_ShouldProcessOneAndRejectOther() throws InterruptedException {
+        int numberOfThreads = 2;
+        ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
+        
+        CountDownLatch readyLatch = new CountDownLatch(numberOfThreads);
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch doneLatch = new CountDownLatch(numberOfThreads);
+
+        List<Integer> responseStatuses = Collections.synchronizedList(new ArrayList<>());
+        List<String> responseBodies = Collections.synchronizedList(new ArrayList<>());
+        
+        String idempotencyKey = java.util.UUID.randomUUID().toString();
+
+        for (int i = 0; i < numberOfThreads; i++) {
+            executorService.submit(() -> {
+                try {
+                    readyLatch.countDown();
+                    startLatch.await(); // Đợi cả 2 thread sẵn sàng
+
+                    MvcResult result = mockMvc.perform(post("/api/v1/checkout")
+                                    .with(user(USER1_EMAIL))
+                                    .header("Idempotency-Key", idempotencyKey) // Dùng CHUNG 1 key
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content("{\"paymentMethod\": \"COD\"}"))
+                            .andReturn();
+
+                    responseStatuses.add(result.getResponse().getStatus());
+                    responseBodies.add(result.getResponse().getContentAsString());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    doneLatch.countDown();
+                }
+            });
+        }
+
+        readyLatch.await(5, TimeUnit.SECONDS);
+        startLatch.countDown(); // Bắn cờ phát lệnh chạy đồng thời
+
+        boolean completed = doneLatch.await(10, TimeUnit.SECONDS);
+        assertTrue(completed, "Concurrency test timed out");
+        executorService.shutdown();
+
+        assertEquals(2, responseStatuses.size(), "Phải có đúng 2 response");
+
+        long successCount = responseStatuses.stream().filter(s -> s == 201).count();
+        long failureCount = responseStatuses.stream().filter(s -> s == 409 || s == 400 || s == 500).count();
+
+        assertEquals(1, successCount, "Chỉ được duy nhất 1 request thành công (HTTP 201)");
+        assertEquals(1, failureCount, "Request thứ 2 phải bị chặn và văng lỗi rõ ràng (không crash)");
+        assertEquals(1, orderRepository.count(), "Chỉ có duy nhất 1 đơn hàng được tạo trong DB!");
+    }
 }
