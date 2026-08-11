@@ -25,7 +25,10 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
         cache: maven
+        cache-dependency-path: 'backend/pom.xml'
     - name: Run tests
+      working-directory: ./backend
       run: mvn -B test
     - name: Build
+      working-directory: ./backend
       run: mvn -B clean package -DskipTests
