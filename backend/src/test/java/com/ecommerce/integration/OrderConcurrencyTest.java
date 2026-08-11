@@ -344,10 +344,18 @@ public class OrderConcurrencyTest {
         assertEquals(2, responseStatuses.size(), "Phải có đúng 2 response");
 
         long successCount = responseStatuses.stream().filter(s -> s == 201).count();
-        long failureCount = responseStatuses.stream().filter(s -> s == 409 || s == 400 || s == 500).count();
+        long failureCount = responseStatuses.stream().filter(s -> s == 409 || s == 400).count();
+        
+        // Tuyệt đối không được phép có mã 500 (Internal Server Error)
+        assertFalse(responseStatuses.contains(500), "Hệ thống không được phép bị crash (HTTP 500)");
 
         assertEquals(1, successCount, "Chỉ được duy nhất 1 request thành công (HTTP 201)");
-        assertEquals(1, failureCount, "Request thứ 2 phải bị chặn và văng lỗi rõ ràng (không crash)");
+        assertEquals(1, failureCount, "Request thứ 2 phải bị chặn (HTTP 400 hoặc 409)");
+        
+        // Đảm bảo phải có chứa mã lỗi mong đợi (400 hoặc 409)
+        assertTrue(responseStatuses.contains(400) || responseStatuses.contains(409), 
+                "Phải có 1 request bị từ chối với mã 400 hoặc 409");
+                
         assertEquals(1, orderRepository.count(), "Chỉ có duy nhất 1 đơn hàng được tạo trong DB!");
     }
 }
