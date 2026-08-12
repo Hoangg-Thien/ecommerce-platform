@@ -1,11 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
-import ProductList from './pages/ProductList';
-import ProductDetail from './pages/ProductDetail';
-import Cart from './pages/Cart';
-import Checkout from './pages/Checkout';
-import PaymentResult from './pages/PaymentResult';
+import ProductList from './pages/product-list/ProductList';
+import ProductDetail from './pages/product-detail/ProductDetail';
+import Cart from './pages/cart/Cart';
+import Checkout from './pages/checkout/Checkout';
+import PaymentResult from './pages/payment-result/PaymentResult';
 
 function App() {
   return (

@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import MainLayout from '../components/layout/MainLayout';
-import CheckoutForm from '../components/checkout/CheckoutForm';
-import CheckoutSummary from '../components/checkout/CheckoutSummary';
+import MainLayout from '../../components/layout/MainLayout';
+import CheckoutForm from '../../components/checkout/CheckoutForm';
+import CheckoutSummary from '../../components/checkout/CheckoutSummary';
 import './Checkout.css';
 
 // Dữ liệu giỏ hàng giả lập cho trang thanh toán (có thể lấy từ context/state management sau này)

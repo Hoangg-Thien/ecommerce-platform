@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingBag } from 'lucide-react';
-import MainLayout from '../components/layout/MainLayout';
-import CartItem from '../components/cart/CartItem';
-import OrderSummary from '../components/cart/OrderSummary';
-import Button from '../components/ui/Button';
+import MainLayout from '../../components/layout/MainLayout';
+import CartItem from '../../components/cart/CartItem';
+import OrderSummary from '../../components/cart/OrderSummary';
+import Button from '../../components/ui/Button';
 import './Cart.css';
 
 // Dữ liệu giỏ hàng giả lập

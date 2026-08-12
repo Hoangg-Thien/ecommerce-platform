@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, X, Clock, RotateCcw } from 'lucide-react';
-import MainLayout from '../components/layout/MainLayout';
-import Button from '../components/ui/Button';
-import momoLogo from '../assets/images/MOMO-Logo-App.png';
+import MainLayout from '../../components/layout/MainLayout';
+import Button from '../../components/ui/Button';
+import momoLogo from '../../assets/images/MOMO-Logo-App.png';
 import './PaymentResult.css';
 
 export default function PaymentResult() {

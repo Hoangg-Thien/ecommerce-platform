@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import MainLayout from '../components/layout/MainLayout';
-import ProductCard from '../components/product/ProductCard';
-import CategoryChips from '../components/product/CategoryChips';
+import MainLayout from '../../components/layout/MainLayout';
+import ProductCard from '../../components/product/ProductCard';
+import CategoryChips from '../../components/product/CategoryChips';
 import './ProductList.css';
 
 // Dữ liệu giả lập cho sản phẩm

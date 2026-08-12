@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Minus, Plus, ShoppingBag, Clock } from 'lucide-react';
-import MainLayout from '../components/layout/MainLayout';
-import SizeSelector from '../components/product/SizeSelector';
-import Accordion from '../components/ui/Accordion';
-import Button from '../components/ui/Button';
-import ProductCard from '../components/product/ProductCard';
+import MainLayout from '../../components/layout/MainLayout';
+import SizeSelector from '../../components/product/SizeSelector';
+import Accordion from '../../components/ui/Accordion';
+import Button from '../../components/ui/Button';
+import ProductCard from '../../components/product/ProductCard';
 import './ProductDetail.css';
 
 // Dữ liệu giả lập
