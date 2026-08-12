@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ecommerce.dto.response.PageResponse;
+
+import com.ecommerce.exception.UnauthorizedAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -91,5 +93,18 @@ public class OrderService {
         Order updatedOrder = orderRepository.save(order);
         log.info("Order status updated successfully: orderId={}, status={}", updatedOrder.getId(), updatedOrder.getStatus());
         return orderMapper.tOrderResponse(updatedOrder);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderById(Long orderId, String username){
+
+        Order order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+
+        if(!order.getUser().getEmail().equals(username)){
+            throw new UnauthorizedAccessException("Bạn không có quyền truy cập vào đơn hàng này!");
+        }
+
+        return orderMapper.tOrderResponse(order);
     }
 }

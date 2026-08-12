@@ -66,4 +66,13 @@ public class OrderController {
         OrderResponse responses = orderService.updateOrderStatus(id, request.getOrderStatus());
         return ResponseEntity.ok(responses);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<OrderResponse> getOrderById(
+        @AuthenticationPrincipal UserDetails userDetails,
+        @PathVariable Long id
+    ){
+        OrderResponse order = orderService.getOrderById(id, userDetails.getUsername());
+        return ResponseEntity.ok(order);
+    }
 }
