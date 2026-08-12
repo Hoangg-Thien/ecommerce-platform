@@ -1,0 +1,12 @@
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background-color: var(--color-surface-bright);
+}
+
+.social-icon {
+  width: 20px;
+  height: 20px;
+}
