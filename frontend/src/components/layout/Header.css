@@ -2,19 +2,21 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background-color: rgba(249, 249, 248, 0.85); /* surface color with opacity */
+  background-color: rgba(249, 249, 248, 0.85);
+  /* surface color with opacity */
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--color-border-soft);
 }
 
+/* Header: total height 72px = padding 24px × 2 + logo 24px */
 .header-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: var(--space-container-max);
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 16px var(--space-gutter-mobile);
+  padding: 24px var(--space-gutter-mobile);
 }
 
 .header-left {
@@ -39,6 +41,7 @@
   text-decoration: none;
 }
 
+/* Nav menu: gap 32px */
 .desktop-nav {
   display: flex;
   gap: 32px;
@@ -54,15 +57,17 @@
   transition: color 0.2s;
 }
 
-.nav-link:hover, .nav-link.active {
+.nav-link:hover,
+.nav-link.active {
   color: var(--color-primary);
   text-decoration: none;
 }
 
+/* Right icons: gap 24px */
 .header-right {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
 }
 
 .search-box {
@@ -92,9 +97,10 @@
   color: var(--color-slate-dim);
 }
 
+/* Icon size 20px */
 .icon-btn {
   color: var(--color-ink-deep);
-  padding: 8px;
+  padding: 6px;
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
@@ -131,7 +137,7 @@
 
 @media (min-width: 768px) {
   .header-container {
-    padding: 16px var(--space-gutter-desktop);
+    padding: 24px var(--space-gutter-desktop);
   }
 }
 
@@ -145,11 +151,12 @@
   .desktop-nav {
     display: none;
   }
-  
+
   .search-box {
-    display: none; /* Hide on mobile for now, maybe add search icon */
+    display: none;
+    /* Hide on mobile for now, maybe add search icon */
   }
-  
+
   .login-link {
     display: none;
   }
@@ -157,7 +164,7 @@
   .mobile-menu-btn {
     display: flex;
   }
-  
+
   .header-container {
     padding: 12px var(--space-gutter-mobile);
   }

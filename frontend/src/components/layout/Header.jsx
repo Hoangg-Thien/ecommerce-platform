@@ -26,12 +26,12 @@ export default function Header() {
             <Search size={18} className="search-icon" />
             <input type="text" placeholder="Tìm kiếm..." className="search-input" />
           </div>
-          
+
           <Link to="/cart" className="icon-btn cart-btn" aria-label="Giỏ hàng">
             <ShoppingCart size={22} />
             <span className="cart-badge">3</span>
           </Link>
-          
+
           <Link to="/login" className="login-link">Đăng nhập</Link>
         </div>
       </div>

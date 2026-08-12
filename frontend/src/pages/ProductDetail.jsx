@@ -60,7 +60,7 @@ export default function ProductDetail() {
   const [isAdding, setIsAdding] = useState(false);
 
   // Thực tế sẽ dùng ID để fetch data, ở đây dùng mock cố định
-  const product = MOCK_PRODUCT; 
+  const product = MOCK_PRODUCT;
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -100,9 +100,9 @@ export default function ProductDetail() {
             <span className="product-category">{product.category}</span>
             <h1 className="product-title">{product.name}</h1>
             <div className="product-price">{formatPrice(product.price)}</div>
-            
+
             <p className="product-desc">{product.description}</p>
-            
+
             {product.stockCount > 0 && product.stockCount <= 5 && (
               <div className="stock-warning">
                 <Clock size={16} />
@@ -111,7 +111,7 @@ export default function ProductDetail() {
             )}
 
             <div className="product-options">
-              <SizeSelector 
+              <SizeSelector
                 sizes={product.sizes}
                 selectedSize={selectedSize}
                 onSelectSize={setSelectedSize}
@@ -120,24 +120,24 @@ export default function ProductDetail() {
 
             <div className="product-actions">
               <div className="qty-selector-lg">
-                <button 
-                  className="qty-btn-lg" 
+                <button
+                  className="qty-btn-lg"
                   onClick={() => handleUpdateQty(-1)}
                   disabled={quantity <= 1}
                 >
                   <Minus size={20} />
                 </button>
                 <span className="qty-val-lg">{quantity}</span>
-                <button 
-                  className="qty-btn-lg" 
+                <button
+                  className="qty-btn-lg"
                   onClick={() => handleUpdateQty(1)}
                 >
                   <Plus size={20} />
                 </button>
               </div>
 
-              <Button 
-                variant="primary" 
+              <Button
+                variant="primary"
                 className="add-to-cart-btn-lg"
                 onClick={handleAddToCart}
                 isLoading={isAdding}
@@ -148,7 +148,7 @@ export default function ProductDetail() {
             </div>
 
             <div className="product-accordions">
-              <Accordion title="Chi tiết & Chất liệu" defaultOpen={true}>
+              <Accordion title="Chi tiết & Chất liệu">
                 {product.details}
               </Accordion>
               <Accordion title="Vận chuyển & Đổi trả">
@@ -157,7 +157,7 @@ export default function ProductDetail() {
             </div>
           </div>
         </div>
-        
+
         {/* Khối Sản phẩm gợi ý */}
         <div className="recommended-section">
           <h3 className="recommended-title">Có thể bạn sẽ thích</h3>

@@ -1,22 +1,24 @@
+/* Card: bo 12px, nền trắng, shadow nhẹ */
 .product-card {
   display: flex;
   flex-direction: column;
-  background-color: var(--color-surface-container);
-  border-radius: var(--radius-default);
+  background-color: #FFFFFF;
+  border-radius: 12px;
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   height: 100%;
 }
 
 .product-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-soft-bloom);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
 }
 
 .product-image-container {
   position: relative;
   width: 100%;
-  padding-top: 100%; /* 1:1 aspect ratio */
+  padding-top: 100%; /* 1:1 */
   background-color: var(--color-surface-container-high);
   display: block;
 }
@@ -58,8 +60,9 @@
   color: var(--color-on-surface-variant);
 }
 
+/* Info area: padding 12px | name → 4px → price */
 .product-info {
-  padding: 16px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -68,7 +71,7 @@
 .product-name-link {
   text-decoration: none;
   color: inherit;
-  margin-bottom: 8px;
+  margin-bottom: 4px; /* name → 4px → price */
 }
 
 .product-name {

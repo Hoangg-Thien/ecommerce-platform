@@ -19,14 +19,11 @@ export default function Accordion({ title, children, defaultOpen = false }) {
         />
       </button>
       
-      <div 
-        className="accordion-content-wrapper" 
-        style={{ 
-          display: isOpen ? 'grid' : 'none'
-        }}
-      >
+      <div className={`accordion-content-wrapper ${isOpen ? 'accordion-content-wrapper--open' : ''}`}>
         <div className="accordion-content">
-          {children}
+          <div className="accordion-content-inner">
+            {children}
+          </div>
         </div>
       </div>
     </div>

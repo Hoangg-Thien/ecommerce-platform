@@ -44,17 +44,22 @@
   --color-paper-bright: #FFFFFF;
   --color-slate-dim: #8A8A8A;
   --color-border-soft: #E2E2E2;
+  
+  /* Stock / Alert colors */
+  --color-stock-warning-bg: #FFE9E9;
+  --color-stock-warning-text: #E53935;
 
   /* Typography */
   --font-display: 'Plus Jakarta Sans', sans-serif;
   --font-body: 'Inter', sans-serif;
   
   --text-display-hero: 48px;
-  --text-display-hero-mobile: 36px;
-  --text-headline-lg: 32px;
+  --text-display-hero-mobile: 32px;
+  --text-headline-lg: 20px;
   --text-headline-md: 24px;
   --text-body-lg: 18px;
   --text-body-md: 15px;
+  --text-body-sm: 13px;
   --text-label-bold: 14px;
   --text-label-caps: 12px;
   --text-micro: 11px;
@@ -69,14 +74,16 @@
 
   /* Spacing */
   --space-base: 8px;
-  --space-gutter-mobile: 20px;
+  --space-gutter-mobile: 24px;
   --space-gutter-desktop: 40px;
   --space-container-max: 1280px;
   --space-stack-sm: 12px;
   --space-stack-md: 24px;
   --space-stack-lg: 48px;
+  --space-stack-xl: 64px;
 
   /* Shadows */
   --shadow-soft-bloom: 0 8px 30px rgba(0, 0, 0, 0.04);
   --shadow-active-bloom: 0 12px 40px rgba(0, 82, 255, 0.15);
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
 }

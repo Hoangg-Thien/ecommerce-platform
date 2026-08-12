@@ -8,20 +8,23 @@
   flex: 1;
 }
 
+/* Footer: padding-top 56px, padding-bottom 24px, nền trắng */
 .main-footer {
   border-top: 1px solid var(--color-border-soft);
-  padding: var(--space-stack-md) 0;
-  background-color: var(--color-surface);
-  margin-top: var(--space-stack-lg);
+  padding-top: 56px;
+  padding-bottom: 24px;
+  background-color: #FFFFFF;
+  margin-top: 0;
 }
 
+/* Footer container: font-size 14px */
 .footer-container {
-  max-width: var(--space-container-max);
+  max-width: 1280px;
   margin: 0 auto;
   padding: 0 var(--space-gutter-mobile);
   text-align: center;
   color: var(--color-slate-dim);
-  font-size: var(--text-body-md);
+  font-size: 14px;
 }
 
 @media (min-width: 768px) {
