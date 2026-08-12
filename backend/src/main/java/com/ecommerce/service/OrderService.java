@@ -14,6 +14,8 @@ import com.ecommerce.entity.OrderItem;
 import com.ecommerce.entity.Product;
 import com.ecommerce.entity.User;
 import com.ecommerce.enums.OrderStatus;
+import com.ecommerce.enums.PaymentMethod;
+import com.ecommerce.enums.PaymentStatus;
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.mapper.OrderMapper;
 import com.ecommerce.repository.CartRepository;
@@ -34,8 +36,6 @@ public class OrderService {
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
     private final OrderMapper orderMapper;
-
-
 
     @Transactional(readOnly = true)
     public PageResponse<OrderResponse> getUserOrders(String userEmail, Pageable pageable) {
@@ -79,6 +79,15 @@ public class OrderService {
         }
         // cap nhat va luu
         order.setStatus(newStatus);
+        
+        // tu dong cap nhat payment status khi giao hang thanh cong
+        if(newStatus == OrderStatus.DONE){
+            if(order.getPayment() != null && order.getPaymentMethod() == PaymentMethod.COD){
+                order.getPayment().setPaymentStatus(PaymentStatus.PAID);
+                log.info("Automatically marked COD Payment as PAID for orderId={}", orderId);
+            }
+        }
+
         Order updatedOrder = orderRepository.save(order);
         log.info("Order status updated successfully: orderId={}, status={}", updatedOrder.getId(), updatedOrder.getStatus());
         return orderMapper.tOrderResponse(updatedOrder);
