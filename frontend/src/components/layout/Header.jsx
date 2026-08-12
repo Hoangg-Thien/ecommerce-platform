@@ -1,4 +1,4 @@
-import { ShoppingCart, Search, Menu } from 'lucide-react';
+import { ShoppingCart, Search, Menu, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import './Header.css';
 
@@ -32,7 +32,15 @@ export default function Header() {
             <span className="cart-badge">3</span>
           </Link>
 
-          <Link to="/login" className="login-link">Đăng nhập</Link>
+          <div className="account-menu-wrapper">
+            <div className="icon-btn account-btn" aria-label="Tài khoản" style={{ cursor: 'default' }}>
+              <User size={22} />
+            </div>
+            <div className="account-dropdown">
+              <Link to="/login" className="account-dropdown-item">Đăng nhập</Link>
+              <Link to="/register" className="account-dropdown-item">Đăng ký</Link>
+            </div>
+          </div>
         </div>
       </div>
     </header>

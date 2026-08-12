@@ -130,9 +130,60 @@
   border: 2px solid var(--color-surface);
 }
 
-.login-link {
-  font-weight: 600;
-  font-size: var(--text-label-bold);
+.account-menu-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.account-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 12px;
+  background-color: #FFFFFF;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  min-width: 150px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  border: 1px solid var(--color-border-soft);
+  z-index: 101;
+}
+
+.account-dropdown::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 0;
+  right: 0;
+  height: 12px;
+}
+
+.account-menu-wrapper:hover .account-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.account-dropdown-item {
+  padding: 10px 16px;
+  color: var(--color-ink-deep);
+  font-size: var(--text-body-md);
+  text-decoration: none;
+  transition: background-color 0.2s;
+  font-weight: 500;
+}
+
+.account-dropdown-item:hover {
+  background-color: var(--color-surface-container-lowest);
+  text-decoration: none;
+  color: var(--color-primary);
 }
 
 @media (min-width: 768px) {
@@ -157,7 +208,7 @@
     /* Hide on mobile for now, maybe add search icon */
   }
 
-  .login-link {
+  .account-menu-wrapper {
     display: none;
   }
 
