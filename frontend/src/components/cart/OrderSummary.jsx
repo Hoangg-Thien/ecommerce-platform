@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import Button from '../ui/Button';
 import './OrderSummary.css';
 
@@ -36,15 +37,17 @@ export default function OrderSummary({ subtotal, shippingFee = 30000, onCheckout
         </div>
       </div>
       
-      <Button 
-        variant="primary" 
-        onClick={onCheckout}
-        disabled={subtotal === 0 || isCheckingOut}
-        isLoading={isCheckingOut}
-        className="checkout-btn"
-      >
-        Tiến hành thanh toán
-      </Button>
+      <Link to="/checkout" className="checkout-btn-wrapper">
+        <Button 
+          variant="primary" 
+          disabled={subtotal === 0 || isCheckingOut}
+          isLoading={isCheckingOut}
+          className="checkout-btn"
+          style={{ width: '100%' }}
+        >
+          Tiến hành thanh toán
+        </Button>
+      </Link>
       
       <p className="summary-note">
         Thuế và mã giảm giá có thể được áp dụng ở bước tiếp theo.

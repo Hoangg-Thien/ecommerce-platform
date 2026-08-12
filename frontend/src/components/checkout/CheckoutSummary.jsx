@@ -1,0 +1,73 @@
+import { Lock } from 'lucide-react';
+import Button from '../ui/Button';
+import './CheckoutSummary.css';
+
+export default function CheckoutSummary({ cartItems, subtotal, shippingFee, onCompleteOrder, isProcessing }) {
+  const total = subtotal + shippingFee;
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(price);
+  };
+
+  return (
+    <div className="checkout-summary">
+      <h2 className="summary-title">Tóm tắt đơn hàng</h2>
+      
+      <div className="checkout-item-list">
+        {cartItems.map((item) => (
+          <div key={item.id} className="checkout-mini-item">
+            <div className="mini-item-image-wrapper">
+              <img src={item.image} alt={item.name} className="mini-item-image" />
+            </div>
+            <div className="mini-item-details">
+              <h4 className="mini-item-name">{item.name}</h4>
+              <span className="mini-item-qty">SL: {item.quantity}</span>
+            </div>
+            <div className="mini-item-price">{formatPrice(item.price * item.quantity)}</div>
+          </div>
+        ))}
+      </div>
+      
+      <div className="summary-divider"></div>
+      
+      <div className="summary-content">
+        <div className="summary-row">
+          <span className="summary-label">Tạm tính</span>
+          <span className="summary-value">{formatPrice(subtotal)}</span>
+        </div>
+        
+        <div className="summary-row">
+          <span className="summary-label">Phí vận chuyển</span>
+          <span className="summary-value">
+            {shippingFee === 0 ? 'Miễn phí' : formatPrice(shippingFee)}
+          </span>
+        </div>
+        
+        <div className="summary-divider"></div>
+        
+        <div className="summary-row summary-total">
+          <span className="summary-label">Tổng cộng</span>
+          <span className="summary-value">{formatPrice(total)}</span>
+        </div>
+      </div>
+      
+      <Button 
+        variant="primary" 
+        onClick={onCompleteOrder}
+        disabled={isProcessing}
+        isLoading={isProcessing}
+        className="complete-order-btn"
+      >
+        <span>Hoàn tất đặt hàng</span>
+        <Lock size={16} style={{ marginLeft: '8px' }} />
+      </Button>
+      
+      <p className="secure-payment-note">
+        Thanh toán được bảo mật và mã hóa.
+      </p>
+    </div>
+  );
+}
