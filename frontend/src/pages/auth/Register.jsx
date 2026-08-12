@@ -20,22 +20,22 @@ export default function Register() {
   const validate = () => {
     const newErrors = {};
     if (!formData.fullName) {
-      newErrors.fullName = 'Full name is required';
+      newErrors.fullName = 'Vui lòng nhập họ và tên';
     }
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'Vui lòng nhập Email';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = 'Email không hợp lệ';
     }
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = 'Vui lòng nhập mật khẩu';
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
     }
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
+      newErrors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = 'Mật khẩu không khớp';
     }
     
     setErrors(newErrors);
@@ -58,29 +58,29 @@ export default function Register() {
       // Simulate API call
       setTimeout(() => {
         setIsLoading(false);
-        alert('Registration simulated successful');
+        alert('Đăng ký thành công (Giả lập)');
       }, 1500);
     }
   };
 
   const handleGoogleLogin = () => {
-    alert('Google signup simulation');
+    alert('Giả lập đăng ký bằng Google');
   };
 
   return (
     <AuthLayout>
       <div className="auth-header">
-        <h1 className="auth-title">Create an Account</h1>
-        <p className="auth-subtitle">Join us and discover Kinetic energy.</p>
+        <h1 className="auth-title">Tạo tài khoản</h1>
+        <p className="auth-subtitle">Tham gia cùng chúng tôi và khám phá Năng lượng Kinetic.</p>
       </div>
 
       <form className="auth-form" onSubmit={handleSubmit}>
         <div className="auth-form-fields">
           <Input
-            label="Full Name"
+            label="Họ và Tên"
             name="fullName"
             type="text"
-            placeholder="John Doe"
+            placeholder="Nguyễn Văn A"
             value={formData.fullName}
             onChange={handleChange}
             error={errors.fullName}
@@ -88,10 +88,10 @@ export default function Register() {
           />
 
           <Input
-            label="Email Address"
+            label="Email"
             name="email"
             type="email"
-            placeholder="you@example.com"
+            placeholder="ban@example.com"
             value={formData.email}
             onChange={handleChange}
             error={errors.email}
@@ -99,9 +99,9 @@ export default function Register() {
           />
           
           <PasswordInput
-            label="Password"
+            label="Mật khẩu"
             name="password"
-            placeholder="Create a password"
+            placeholder="Tạo mật khẩu"
             value={formData.password}
             onChange={handleChange}
             error={errors.password}
@@ -109,9 +109,9 @@ export default function Register() {
           />
 
           <PasswordInput
-            label="Confirm Password"
+            label="Xác nhận mật khẩu"
             name="confirmPassword"
-            placeholder="Confirm your password"
+            placeholder="Nhập lại mật khẩu"
             value={formData.confirmPassword}
             onChange={handleChange}
             error={errors.confirmPassword}
@@ -120,16 +120,16 @@ export default function Register() {
         </div>
 
         <Button type="submit" variant="primary" isLoading={isLoading}>
-          Create Account
+          Tạo tài khoản
         </Button>
       </form>
 
-      <div className="auth-divider">Or</div>
+      <div className="auth-divider">Hoặc</div>
 
       <SocialButton provider="google" onClick={handleGoogleLogin} disabled={isLoading} />
 
       <div className="auth-redirect">
-        Already have an account? <Link to="/login" className="auth-link">Sign in</Link>
+        Đã có tài khoản? <Link to="/login" className="auth-link">Đăng nhập</Link>
       </div>
     </AuthLayout>
   );

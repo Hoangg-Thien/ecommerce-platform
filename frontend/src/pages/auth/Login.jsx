@@ -18,12 +18,12 @@ export default function Login() {
   const validate = () => {
     const newErrors = {};
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'Vui lòng nhập Email';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = 'Email không hợp lệ';
     }
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = 'Vui lòng nhập mật khẩu';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -45,20 +45,20 @@ export default function Login() {
       // Simulate API call
       setTimeout(() => {
         setIsLoading(false);
-        alert('Login simulated successful');
+        alert('Đăng nhập thành công (Giả lập)');
       }, 1500);
     }
   };
 
   const handleGoogleLogin = () => {
-    alert('Google login simulation');
+    alert('Giả lập đăng nhập bằng Google');
   };
 
   return (
     <AuthLayout>
       <div className="auth-header">
-        <h1 className="auth-title">Welcome Back</h1>
-        <p className="auth-subtitle">Sign in to your account to continue.</p>
+        <h1 className="auth-title">Chào mừng trở lại</h1>
+        <p className="auth-subtitle">Đăng nhập vào tài khoản của bạn để tiếp tục.</p>
       </div>
 
       <form className="auth-form" onSubmit={handleSubmit}>
@@ -67,7 +67,7 @@ export default function Login() {
             label="Email"
             name="email"
             type="email"
-            placeholder="you@example.com"
+            placeholder="ban@example.com"
             value={formData.email}
             onChange={handleChange}
             error={errors.email}
@@ -75,9 +75,9 @@ export default function Login() {
           />
           
           <PasswordInput
-            label="Password"
+            label="Mật khẩu"
             name="password"
-            placeholder="Enter your password"
+            placeholder="Nhập mật khẩu của bạn"
             value={formData.password}
             onChange={handleChange}
             error={errors.password}
@@ -87,22 +87,22 @@ export default function Login() {
 
         <div className="auth-form-footer">
           <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'var(--text-body-md)' }}>
-            <input type="checkbox" disabled={isLoading} /> Remember me
+            <input type="checkbox" disabled={isLoading} /> Ghi nhớ đăng nhập
           </label>
-          <Link to="#" className="auth-link">Forgot Password?</Link>
+          <Link to="#" className="auth-link">Quên mật khẩu?</Link>
         </div>
 
         <Button type="submit" variant="primary" isLoading={isLoading}>
-          Sign In
+          Đăng nhập
         </Button>
       </form>
 
-      <div className="auth-divider">Or</div>
+      <div className="auth-divider">Hoặc</div>
 
       <SocialButton provider="google" onClick={handleGoogleLogin} disabled={isLoading} />
 
       <div className="auth-redirect">
-        Don't have an account? <Link to="/register" className="auth-link">Sign up</Link>
+        Chưa có tài khoản? <Link to="/register" className="auth-link">Đăng ký ngay</Link>
       </div>
     </AuthLayout>
   );
