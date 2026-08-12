@@ -14,7 +14,7 @@ export default function SocialButton({ provider = 'google', onClick, disabled })
         alt="Google Logo" 
         className="social-icon" 
       />
-      Continue with Google
+      Tiếp tục với Google
     </button>
   );
 }
