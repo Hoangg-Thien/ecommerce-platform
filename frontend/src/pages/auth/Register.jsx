@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../../components/auth/AuthLayout';
 import Input from '../../components/ui/Input';
 import PasswordInput from '../../components/auth/PasswordInput';
 import Button from '../../components/ui/Button';
 import SocialButton from '../../components/auth/SocialButton';
 import '../../components/auth/Auth.css';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -16,6 +17,8 @@ export default function Register() {
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const { register } = useAuth();
+  const navigate = useNavigate();
 
   const validate = () => {
     const newErrors = {};
@@ -29,8 +32,8 @@ export default function Register() {
     }
     if (!formData.password) {
       newErrors.password = 'Vui lòng nhập mật khẩu';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 8 ký tự';
     }
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
@@ -49,17 +52,27 @@ export default function Register() {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
     }
+    if (errors.general) {
+      setErrors((prev) => ({ ...prev, general: '' }));
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validate()) {
       setIsLoading(true);
-      // Simulate API call
-      setTimeout(() => {
+      try {
+        await register({ email: formData.email, password: formData.password });
+        alert('Đăng ký thành công!');
+        navigate('/');
+      } catch (err) {
+        setErrors((prev) => ({ 
+          ...prev, 
+          general: err.response?.data?.message || err.response?.data?.error || 'Đăng ký thất bại. Vui lòng thử lại!' 
+        }));
+      } finally {
         setIsLoading(false);
-        alert('Đăng ký thành công (Giả lập)');
-      }, 1500);
+      }
     }
   };
 
@@ -75,6 +88,11 @@ export default function Register() {
       </div>
 
       <form className="auth-form" onSubmit={handleSubmit}>
+        {errors.general && (
+          <div style={{ color: 'red', marginBottom: '16px', fontSize: '14px', textAlign: 'center' }}>
+            {errors.general}
+          </div>
+        )}
         <div className="auth-form-fields">
           <Input
             label="Họ và Tên"

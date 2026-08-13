@@ -82,7 +82,7 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.accessToken").value("dummy-jwt-token"))
-                .andExpect(jsonPath("$.refreshToken").value("dummy-refresh-token"))
+                .andExpect(cookie().value("refreshToken", "dummy-refresh-token"))
                 .andExpect(jsonPath("$.email").value("user@example.com"));
     }
 
@@ -176,7 +176,7 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("dummy-jwt-token"))
-                .andExpect(jsonPath("$.refreshToken").value("dummy-refresh-token"))
+                .andExpect(cookie().value("refreshToken", "dummy-refresh-token"))
                 .andExpect(jsonPath("$.email").value("user@example.com"));
     }
 
@@ -231,8 +231,6 @@ class AuthControllerTest {
 
     @Test
     void refreshToken_WithValidToken_ShouldReturn200AndNewAccessToken() throws Exception {
-        RefreshTokenRequest request = new RefreshTokenRequest("valid-refresh-token");
-
         User user = new User();
         user.setId(1L);
         user.setEmail("user@example.com");
@@ -248,18 +246,14 @@ class AuthControllerTest {
         when(userService.findByEmail("user@example.com")).thenReturn(user);
 
         mockMvc.perform(post("/api/v1/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .cookie(new jakarta.servlet.http.Cookie("refreshToken", "valid-refresh-token")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("new-access-token"))
-                .andExpect(jsonPath("$.refreshToken").value("valid-refresh-token"))
                 .andExpect(jsonPath("$.email").value("user@example.com"));
     }
 
     @Test
     void refreshToken_WhenTokenExpiredOrInvalid_ShouldReturn401Unauthorized() throws Exception {
-        RefreshTokenRequest request = new RefreshTokenRequest("expired-refresh-token");
-
         org.springframework.security.core.userdetails.User springUser =
                 new org.springframework.security.core.userdetails.User("user@example.com", "pass", java.util.List.of());
 
@@ -268,8 +262,7 @@ class AuthControllerTest {
         when(jwtService.isTokenValid("expired-refresh-token", springUser)).thenReturn(false);
 
         mockMvc.perform(post("/api/v1/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .cookie(new jakarta.servlet.http.Cookie("refreshToken", "expired-refresh-token")))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.message").value("Refresh token is expired or invalid"));
@@ -277,27 +270,18 @@ class AuthControllerTest {
 
     @Test
     void refreshToken_WhenTokenMalformed_ShouldReturn401Unauthorized() throws Exception {
-        RefreshTokenRequest request = new RefreshTokenRequest("malformed-token");
-
         when(jwtService.extractUsername("malformed-token")).thenThrow(new RuntimeException("Malformed token"));
 
         mockMvc.perform(post("/api/v1/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .cookie(new jakarta.servlet.http.Cookie("refreshToken", "malformed-token")))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.message").value("Invalid refresh token format or signature"));
     }
 
     @Test
-    void refreshToken_WhenTokenBlank_ShouldReturn400BadRequest() throws Exception {
-        RefreshTokenRequest request = new RefreshTokenRequest("");
-
-        mockMvc.perform(post("/api/v1/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.error").value("Validation Failed"));
+    void refreshToken_WhenTokenMissing_ShouldReturn401Unauthorized() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/refresh"))
+                .andExpect(status().isUnauthorized());
     }
 }

@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import AuthLayout from '../../components/auth/AuthLayout';
 import Input from '../../components/ui/Input';
 import PasswordInput from '../../components/auth/PasswordInput';
 import Button from '../../components/ui/Button';
 import SocialButton from '../../components/auth/SocialButton';
 import '../../components/auth/Auth.css';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -14,6 +15,9 @@ export default function Login() {
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const validate = () => {
     const newErrors = {};
@@ -36,17 +40,29 @@ export default function Login() {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
     }
+    if (errors.general) {
+      setErrors((prev) => ({ ...prev, general: '' }));
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validate()) {
       setIsLoading(true);
-      // Simulate API call
-      setTimeout(() => {
+      try {
+        await login({ email: formData.email, password: formData.password });
+        
+        // redirect user to the page they were trying to visit, or home
+        const from = location.state?.from?.pathname || '/';
+        navigate(from, { replace: true });
+      } catch (err) {
+        setErrors((prev) => ({ 
+          ...prev, 
+          general: err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại!' 
+        }));
+      } finally {
         setIsLoading(false);
-        alert('Đăng nhập thành công (Giả lập)');
-      }, 1500);
+      }
     }
   };
 
@@ -62,6 +78,11 @@ export default function Login() {
       </div>
 
       <form className="auth-form" onSubmit={handleSubmit}>
+        {errors.general && (
+          <div style={{ color: 'red', marginBottom: '16px', fontSize: '14px', textAlign: 'center' }}>
+            {errors.general}
+          </div>
+        )}
         <div className="auth-form-fields">
           <Input
             label="Email"
