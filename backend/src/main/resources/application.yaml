@@ -22,7 +22,7 @@ application:
     jwt:
       secret-key: ${JWT_SECRET_KEY}
       expiration: 900000 # 15 minutes (access token)
-      refesh-token:
+      refresh-token:
         expiration: 604800000 # 7 days
 
 momo:

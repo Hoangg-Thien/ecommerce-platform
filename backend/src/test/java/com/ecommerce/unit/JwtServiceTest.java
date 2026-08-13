@@ -27,7 +27,7 @@ public class JwtServiceTest {
 
         ReflectionTestUtils.setField(jwtService, "secretKey", secretKey);
         ReflectionTestUtils.setField(jwtService, "jwtExpiration", 1000 * 60 * 60); // 1 hour
-        ReflectionTestUtils.setField(jwtService, "refeshExpiration", 1000 * 60 * 60 * 24 * 7); // 7 days
+        ReflectionTestUtils.setField(jwtService, "refreshExpiration", 1000 * 60 * 60 * 24 * 7); // 7 days
 
         userDetails = new User(
             "user@gmail.com",
@@ -44,8 +44,8 @@ public class JwtServiceTest {
     }
 
     @Test
-    void generateRefeshToken_ShouldReturnValidToken() {
-        String token = jwtService.generateRefeshToken(userDetails);
+    void generateRefreshToken_ShouldReturnValidToken() {
+        String token = jwtService.generateRefreshToken(userDetails);
         String username = jwtService.extractUsername(token);
         assertEquals("user@gmail.com", username);
         assertTrue(jwtService.isTokenValid(token, userDetails));

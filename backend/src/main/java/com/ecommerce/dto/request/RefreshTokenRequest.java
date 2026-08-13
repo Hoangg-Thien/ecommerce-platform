@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class RefeshTokenRequest {
+public class RefreshTokenRequest {
     
     @NotBlank(message = "Request token cannot be blank")
-    private String refeshToken;
+    private String refreshToken;
 }

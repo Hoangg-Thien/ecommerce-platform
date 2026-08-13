@@ -1,7 +1,7 @@
 package com.ecommerce.controller;
 
 import com.ecommerce.dto.request.LoginRequest;
-import com.ecommerce.dto.request.RefeshTokenRequest;
+import com.ecommerce.dto.request.RefreshTokenRequest;
 import com.ecommerce.dto.request.RegisterRequest;
 import com.ecommerce.dto.response.AuthResponse;
 import com.ecommerce.dto.response.UserResponse;
@@ -42,12 +42,12 @@ public class AuthController {
         UserDetails userDetails = userDetailsService.loadUserByUsername(userRespone.getEmail());
 
         String accessToken = jwtService.generateToken(userDetails);
-        String refreshToken = jwtService.generateRefeshToken(userDetails);
+        String refreshToken = jwtService.generateRefreshToken(userDetails);
         
         // Return AuthRespone
         AuthResponse authRespone = AuthResponse.builder()
         .accessToken(accessToken)
-        .refeshToken(refreshToken)
+        .refreshToken(refreshToken)
         .id(userRespone.getId())
         .email(userRespone.getEmail())
         .role(userRespone.getRole())
@@ -70,7 +70,7 @@ public class AuthController {
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
 
         String accessToken = jwtService.generateToken(userDetails);
-        String refreshToken = jwtService.generateRefeshToken(userDetails);
+        String refreshToken = jwtService.generateRefreshToken(userDetails);
         
         // Fetch user from DB to get ID and roles
         com.ecommerce.entity.User user = userService.findByEmail(request.getEmail());
@@ -78,7 +78,7 @@ public class AuthController {
         // Return AuthRespone
         AuthResponse authRespone = AuthResponse.builder()
         .accessToken(accessToken)
-        .refeshToken(refreshToken)
+        .refreshToken(refreshToken)
         .id(user.getId())
         .email(user.getEmail())
         .role(user.getRole())
@@ -88,8 +88,8 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refeshToken(@Valid @RequestBody RefeshTokenRequest request){
-        String refreshToken = request.getRefeshToken();
+    public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request){
+        String refreshToken = request.getRefreshToken();
 
         // Extract email from refresh token
         String userEmail;
@@ -115,7 +115,7 @@ public class AuthController {
 
         AuthResponse authResponse = AuthResponse.builder()
         .accessToken(newAccessToken)
-        .refeshToken(refreshToken)
+        .refreshToken(refreshToken)
         .id(user.getId())
         .email(user.getEmail())
         .role(user.getRole())
