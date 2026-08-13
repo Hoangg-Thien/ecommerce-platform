@@ -1,66 +1,44 @@
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
 import { Minus, Plus, ShoppingBag, Clock } from 'lucide-react';
 import MainLayout from '../../components/layout/MainLayout';
 import SizeSelector from '../../components/product/SizeSelector';
 import Accordion from '../../components/ui/Accordion';
 import Button from '../../components/ui/Button';
-import ProductCard from '../../components/product/ProductCard';
+import productApi from '../../api/productApi';
 import './ProductDetail.css';
-
-// Dữ liệu giả lập
-const MOCK_PRODUCT = {
-  id: '1',
-  name: 'TRAIL RUNNER LOW',
-  category: 'GIÀY DÉP • CHẠY ĐỊA HÌNH',
-  price: 2150000,
-  image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1000&auto=format&fit=crop',
-  description: 'Đế lug bám địa hình, phần upper dệt liền chống thấm nhẹ. Form chuẩn cho cả đi phố lẫn off-road.',
-  stockCount: 3,
-  sizes: ['40', '41', '42', '43', '44'],
-  details: 'Thiết kế với lớp lưới thoáng khí, lót trong êm ái và đệm xốp Eva đàn hồi cao giúp tối ưu hóa từng bước chạy trên mọi địa hình hiểm trở.',
-  shipping: 'Miễn phí giao hàng tiêu chuẩn cho mọi đơn hàng từ 1.000.000đ. Đổi trả dễ dàng trong vòng 30 ngày.'
-};
-
-const RECOMMENDED_PRODUCTS = [
-  {
-    id: 11,
-    name: 'CITY RUNNER PRO',
-    price: 2400000,
-    image: 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?q=80&w=600&auto=format&fit=crop',
-    badge: null
-  },
-  {
-    id: 12,
-    name: 'TREK HIKER MID',
-    price: 2850000,
-    image: 'https://images.unsplash.com/photo-1520639888713-7851133b1ed0?q=80&w=600&auto=format&fit=crop',
-    badge: { type: 'new', text: 'Mới' }
-  },
-  {
-    id: 13,
-    name: 'EVERYDAY COURT',
-    price: 1950000,
-    image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=600&auto=format&fit=crop',
-    badge: null
-  },
-  {
-    id: 14,
-    name: 'TRAIL SPEEDSTER',
-    price: 2250000,
-    image: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?q=80&w=600&auto=format&fit=crop',
-    badge: { type: 'stock', text: 'Sắp hết' }
-  }
-];
 
 export default function ProductDetail() {
   const { id } = useParams();
-  const [selectedSize, setSelectedSize] = useState('41');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  const { addToCart } = useCart();
+  
+  const [product, setProduct] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedSize, setSelectedSize] = useState('41'); // Có thể lấy size mặc định từ product nếu có
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
 
-  // Thực tế sẽ dùng ID để fetch data, ở đây dùng mock cố định
-  const product = MOCK_PRODUCT;
+  useEffect(() => {
+    const fetchDetail = async () => {
+      try {
+        const data = await productApi.getProductById(id);
+        setProduct(data);
+      } catch (error) {
+        console.error('Lỗi khi tải chi tiết', error);
+        alert('Sản phẩm không tồn tại!');
+        navigate('/'); 
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchDetail();
+  }, [id, navigate]);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -69,12 +47,23 @@ export default function ProductDetail() {
     }).format(price);
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
+    // Check login
+    if (!user) {
+      alert('Vui lòng đăng nhập để thêm vào giỏ hàng!');
+      navigate('/login', { state: { from: location } });
+      return;
+    }
+
     setIsAdding(true);
-    setTimeout(() => {
+    try {
+      await addToCart(product.id, quantity);
+      alert('Đã thêm vào giỏ hàng!');
+    } catch (err) {
+      alert('Có lỗi xảy ra, thử lại sau!');
+    } finally {
       setIsAdding(false);
-      alert(`Đã thêm ${quantity} sản phẩm (Size: ${selectedSize}) vào giỏ hàng!`);
-    }, 1000);
+    }
   };
 
   const handleUpdateQty = (delta) => {
@@ -84,6 +73,16 @@ export default function ProductDetail() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div style={{ textAlign: 'center', padding: '100px' }}>Đang tải thông tin...</div>
+      </MainLayout>
+    );
+  }
+
+  if (!product) return null;
+
   return (
     <MainLayout>
       <div className="product-detail-page">
@@ -91,28 +90,28 @@ export default function ProductDetail() {
         <div className="product-main-container">
           <div className="product-image-col">
             <div className="product-image-main-wrapper">
-              <img src={product.image} alt={product.name} className="product-main-image" />
+              <img src={product.imageUrl || product.image} alt={product.name} className="product-main-image" />
             </div>
-            {/* Đã bỏ phần ảnh thu nhỏ theo yêu cầu */}
           </div>
 
           <div className="product-info-col">
-            <span className="product-category">{product.category}</span>
+            <span className="product-category">Thời Trang</span>
             <h1 className="product-title">{product.name}</h1>
             <div className="product-price">{formatPrice(product.price)}</div>
 
             <p className="product-desc">{product.description}</p>
 
-            {product.stockCount > 0 && product.stockCount <= 5 && (
+            {product.stockQuantity > 0 && product.stockQuantity <= 5 && (
               <div className="stock-warning">
                 <Clock size={16} />
-                Chỉ còn {product.stockCount} sản phẩm
+                Chỉ còn {product.stockQuantity} sản phẩm
               </div>
             )}
 
+            {/* Giả định sản phẩm có size, nếu không có thì ẩn đi */}
             <div className="product-options">
               <SizeSelector
-                sizes={product.sizes}
+                sizes={['40', '41', '42', '43', '44']}
                 selectedSize={selectedSize}
                 onSelectSize={setSelectedSize}
               />
@@ -149,22 +148,12 @@ export default function ProductDetail() {
 
             <div className="product-accordions">
               <Accordion title="Chi tiết & Chất liệu">
-                {product.details}
+                {product.details || 'Không có chi tiết'}
               </Accordion>
               <Accordion title="Vận chuyển & Đổi trả">
-                {product.shipping}
+                Miễn phí giao hàng tiêu chuẩn cho mọi đơn hàng từ 1.000.000đ. Đổi trả dễ dàng trong vòng 30 ngày.
               </Accordion>
             </div>
-          </div>
-        </div>
-
-        {/* Khối Sản phẩm gợi ý */}
-        <div className="recommended-section">
-          <h3 className="recommended-title">Có thể bạn sẽ thích</h3>
-          <div className="recommended-grid">
-            {RECOMMENDED_PRODUCTS.map(prod => (
-              <ProductCard key={prod.id} product={prod} />
-            ))}
           </div>
         </div>
       </div>

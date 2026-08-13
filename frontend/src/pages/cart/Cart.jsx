@@ -1,100 +1,89 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ShoppingBag } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
-import CartItem from '../../components/cart/CartItem';
-import OrderSummary from '../../components/cart/OrderSummary';
 import Button from '../../components/ui/Button';
+import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 import './Cart.css';
 
-// Dữ liệu giỏ hàng giả lập
-const INITIAL_CART = [
-  {
-    id: 1,
-    name: 'Áo Khoác Nam Thể Thao Đa Năng',
-    price: 450000,
-    image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=600&auto=format&fit=crop',
-    quantity: 1,
-    variant: 'Size L / Đen'
-  },
-  {
-    id: 2,
-    name: 'Giày Chạy Bộ Nam Siêu Nhẹ',
-    price: 1200000,
-    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600&auto=format&fit=crop',
-    quantity: 2,
-    variant: 'Size 42 / Xanh Neon'
-  }
-];
-
 export default function Cart() {
-  const [cartItems, setCartItems] = useState(INITIAL_CART);
-  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const { user } = useAuth();
+  const { cart, removeCartItem, isLoading } = useCart();
+  const navigate = useNavigate();
 
-  const handleUpdateQuantity = (id, newQuantity) => {
-    if (newQuantity < 1) return;
-    setCartItems(prev => prev.map(item => 
-      item.id === id ? { ...item, quantity: newQuantity } : item
-    ));
-  };
+  // Redirect nếu vào cart mà chưa đăng nhập
+  if (!user) {
+    return (
+      <MainLayout>
+        <div className="container" style={{ padding: '0 20px', maxWidth: '1200px', margin: '0 auto' }}>
+          <div className="adidas-cart-header">
+            <h1 className="adidas-cart-title">GIỎ HÀNG CỦA BẠN <span className="adidas-cart-count">(0 các sản phẩm)</span></h1>
+          </div>
+          
+          <div className="adidas-empty-msg">
+            Giỏ hàng của bạn trống
+          </div>
 
-  const handleRemoveItem = (id) => {
-    setCartItems(prev => prev.filter(item => item.id !== id));
-  };
+          <button className="adidas-btn-box" onClick={() => navigate('/')}>
+            <span>Bắt đầu</span>
+            <span className="arrow-icon">→</span>
+          </button>
 
-  const handleCheckout = () => {
-    setIsCheckingOut(true);
-    setTimeout(() => {
-      setIsCheckingOut(false);
-      alert('Chuyển hướng đến trang thanh toán...');
-    }, 1500);
-  };
+          <p className="adidas-login-text">
+            Không thấy sản phẩm của bạn? Đăng nhập để xem giỏ hàng.
+          </p>
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+          <button className="adidas-btn-black" onClick={() => navigate('/login')}>
+            <span>Đăng nhập</span>
+            <span className="arrow-icon">→</span>
+          </button>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
       <div className="cart-page">
-        <div className="cart-container">
-          <div className="cart-header">
-            <h1 className="cart-title">Giỏ hàng của bạn</h1>
-            <span className="cart-count">({cartItems.length} sản phẩm)</span>
-          </div>
-
-          {cartItems.length > 0 ? (
-            <div className="cart-layout">
-              <div className="cart-items-section">
-                <div className="cart-items-list">
-                  {cartItems.map(item => (
-                    <CartItem 
-                      key={item.id} 
-                      item={item} 
-                      onUpdateQuantity={handleUpdateQuantity}
-                      onRemove={handleRemoveItem}
-                    />
-                  ))}
-                </div>
-              </div>
-              
-              <div className="cart-summary-section">
-                <OrderSummary 
-                  subtotal={subtotal} 
-                  shippingFee={30000}
-                  onCheckout={handleCheckout}
-                  isCheckingOut={isCheckingOut}
-                />
-              </div>
+        <div className="container">
+          <h1 className="cart-title">Giỏ hàng của bạn</h1>
+          
+          {isLoading ? (
+            <div>Đang tải giỏ hàng...</div>
+          ) : !cart || !cart.items || cart.items.length === 0 ? (
+            <div className="empty-cart">
+              <p>Giỏ hàng của bạn đang trống.</p>
+              <Button onClick={() => navigate('/')}>Tiếp tục mua sắm</Button>
             </div>
           ) : (
-            <div className="cart-empty-state">
-              <div className="empty-icon-wrapper">
-                <ShoppingBag size={48} className="empty-icon" />
+            <div className="cart-content">
+              {/* Danh sách CartItem */}
+              <div className="cart-items">
+                {cart.items.map(item => (
+                  <div key={item.id} className="cart-item">
+                    <img src={item.productImageUrl} alt={item.productName} width={80} />
+                    <div className="item-details">
+                      <h3>{item.productName}</h3>
+                      <p>Đơn giá: {item.price}đ</p>
+                      <p>Số lượng: {item.quantity}</p>
+                    </div>
+                    <Button variant="outline" onClick={() => removeCartItem(item.id)}>
+                      Xóa
+                    </Button>
+                  </div>
+                ))}
               </div>
-              <h2 className="empty-title">Giỏ hàng trống</h2>
-              <p className="empty-subtitle">Có vẻ như bạn chưa thêm sản phẩm nào vào giỏ hàng.</p>
-              <Link to="/">
-                <Button variant="primary">Tiếp tục mua sắm</Button>
-              </Link>
+
+              {/* CartSummary */}
+              <div className="cart-summary">
+                <h3>Tóm tắt đơn hàng</h3>
+                <div className="summary-row">
+                  <span>Tổng cộng:</span>
+                  <span className="total-price">{cart.totalPrice}đ</span>
+                </div>
+                <Button variant="primary" onClick={() => navigate('/checkout')}>
+                  Tiến hành thanh toán
+                </Button>
+              </div>
             </div>
           )}
         </div>
