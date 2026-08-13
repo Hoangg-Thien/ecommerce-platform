@@ -1,8 +1,17 @@
 import { ShoppingCart, Search, Menu, User } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './Header.css';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Header() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   return (
     <header className="site-header">
       <div className="header-container">
@@ -37,8 +46,25 @@ export default function Header() {
               <User size={22} />
             </div>
             <div className="account-dropdown">
-              <Link to="/login" className="account-dropdown-item">Đăng nhập</Link>
-              <Link to="/register" className="account-dropdown-item">Đăng ký</Link>
+              {user ? (
+                <>
+                  <div className="account-dropdown-header" style={{ padding: '6px 16px', borderBottom: '1px solid #eee', fontSize: '13px', color: '#666', marginBottom: '4px' }}>
+                    Xin chào,<br/><strong style={{color: '#000', fontSize: '14px', display: 'block', marginTop: '2px', wordBreak: 'break-all'}}>{user.email}</strong>
+                  </div>
+                  <Link to="/orders" className="account-dropdown-item">Đơn hàng của tôi</Link>
+                  {user.role === 'ADMIN' && (
+                    <Link to="/admin" className="account-dropdown-item">Quản trị viên</Link>
+                  )}
+                  <div onClick={handleLogout} className="account-dropdown-item" style={{ cursor: 'pointer', color: '#e74c3c' }}>
+                    Đăng xuất
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" className="account-dropdown-item">Đăng nhập</Link>
+                  <Link to="/register" className="account-dropdown-item">Đăng ký</Link>
+                </>
+              )}
             </div>
           </div>
         </div>
