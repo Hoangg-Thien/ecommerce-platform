@@ -35,12 +35,12 @@ export default function CheckoutSummary({ cartItems, subtotal, shippingFee, onCo
       
       <div className="summary-content">
         <div className="summary-row">
-          <span className="summary-label">Tạm tính</span>
+          <span className="summary-label">Tạm tính: </span>
           <span className="summary-value">{formatPrice(subtotal)}</span>
         </div>
         
         <div className="summary-row">
-          <span className="summary-label">Phí vận chuyển</span>
+          <span className="summary-label">Phí vận chuyển: </span>
           <span className="summary-value">
             {shippingFee === 0 ? 'Miễn phí' : formatPrice(shippingFee)}
           </span>
@@ -49,7 +49,7 @@ export default function CheckoutSummary({ cartItems, subtotal, shippingFee, onCo
         <div className="summary-divider"></div>
         
         <div className="summary-row summary-total">
-          <span className="summary-label">Tổng cộng</span>
+          <span className="summary-label">Tổng cộng: </span>
           <span className="summary-value">{formatPrice(total)}</span>
         </div>
       </div>

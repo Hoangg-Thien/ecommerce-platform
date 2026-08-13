@@ -1,152 +1,70 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Check, X, Clock, RotateCcw } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
+import paymentApi from '../../api/paymentApi';
 import Button from '../../components/ui/Button';
-import momoLogo from '../../assets/images/MOMO-Logo-App.png';
-import './PaymentResult.css';
 
 export default function PaymentResult() {
-  // Demo state for the UI preview (Success by default)
-  const [status, setStatus] = useState('success'); // success, failure, loading, refunding, refunded
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  
+  const orderId = searchParams.get('orderId');
+  const [status, setStatus] = useState('PENDING'); // PENDING, SUCCESS, FAILED
+  const [isLoading, setIsLoading] = useState(true);
 
-  const renderStatusIcon = () => {
-    switch (status) {
-      case 'success':
-        return (
-          <div className="status-icon-wrapper success">
-            <div className="status-icon-inner">
-              <Check size={20} strokeWidth={3} />
-            </div>
-          </div>
-        );
-      case 'failure':
-        return (
-          <div className="status-icon-wrapper failure">
-            <div className="status-icon-inner">
-              <X size={20} strokeWidth={3} />
-            </div>
-          </div>
-        );
-      case 'loading':
-      case 'refunding':
-        return (
-          <div className="status-icon-wrapper loading">
-            <div className="status-icon-inner">
-              <Clock size={20} strokeWidth={3} />
-            </div>
-          </div>
-        );
-      case 'refunded':
-        return (
-          <div className="status-icon-wrapper refunded">
-            <div className="status-icon-inner">
-              <RotateCcw size={20} strokeWidth={3} />
-            </div>
-          </div>
-        );
-      default:
-        return null;
+  useEffect(() => {
+    if (!orderId) {
+      navigate('/');
+      return;
     }
-  };
 
-  const getTitle = () => {
-    switch (status) {
-      case 'success': return 'Thanh toán thành công';
-      case 'failure': return 'Thanh toán thất bại';
-      case 'loading': return 'Đang xử lý thanh toán';
-      case 'refunding': return 'Đang xử lý hoàn tiền';
-      case 'refunded': return 'Đã hoàn tiền';
-      default: return '';
-    }
-  };
+    const checkPaymentStatus = async () => {
+      try {
+        const response = await paymentApi.getPaymentStatus(orderId);
+        
+        if (response.status === 'COMPLETED') {
+          setStatus('SUCCESS');
+        } else if (response.status === 'FAILED') {
+          setStatus('FAILED');
+        } else {
+          // Nếu vẫn PENDING (do IPN của MoMo chưa gọi kịp), chờ 2 giây rồi check lại (Polling)
+          setTimeout(checkPaymentStatus, 2000);
+          return;
+        }
+      } catch (error) {
+        console.error('Không tìm thấy giao dịch', error);
+        setStatus('FAILED');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const getAmountColor = () => {
-    if (status === 'failure') return '#E53935';
-    if (status === 'refunded') return '#0ea84e';
-    return '#0A52FF';
-  };
+    checkPaymentStatus();
+  }, [orderId, navigate]);
 
   return (
     <MainLayout>
-      <div className="payment-result-page">
-        <div className="payment-result-card">
-          {/* Logo & Status (Stacked & Overlapped) */}
-          <div className="payment-hero-icon">
-            <img src={momoLogo} alt="MoMo" className="provider-logo" />
-            <div className="status-badge">
-              {renderStatusIcon()}
-            </div>
+      <div className="container" style={{ textAlign: 'center', padding: '100px 20px' }}>
+        {isLoading || status === 'PENDING' ? (
+          <div>
+            <h2>Đang kiểm tra kết quả giao dịch...</h2>
+            <p>Vui lòng không đóng trình duyệt!</p>
           </div>
-
-          {/* Title & Amount */}
-          <h1 className="payment-title">{getTitle()}</h1>
-          <div className="payment-amount" style={{ color: getAmountColor() }}>
-            2.150.000đ
+        ) : status === 'SUCCESS' ? (
+          <div style={{ color: 'green' }}>
+            <h1 style={{ fontSize: '48px', marginBottom: '20px' }}>✅</h1>
+            <h2>Thanh toán Thành Công!</h2>
+            <p>Đơn hàng #{orderId} của bạn đã được ghi nhận.</p>
+            <Button onClick={() => navigate('/')} style={{ marginTop: '20px' }}>Về trang chủ</Button>
           </div>
-
-          {/* Details Box */}
-          <div className="payment-details-box">
-            <div className="payment-detail-row">
-              <span className="detail-label">Mã giao dịch MoMo</span>
-              <span className="detail-value">MM192837465</span>
-            </div>
-            <div className="payment-detail-divider"></div>
-            <div className="payment-detail-row">
-              <span className="detail-label">Mã đơn hàng</span>
-              <span className="detail-value">#128</span>
-            </div>
+        ) : (
+          <div style={{ color: 'red' }}>
+            <h1 style={{ fontSize: '48px', marginBottom: '20px' }}>❌</h1>
+            <h2>Thanh toán Thất Bại hoặc Hủy</h2>
+            <p>Vui lòng thử đặt hàng lại!</p>
+            <Button onClick={() => navigate('/cart')} style={{ marginTop: '20px' }}>Quay lại Giỏ hàng</Button>
           </div>
-
-          {/* Action Button */}
-          <div className="payment-action">
-            {status === 'failure' ? (
-              <Button variant="primary" className="payment-btn" onClick={() => window.history.back()}>
-                Thử lại
-              </Button>
-            ) : (
-              <Link to="/" style={{ width: '100%', textDecoration: 'none' }}>
-                <Button variant="primary" className="payment-btn">
-                  Xem đơn hàng của tôi
-                </Button>
-              </Link>
-            )}
-          </div>
-        </div>
-
-        {/* Development Only: State Toggles (like in Figma) */}
-        <div className="dev-state-toggles">
-          <button 
-            className={`dev-toggle default ${status === 'loading' ? 'active' : ''}`}
-            onClick={() => setStatus('loading')}
-          >
-            Loading
-          </button>
-          <button 
-            className={`dev-toggle success ${status === 'success' ? 'active' : ''}`}
-            onClick={() => setStatus('success')}
-          >
-            Success
-          </button>
-          <button 
-            className={`dev-toggle failure ${status === 'failure' ? 'active' : ''}`}
-            onClick={() => setStatus('failure')}
-          >
-            Failure
-          </button>
-          <button 
-            className={`dev-toggle refunding ${status === 'refunding' ? 'active' : ''}`}
-            onClick={() => setStatus('refunding')}
-          >
-            Refunding
-          </button>
-          <button 
-            className={`dev-toggle refunded ${status === 'refunded' ? 'active' : ''}`}
-            onClick={() => setStatus('refunded')}
-          >
-            Refunded
-          </button>
-        </div>
+        )}
       </div>
     </MainLayout>
   );

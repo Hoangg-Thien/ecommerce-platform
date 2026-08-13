@@ -1,28 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
 import CheckoutForm from '../../components/checkout/CheckoutForm';
 import CheckoutSummary from '../../components/checkout/CheckoutSummary';
+import { useCart } from '../../context/CartContext';
+import checkoutApi from '../../api/checkoutApi';
+import { generateIdempotencyKey } from '../../utils/generateIdempotencyKey';
 import './Checkout.css';
 
-// Dữ liệu giỏ hàng giả lập cho trang thanh toán (có thể lấy từ context/state management sau này)
-const MOCK_CHECKOUT_ITEMS = [
-  {
-    id: 1,
-    name: 'Áo Khoác Nam Thể Thao Đa Năng',
-    price: 450000,
-    image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=600&auto=format&fit=crop',
-    quantity: 1
-  },
-  {
-    id: 2,
-    name: 'Giày Chạy Bộ Nam Siêu Nhẹ',
-    price: 1200000,
-    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600&auto=format&fit=crop',
-    quantity: 2
-  }
-];
-
 export default function Checkout() {
+  const navigate = useNavigate();
+  const { cart, isLoading: isCartLoading } = useCart();
+  
   const [formData, setFormData] = useState({
     email: '',
     firstName: '',
@@ -34,25 +23,64 @@ export default function Checkout() {
   });
   
   const [shippingMethod, setShippingMethod] = useState('standard');
-  const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [paymentMethod, setPaymentMethod] = useState('COD');
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Sinh Idempotency Key 1 lần duy nhất khi load trang Checkout (chống double click)
+  const [idempotencyKey] = useState(() => generateIdempotencyKey());
+
+  // Bắt buộc phải có giỏ hàng mới cho vào trang này
+  useEffect(() => {
+    if (!isCartLoading && (!cart || !cart.items || cart.items.length === 0)) {
+      alert("Giỏ hàng của bạn đang trống!");
+      navigate('/cart');
+    }
+  }, [cart, isCartLoading, navigate]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleCompleteOrder = () => {
+  const handlePlaceOrder = async () => {
     setIsProcessing(true);
-    // Giả lập gọi API đặt hàng
-    setTimeout(() => {
+    try {
+      const payload = {
+        paymentMethod: paymentMethod === 'cod' ? 'COD' : (paymentMethod === 'momo' ? 'MOMO' : paymentMethod)
+      };
+
+      const response = await checkoutApi.checkout(payload, idempotencyKey);
+      
+      // Nếu là COD -> Chuyển thẳng tới trang thành công
+      if (payload.paymentMethod === 'COD') {
+        alert('Đặt hàng thành công!');
+        navigate(`/payment-result?orderId=${response.orderId}`);
+      } 
+      // Nếu là MoMo -> Backend sẽ trả về payUrl -> Redirect tới MoMo
+      else if (payload.paymentMethod === 'MOMO' && response.payUrl) {
+        window.location.href = response.payUrl;
+      }
+    } catch (error) {
+      console.error('Lỗi khi đặt hàng', error);
+      alert(error.response?.data?.message || 'Có lỗi xảy ra, thử lại sau!');
+    } finally {
       setIsProcessing(false);
-      alert('Đặt hàng thành công!');
-    }, 2000);
+    }
   };
 
-  const subtotal = MOCK_CHECKOUT_ITEMS.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  if (!cart) return null;
+
+  const subtotal = cart.totalPrice || 0;
   const shippingFee = shippingMethod === 'express' ? 30000 : 0;
+  
+  // Format items for CheckoutSummary
+  const cartItemsFormatted = cart.items.map(item => ({
+    id: item.id,
+    name: item.productName,
+    price: item.productPrice,
+    image: item.productImageUrl,
+    quantity: item.quantity
+  }));
 
   return (
     <MainLayout>
@@ -77,10 +105,10 @@ export default function Checkout() {
             
             <div className="checkout-summary-side">
               <CheckoutSummary 
-                cartItems={MOCK_CHECKOUT_ITEMS}
+                cartItems={cartItemsFormatted}
                 subtotal={subtotal}
                 shippingFee={shippingFee}
-                onCompleteOrder={handleCompleteOrder}
+                onCompleteOrder={handlePlaceOrder}
                 isProcessing={isProcessing}
               />
             </div>
