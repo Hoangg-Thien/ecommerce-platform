@@ -3,7 +3,7 @@ import axiosClient from './axiosClient';
 const orderApi = {
 
     // retrieve a paginated list of orders
-    getUserOrder: (page = 0, size = 10) => {
+    getUserOrders: (page = 0, size = 10) => {
         return axiosClient.get(`/orders`, {params: {page,size}});
     },
 

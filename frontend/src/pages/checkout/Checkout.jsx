@@ -46,6 +46,9 @@ export default function Checkout() {
     setIsProcessing(true);
     try {
       const payload = {
+        ...formData,
+        shippingMethod: shippingMethod,
+        shippingFee: shippingMethod === 'express' ? 30000 : 0,
         paymentMethod: paymentMethod === 'cod' ? 'COD' : (paymentMethod === 'momo' ? 'MOMO' : paymentMethod)
       };
 

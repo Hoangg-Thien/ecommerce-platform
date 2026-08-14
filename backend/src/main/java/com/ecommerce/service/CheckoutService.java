@@ -67,6 +67,16 @@ public class CheckoutService {
         Order order = new Order();
         order.setUser(user);
         order.setPaymentMethod(request.getPaymentMethod());
+        
+        // map thong tin giao hang
+        String fullName = request.getLastName() + " " + request.getFirstName();
+        order.setCustomerName(fullName);
+        order.setCustomerPhone(request.getPhone());
+        order.setShippingAddress(request.getAddress());
+        order.setShippingCity(request.getCity());
+        order.setShippingWard(request.getWard());
+        order.setShippingMethod(request.getShippingMethod());
+        order.setShippingFee(request.getShippingFee());
 
         BigDecimal totalPrice = BigDecimal.ZERO;
 
@@ -90,6 +100,10 @@ public class CheckoutService {
 
             BigDecimal subTotal = product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()));
             totalPrice = totalPrice.add(subTotal);
+        }
+
+        if (request.getShippingFee() != null) {
+            totalPrice = totalPrice.add(request.getShippingFee());
         }
 
         order.setTotalPrice(totalPrice);
