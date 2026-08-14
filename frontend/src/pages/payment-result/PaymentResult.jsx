@@ -21,10 +21,11 @@ export default function PaymentResult() {
     const checkPaymentStatus = async () => {
       try {
         const response = await paymentApi.getPaymentStatus(orderId);
+        const payment = response;
         
-        if (response.status === 'COMPLETED') {
+        if (payment.paymentStatus === 'PAID' || payment.paymentMethod === 'COD') {
           setStatus('SUCCESS');
-        } else if (response.status === 'FAILED') {
+        } else if (payment.paymentStatus === 'FAILED' || payment.paymentStatus === 'CANCELLED') {
           setStatus('FAILED');
         } else {
           // Nếu vẫn PENDING (do IPN của MoMo chưa gọi kịp), chờ 2 giây rồi check lại (Polling)
@@ -53,9 +54,12 @@ export default function PaymentResult() {
         ) : status === 'SUCCESS' ? (
           <div style={{ color: 'green' }}>
             <h1 style={{ fontSize: '48px', marginBottom: '20px' }}>✅</h1>
-            <h2>Thanh toán Thành Công!</h2>
-            <p>Đơn hàng #{orderId} của bạn đã được ghi nhận.</p>
-            <Button onClick={() => navigate('/')} style={{ marginTop: '20px' }}>Về trang chủ</Button>
+            <h2>Đã đặt hàng thành công!</h2>
+            <p>Đơn hàng của bạn đã được ghi nhận.</p>
+            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                <Button onClick={() => navigate('/orders')} variant="outline">Xem đơn hàng</Button>
+                <Button onClick={() => navigate('/')}>Tiếp tục mua sắm</Button>
+            </div>
           </div>
         ) : (
           <div style={{ color: 'red' }}>

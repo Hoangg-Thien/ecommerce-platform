@@ -10,7 +10,7 @@ import './Checkout.css';
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const { cart, isLoading: isCartLoading } = useCart();
+  const { cart, isLoading: isCartLoading, fetchCart, clearCart } = useCart();
   
   const [formData, setFormData] = useState({
     email: '',
@@ -24,6 +24,7 @@ export default function Checkout() {
   
   const [shippingMethod, setShippingMethod] = useState('standard');
   const [paymentMethod, setPaymentMethod] = useState('COD');
+  const [isSuccess, setIsSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Sinh Idempotency Key 1 lần duy nhất khi load trang Checkout (chống double click)
@@ -31,11 +32,11 @@ export default function Checkout() {
 
   // Bắt buộc phải có giỏ hàng mới cho vào trang này
   useEffect(() => {
-    if (!isCartLoading && (!cart || !cart.items || cart.items.length === 0)) {
+    if (!isSuccess && !isCartLoading && (!cart || !cart.items || cart.items.length === 0)) {
       alert("Giỏ hàng của bạn đang trống!");
       navigate('/cart');
     }
-  }, [cart, isCartLoading, navigate]);
+  }, [cart, isCartLoading, navigate, isSuccess]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -54,9 +55,11 @@ export default function Checkout() {
 
       const response = await checkoutApi.checkout(payload, idempotencyKey);
       
+      setIsSuccess(true);
+      clearCart(); // Xóa giỏ hàng khỏi state ngay lập tức
+
       // Nếu là COD -> Chuyển thẳng tới trang thành công
       if (payload.paymentMethod === 'COD') {
-        alert('Đặt hàng thành công!');
         navigate(`/payment-result?orderId=${response.orderId}`);
       } 
       // Nếu là MoMo -> Backend sẽ trả về payUrl -> Redirect tới MoMo
