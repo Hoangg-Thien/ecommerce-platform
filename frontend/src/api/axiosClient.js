@@ -32,8 +32,8 @@ axiosClient.interceptors.response.use((response) => response.data,
 async(error) => {
         const originalRequest = error.config;
 
-        // if 401 and request has not been retried even once
-        if(error.response?.status === 401 && !originalRequest._retry){
+        // if 401 or 403 and request has not been retried even once
+        if((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry){
             originalRequest._retry = true;
 
             try{
