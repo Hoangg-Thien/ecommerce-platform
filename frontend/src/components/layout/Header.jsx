@@ -2,15 +2,19 @@ import { ShoppingCart, Search, Menu, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import './Header.css';
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
 
 export default function Header() {
   const { user, logout } = useAuth();
+  const { cart } = useCart();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
+
+  const cartItemCount = cart?.items?.length || 0;
 
   return (
     <header className="site-header">
@@ -38,7 +42,9 @@ export default function Header() {
 
           <Link to="/cart" className="icon-btn cart-btn" aria-label="Giỏ hàng">
             <ShoppingCart size={22} />
-            <span className="cart-badge">3</span>
+            {cartItemCount > 0 && (
+              <span className="cart-badge">{cartItemCount}</span>
+            )}
           </Link>
 
           <div className="account-menu-wrapper">

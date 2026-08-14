@@ -12,7 +12,11 @@ const cartApi = {
 
     removeCartItem: (itemId) => {
         return axiosClient.delete(`/carts/${itemId}`);
-    }
+    },
+    
+    updateQuantity: (productId, quantity) => {
+        return axiosClient.put('/carts/update', {productId, quantity});
+    },
 };
 
 export default cartApi;

@@ -51,8 +51,18 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  const updateQuantity = async (productId, quantity) => {
+    try {
+      const updatedCart = await cartApi.updateQuantity(productId, quantity);
+      setCart(updatedCart);
+    } catch (error) {
+      console.error('Lỗi cập nhật số lượng', error);
+      throw error;
+    }
+  }
+
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeCartItem, isLoading }}>
+    <CartContext.Provider value={{ cart, addToCart, removeCartItem, updateQuantity, isLoading }}>
       {children}
     </CartContext.Provider>
   );

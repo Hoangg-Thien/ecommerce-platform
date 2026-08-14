@@ -11,7 +11,7 @@ import './Cart.css';
 
 export default function Cart() {
   const { user } = useAuth();
-  const { cart, removeCartItem, addToCart, isLoading } = useCart();
+  const { cart, removeCartItem, addToCart, updateQuantity, isLoading } = useCart();
   const navigate = useNavigate();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
@@ -51,15 +51,12 @@ export default function Cart() {
     const item = cart?.items.find(i => i.id === id);
     if (!item) return;
 
-    if (newQuantity > oldQuantity) {
       try {
-        await addToCart(item.productId, 1);
+        await updateQuantity(item.productId, newQuantity);
       } catch (error) {
-        console.error('Lỗi khi thêm số lượng', error);
+        console.error('Lỗi khi cập nhật số lượng', error);
+        alert(error.response?.data?.message || 'Có lỗi xảy ra!');
       }
-    } else {
-      alert('Chức năng giảm số lượng hiện chưa được hỗ trợ bởi Backend API!');
-    }
   };
 
   const handleRemoveItem = async (id) => {

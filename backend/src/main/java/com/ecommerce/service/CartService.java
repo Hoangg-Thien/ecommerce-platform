@@ -1,9 +1,11 @@
 package com.ecommerce.service;
 
+import com.ecommerce.controller.ProductController;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ecommerce.dto.request.AddToCartRequest;
+import com.ecommerce.dto.request.UpdateCartItemRequest;
 import com.ecommerce.dto.response.CartResponse;
 import com.ecommerce.entity.Cart;
 import com.ecommerce.entity.CartItem;
@@ -24,6 +26,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CartService {
 
+    private final ProductController productController;
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
@@ -130,5 +133,36 @@ public class CartService {
     return cartMapper.toCartResponse(savedCart);
     }
 
+    @Transactional
+    public CartResponse updateCartItemQuantity(String userEmail, UpdateCartItemRequest request){
 
+        log.info("Updating cart item: user='{}', productId={}, newQuantity={}", 
+        userEmail, request.getProductId(), request.getQuantity());
+
+        // find user
+        User user = userRepository.findByEmail(userEmail)
+        .orElseThrow(() -> new ResourceNotFoundException("User", "email", userEmail));
+
+        // validate stock
+        Product product = productRepository.findById(request.getProductId())
+        .orElseThrow(() -> new ResourceNotFoundException("Product", request.getProductId()));
+
+        if(product.getStock() < request.getQuantity()){
+            throw new IllegalArgumentException("Không đủ hàng trong kho cho sản phẩm: " + product.getName());
+        }
+
+        // find cart
+        Cart cart = cartRepository.findByUserId(user.getId())
+        .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy giỏ hàng cho user: " + userEmail));
+
+        // find item
+        CartItem cartItem = cart.getItems().stream()
+        .filter(item -> item.getProduct().getId().equals(product.getId()))
+        .findFirst()
+        .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không có trong giỏ hàng!"));
+
+        cartItem.setQuantity(request.getQuantity());
+        Cart savedCart = cartRepository.save(cart);
+        return cartMapper.toCartResponse(savedCart);
+    }
 }
