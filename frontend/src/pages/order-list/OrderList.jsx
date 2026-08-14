@@ -1,44 +1,12 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Package, ChevronRight, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
 import Button from '../../components/ui/Button';
+import Pagination from '../../components/ui/Pagination';
+import OrderStatusBadge from '../../components/order/OrderStatusBadge';
+import orderApi from '../../api/orderApi';
+import { useAuth } from '../../context/AuthContext';
 import './OrderList.css';
-
-// Dữ liệu giả lập cho lịch sử đơn hàng
-const MOCK_ORDERS = [
-  {
-    id: 'KHO-10293',
-    date: '12 Thg 08, 2026',
-    status: 'DELIVERED', 
-    total: 2150000,
-    itemCount: 3,
-    items: [
-      { id: 1, name: 'Áo Khoác Nam Thể Thao Đa Năng', image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=200&auto=format&fit=crop' },
-      { id: 2, name: 'Giày Chạy Bộ Nam Siêu Nhẹ', image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=200&auto=format&fit=crop' }
-    ]
-  },
-  {
-    id: 'KHO-10285',
-    date: '05 Thg 08, 2026',
-    status: 'PROCESSING',
-    total: 850000,
-    itemCount: 1,
-    items: [
-      { id: 3, name: 'Áo Thun Nam Cổ Tròn Basic', image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=200&auto=format&fit=crop' }
-    ]
-  },
-  {
-    id: 'KHO-10211',
-    date: '20 Thg 07, 2026',
-    status: 'CANCELLED',
-    total: 1250000,
-    itemCount: 2,
-    items: [
-      { id: 4, name: 'Quần Jean Nam Ống Đứng', image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=200&auto=format&fit=crop' }
-    ]
-  }
-];
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('vi-VN', {
@@ -47,21 +15,43 @@ const formatPrice = (price) => {
   }).format(price).replace('₫', 'đ');
 };
 
-const getStatusConfig = (status) => {
-  switch (status) {
-    case 'DELIVERED':
-      return { label: 'Đã giao hàng', className: 'status-delivered', icon: <CheckCircle2 size={16} /> };
-    case 'PROCESSING':
-      return { label: 'Đang xử lý', className: 'status-processing', icon: <Clock size={16} /> };
-    case 'CANCELLED':
-      return { label: 'Đã hủy', className: 'status-cancelled', icon: <XCircle size={16} /> };
-    default:
-      return { label: 'Không xác định', className: '', icon: <Package size={16} /> };
-  }
-};
-
 export default function OrderList() {
-  const [orders] = useState(MOCK_ORDERS);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
+  const [orders, setOrders] = useState([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Redirect nếu chưa đăng nhập
+  useEffect(() => {
+    if (!user) {
+      alert("Vui lòng đăng nhập để xem đơn hàng!");
+      navigate('/login');
+    }
+  }, [user, navigate]);
+
+  useEffect(() => {
+    if (!user) return; // Không fetch nếu chưa login
+
+    const fetchOrders = async () => {
+      setIsLoading(true);
+      try {
+        const response = await orderApi.getUserOrders(currentPage, 5); // Hiển thị 5 đơn 1 trang
+        setOrders(response.content);
+        setTotalPages(response.totalPages);
+      } catch (error) {
+        console.error('Lỗi khi tải đơn hàng', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [currentPage, user]);
+
+  if (!user) return null;
 
   return (
     <MainLayout>
@@ -72,68 +62,85 @@ export default function OrderList() {
             <p className="order-list-subtitle">Quản lý và theo dõi trạng thái các đơn hàng bạn đã đặt.</p>
           </div>
 
-          <div className="orders-grid">
-            {orders.map((order) => {
-              const statusConfig = getStatusConfig(order.status);
-              
-              return (
-                <div key={order.id} className="order-card">
-                  {/* Header Card */}
-                  <div className="order-card-header">
-                    <div className="order-meta">
-                      <span className="order-id">#{order.id}</span>
-                      <span className="order-date">{order.date}</span>
-                    </div>
-                    <div className={`order-status-badge ${statusConfig.className}`}>
-                      {statusConfig.icon}
-                      <span>{statusConfig.label}</span>
-                    </div>
-                  </div>
+          {isLoading ? (
+            <div style={{ textAlign: 'center', padding: '50px' }}>Đang tải danh sách đơn hàng...</div>
+          ) : orders.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '100px 0', background: '#f9f9f9', borderRadius: '8px' }}>
+              <h2>Bạn chưa có đơn hàng nào!</h2>
+              <Button style={{ marginTop: '20px' }} onClick={() => navigate('/')}>Đi mua sắm ngay</Button>
+            </div>
+          ) : (
+            <>
+              <div className="orders-grid">
+                {orders.map((order) => {
+                  // Calculate total items (quantity)
+                  const totalItems = order.orderDetails.reduce((sum, item) => sum + item.quantity, 0);
+                  const firstItem = order.orderDetails[0];
 
-                  {/* Body Card - Hình ảnh sản phẩm */}
-                  <div className="order-card-body">
-                    <div className="order-items-preview">
-                      <div className="order-images-stack">
-                        {order.items.slice(0, 3).map((item, index) => (
-                          <div key={item.id} className="order-item-img-wrapper" style={{ zIndex: 3 - index }}>
-                            <img src={item.image} alt={item.name} className="order-item-img" />
-                          </div>
-                        ))}
-                        {order.itemCount > order.items.length && (
-                          <div className="order-item-img-wrapper more-items" style={{ zIndex: 0 }}>
-                            +{order.itemCount - order.items.length}
-                          </div>
-                        )}
+                  return (
+                    <div key={order.id} className="order-card">
+                      {/* Header Card */}
+                      <div className="order-card-header">
+                        <div className="order-meta">
+                          <span className="order-id">#{order.id}</span>
+                          <span className="order-date">{new Date(order.createAt).toLocaleDateString('vi-VN')}</span>
+                        </div>
+                        <OrderStatusBadge status={order.orderStatus} />
                       </div>
-                      <div className="order-items-text">
-                        <span className="order-items-primary">
-                          {order.items[0].name}
-                        </span>
-                        {order.itemCount > 1 && (
-                          <span className="order-items-secondary">
-                            và {order.itemCount - 1} sản phẩm khác
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Footer Card */}
-                  <div className="order-card-footer">
-                    <div className="order-total-section">
-                      <span className="order-total-label">Tổng tiền:</span>
-                      <span className="order-total-value">{formatPrice(order.total)}</span>
+                      {/* Body Card - Hình ảnh sản phẩm */}
+                      <div className="order-card-body">
+                        <div className="order-items-preview">
+                          <div className="order-images-stack">
+                            {order.orderDetails.slice(0, 3).map((item, index) => (
+                              <div key={item.id} className="order-item-img-wrapper" style={{ zIndex: 3 - index }}>
+                                <img src={item.product.imageUrl} alt={item.product.name} className="order-item-img" />
+                              </div>
+                            ))}
+                            {totalItems > order.orderDetails.length && (
+                              <div className="order-item-img-wrapper more-items" style={{ zIndex: 0 }}>
+                                +{totalItems - order.orderDetails.length}
+                              </div>
+                            )}
+                          </div>
+                          <div className="order-items-text">
+                            <span className="order-items-primary">
+                              {firstItem?.product?.name}
+                            </span>
+                            {totalItems > 1 && (
+                              <span className="order-items-secondary">
+                                và {totalItems - 1} sản phẩm khác
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Footer Card */}
+                      <div className="order-card-footer">
+                        <div className="order-total-section">
+                          <span className="order-total-label">Tổng tiền:</span>
+                          <span className="order-total-value">{formatPrice(order.totalAmount)}</span>
+                        </div>
+                        <div className="order-actions">
+                          <Button variant="outline" className="btn-view-details" onClick={() => navigate(`/payment-result?orderId=${order.id}`)}>
+                            Xem trạng thái thanh toán
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="order-actions">
-                      <Button variant="outline" className="btn-view-details">
-                        Xem chi tiết
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
+
+              {/* Hiện nút phân trang */}
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </>
+          )}
         </div>
       </div>
     </MainLayout>
