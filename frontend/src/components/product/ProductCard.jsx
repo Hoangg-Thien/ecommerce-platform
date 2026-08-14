@@ -3,12 +3,14 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Button from '../ui/Button';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
+import { useToast } from '../../context/ToastContext';
 import './ProductCard.css';
 
 export default function ProductCard({ product }) {
   const { id, name, price, image, imageUrl, badge } = product;
   const { user } = useAuth();
   const { addToCart } = useCart();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -29,10 +31,10 @@ export default function ProductCard({ product }) {
 
     try {
       await addToCart(id, 1);
-      alert('Đã thêm vào giỏ hàng!');
+      showToast('Đã thêm vào giỏ hàng!');
     } catch (error) {
       console.error('Lỗi khi thêm vào giỏ hàng', error);
-      alert('Có lỗi xảy ra: ' + (error.response?.data?.message || error.message));
+      showToast(error.response?.data?.message || 'Có lỗi xảy ra!', 'error', 4500);
     }
   };
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
+import { useToast } from '../../context/ToastContext';
 import { Minus, Plus, ShoppingBag, Clock } from 'lucide-react';
 import MainLayout from '../../components/layout/MainLayout';
 import SizeSelector from '../../components/product/SizeSelector';
@@ -16,6 +17,7 @@ export default function ProductDetail() {
   const location = useLocation();
   const { user } = useAuth();
   const { addToCart } = useCart();
+  const { showToast } = useToast();
   
   const [product, setProduct] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,9 +60,10 @@ export default function ProductDetail() {
     setIsAdding(true);
     try {
       await addToCart(product.id, quantity);
-      alert('Đã thêm vào giỏ hàng!');
+      showToast('Đã thêm vào giỏ hàng!');
     } catch (err) {
-      alert('Có lỗi xảy ra, thử lại sau!');
+      console.error('Lỗi khi thêm vào giỏ hàng', err);
+      showToast(err.response?.data?.message || 'Có lỗi xảy ra, thử lại sau!', 'error', 4000);
     } finally {
       setIsAdding(false);
     }

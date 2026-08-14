@@ -76,7 +76,7 @@ export default function CheckoutForm({ formData, onChange, shippingMethod, setSh
                 onChange={onChange}
               />
             </div>
-            {/* Đã bỏ ZIP / Postal Code theo yêu cầu */}
+            {}
             
             <div className="form-group-full">
               <Input

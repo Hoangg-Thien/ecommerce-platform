@@ -47,7 +47,7 @@ public class CartService {
         .orElseThrow(() -> new ResourceNotFoundException("Product", request.getProductId()));
         
         if(product.getStock() < request.getQuantity()){
-            throw new IllegalArgumentException("Not enough stock for product: " + product.getName());
+            throw new IllegalArgumentException("Sản phẩm " + product.getName() + " không đủ số lượng trong kho!");
         }
 
         // tim cart cua user, neu chua co thi khoi tao
@@ -71,7 +71,7 @@ public class CartService {
             if(newQuantity > product.getStock()){
                 log.warn("Cannot add to cart: Total quantity {} exceeds available stock {} for product '{}'",
                 newQuantity, product.getStock(), product.getName());
-                throw new IllegalArgumentException("Cannot add more. Total in cart exceeds available stock");
+                throw new IllegalArgumentException("Rất tiếc! Tổng số lượng vượt quá hàng có sẵn trong kho");
             }
             item.setQuantity(newQuantity);
 

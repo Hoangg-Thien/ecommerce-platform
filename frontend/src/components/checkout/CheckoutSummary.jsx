@@ -62,12 +62,7 @@ export default function CheckoutSummary({ cartItems, subtotal, shippingFee, onCo
         className="complete-order-btn"
       >
         <span>Hoàn tất đặt hàng</span>
-        <Lock size={16} style={{ marginLeft: '8px' }} />
       </Button>
-      
-      <p className="secure-payment-note">
-        Thanh toán được bảo mật và mã hóa.
-      </p>
     </div>
   );
 }
