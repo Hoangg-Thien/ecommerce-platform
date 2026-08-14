@@ -10,7 +10,7 @@ export default function MainLayout({ children }) {
       </main>
       <footer className="main-footer">
         <div className="footer-container">
-          <p>© 2026 KHO. Kinetic E-commerce. All rights reserved.</p>
+          <p>© 2026 XOÀI. All rights reserved.</p>
         </div>
       </footer>
     </div>

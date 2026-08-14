@@ -24,7 +24,7 @@ export default function Header() {
             <Menu size={24} />
           </button>
           <Link to="/" className="brand-logo">
-            KHO.
+            XOÀI
           </Link>
         </div>
 
