@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Button from '../ui/Button';
+import ConfirmModal from '../ui/ConfirmModal';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
@@ -13,6 +15,7 @@ export default function ProductCard({ product }) {
   const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   // Format currency
   const formattedPrice = new Intl.NumberFormat('vi-VN', {
@@ -24,8 +27,7 @@ export default function ProductCard({ product }) {
 
   const handleAddToCart = async () => {
     if (!user) {
-      alert('Vui lòng đăng nhập để thêm vào giỏ hàng!');
-      navigate('/login', { state: { from: location } });
+      setIsLoginModalOpen(true);
       return;
     }
 
@@ -65,6 +67,23 @@ export default function ProductCard({ product }) {
           Thêm vào giỏ
         </Button>
       </div>
+      
+      <ConfirmModal
+        isOpen={isLoginModalOpen}
+        title="Cần đăng nhập"
+        message="Có vẻ như bạn chưa đăng nhập. Đăng nhập để tiếp tục thêm vào giỏ hoặc quay lại trang chủ."
+        confirmText="Đăng nhập"
+        cancelText="Trở về trang chủ"
+        isDanger={false}
+        onConfirm={() => {
+          setIsLoginModalOpen(false);
+          navigate('/login', { state: { from: location } });
+        }}
+        onCancel={() => {
+          setIsLoginModalOpen(false);
+          navigate('/');
+        }}
+      />
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import './ConfirmModal.css';
 import Button from './Button';
 
@@ -13,7 +14,7 @@ export default function ConfirmModal({
 }) {
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="confirm-modal-overlay" onClick={onCancel}>
       <div className="confirm-modal-content" onClick={e => e.stopPropagation()}>
         <div className="confirm-modal-header">
@@ -34,6 +35,7 @@ export default function ConfirmModal({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

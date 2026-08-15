@@ -34,11 +34,11 @@ export default function Cart() {
               <h2 className="empty-title">Bạn chưa đăng nhập</h2>
               <p className="empty-subtitle">Vui lòng đăng nhập để xem giỏ hàng hoặc bắt đầu mua sắm.</p>
               <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '20px' }}>
-                <Link to="/login">
-                  <Button variant="primary">Đăng nhập</Button>
-                </Link>
                 <Link to="/">
                   <Button variant="outline">Bắt đầu mua sắm</Button>
+                </Link>
+                <Link to="/login">
+                  <Button variant="primary">Đăng nhập</Button>
                 </Link>
               </div>
             </div>

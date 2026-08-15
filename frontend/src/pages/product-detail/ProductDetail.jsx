@@ -8,6 +8,7 @@ import MainLayout from '../../components/layout/MainLayout';
 import SizeSelector from '../../components/product/SizeSelector';
 import Accordion from '../../components/ui/Accordion';
 import Button from '../../components/ui/Button';
+import ConfirmModal from '../../components/ui/ConfirmModal';
 import productApi from '../../api/productApi';
 import './ProductDetail.css';
 
@@ -24,6 +25,7 @@ export default function ProductDetail() {
   const [selectedSize, setSelectedSize] = useState('41'); // Có thể lấy size mặc định từ product nếu có
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -32,7 +34,7 @@ export default function ProductDetail() {
         setProduct(data);
       } catch (error) {
         console.error('Lỗi khi tải chi tiết', error);
-        alert('Sản phẩm không tồn tại!');
+        showToast('Sản phẩm không tồn tại!', 'error');
         navigate('/'); 
       } finally {
         setIsLoading(false);
@@ -52,8 +54,7 @@ export default function ProductDetail() {
   const handleAddToCart = async () => {
     // Check login
     if (!user) {
-      alert('Vui lòng đăng nhập để thêm vào giỏ hàng!');
-      navigate('/login', { state: { from: location } });
+      setIsLoginModalOpen(true);
       return;
     }
 
@@ -160,6 +161,23 @@ export default function ProductDetail() {
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={isLoginModalOpen}
+        title="Cần đăng nhập"
+        message="Có vẻ như bạn chưa đăng nhập. Đăng nhập để tiếp tục thêm vào giỏ hoặc quay lại trang chủ."
+        confirmText="Đăng nhập"
+        cancelText="Trở về trang chủ"
+        isDanger={false}
+        onConfirm={() => {
+          setIsLoginModalOpen(false);
+          navigate('/login', { state: { from: location } });
+        }}
+        onCancel={() => {
+          setIsLoginModalOpen(false);
+          navigate('/');
+        }}
+      />
     </MainLayout>
   );
 }
