@@ -161,7 +161,7 @@ public class OrderConcurrencyTest {
                                     .with(user(userEmail))
                                     .header("Idempotency-Key", java.util.UUID.randomUUID().toString())
                                     .contentType(MediaType.APPLICATION_JSON)
-                                    .content("{\"paymentMethod\": \"COD\"}"))
+                                    .content("{\"paymentMethod\": \"COD\", \"firstName\": \"Test\", \"lastName\": \"User\", \"address\": \"123 Street\", \"city\": \"HCM\", \"ward\": \"Ward 1\", \"phone\": \"0123456789\"}"))
                             .andReturn();
 
                     responseStatuses.add(result.getResponse().getStatus());
@@ -221,6 +221,12 @@ public class OrderConcurrencyTest {
 
         CheckoutRequest checkoutRequest = new CheckoutRequest();
         checkoutRequest.setPaymentMethod(PaymentMethod.COD);
+        checkoutRequest.setFirstName("Test");
+        checkoutRequest.setLastName("User");
+        checkoutRequest.setAddress("123 Street");
+        checkoutRequest.setCity("HCM");
+        checkoutRequest.setWard("Ward 1");
+        checkoutRequest.setPhone("0123456789");
 
         for (String userEmail : users) {
             executorService.submit(() -> {
@@ -278,7 +284,7 @@ public class OrderConcurrencyTest {
                 .with(user(USER1_EMAIL))
                 .header("Idempotency-Key", idempotencyKey)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"paymentMethod\": \"COD\"}"))
+                .content("{\"paymentMethod\": \"COD\", \"firstName\": \"Test\", \"lastName\": \"User\", \"address\": \"123 Street\", \"city\": \"HCM\", \"ward\": \"Ward 1\", \"phone\": \"0123456789\"}"))
                 .andExpect(status().isBadRequest()); 
         
         // 3. Fix the product stock back to 1
@@ -292,7 +298,7 @@ public class OrderConcurrencyTest {
                 .with(user(USER1_EMAIL))
                 .header("Idempotency-Key", idempotencyKey)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"paymentMethod\": \"COD\"}"))
+                .content("{\"paymentMethod\": \"COD\", \"firstName\": \"Test\", \"lastName\": \"User\", \"address\": \"123 Street\", \"city\": \"HCM\", \"ward\": \"Ward 1\", \"phone\": \"0123456789\"}"))
                 .andExpect(status().isCreated());
     }
 
@@ -321,7 +327,7 @@ public class OrderConcurrencyTest {
                                     .with(user(USER1_EMAIL))
                                     .header("Idempotency-Key", idempotencyKey) // Dùng CHUNG 1 key
                                     .contentType(MediaType.APPLICATION_JSON)
-                                    .content("{\"paymentMethod\": \"COD\"}"))
+                                    .content("{\"paymentMethod\": \"COD\", \"firstName\": \"Test\", \"lastName\": \"User\", \"address\": \"123 Street\", \"city\": \"HCM\", \"ward\": \"Ward 1\", \"phone\": \"0123456789\"}"))
                             .andReturn();
 
                     responseStatuses.add(result.getResponse().getStatus());

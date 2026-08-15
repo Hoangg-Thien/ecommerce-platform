@@ -28,8 +28,7 @@ export default function OrderList() {
   // Redirect nếu chưa đăng nhập
   useEffect(() => {
     if (!user) {
-      alert("Vui lòng đăng nhập để xem đơn hàng!");
-      navigate('/login');
+      navigate('/');
     }
   }, [user, navigate]);
 
