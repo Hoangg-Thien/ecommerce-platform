@@ -26,7 +26,7 @@
 }
 
 .mobile-menu-btn {
-  display: none;
+  display: none !important;
 }
 
 .brand-logo {
@@ -201,22 +201,46 @@
 @media (max-width: 767px) {
   .desktop-nav {
     display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: var(--color-surface-container-lowest);
+    padding: 16px var(--space-gutter-mobile);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid var(--color-border-soft);
+  }
+
+  .desktop-nav.mobile-open {
+    display: flex;
   }
 
   .search-box {
-    display: none;
-    /* Hide on mobile for now, maybe add search icon */
+    width: auto;
+    background: transparent;
+    padding: 6px;
   }
 
-  .account-menu-wrapper {
+  .search-input {
     display: none;
   }
+
+  .search-icon {
+    margin-right: 0;
+  }
+
+  /* Don't hide account menu on mobile */
 
   .mobile-menu-btn {
-    display: flex;
+    display: flex !important;
   }
 
   .header-container {
     padding: 12px var(--space-gutter-mobile);
+  }
+  
+  .header-right {
+    gap: 8px;
   }
 }

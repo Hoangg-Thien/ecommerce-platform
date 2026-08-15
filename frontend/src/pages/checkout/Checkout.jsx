@@ -33,8 +33,7 @@ export default function Checkout() {
   // Bắt buộc phải có giỏ hàng mới cho vào trang này
   useEffect(() => {
     if (!isSuccess && !isCartLoading && (!cart || !cart.items || cart.items.length === 0)) {
-      alert("Giỏ hàng của bạn đang trống!");
-      navigate('/cart');
+      navigate('/checkout');
     }
   }, [cart, isCartLoading, navigate, isSuccess]);
 

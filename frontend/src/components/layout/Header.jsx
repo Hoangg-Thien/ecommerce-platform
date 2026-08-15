@@ -11,6 +11,7 @@ export default function Header() {
   const { cart } = useCart();
   const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const confirmLogout = () => {
     logout();
@@ -22,6 +23,10 @@ export default function Header() {
     setShowLogoutConfirm(true);
   };
 
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
   const cartItemCount = cart?.items?.length || 0;
 
   return (
@@ -29,7 +34,7 @@ export default function Header() {
       <header className="site-header">
         <div className="header-container">
           <div className="header-left">
-            <button className="icon-btn mobile-menu-btn" aria-label="Menu">
+            <button className="icon-btn mobile-menu-btn" aria-label="Menu" onClick={toggleMobileMenu}>
               <Menu size={24} />
             </button>
             <Link to="/" className="brand-logo">
@@ -37,10 +42,10 @@ export default function Header() {
             </Link>
           </div>
 
-          <nav className="desktop-nav">
-            <Link to="/" className="nav-link active">Sản phẩm</Link>
-            <Link to="#" className="nav-link">Khuyến mãi</Link>
-            <Link to="#" className="nav-link">Về chúng tôi</Link>
+          <nav className={`desktop-nav ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+            <Link to="/" className="nav-link active" onClick={() => setIsMobileMenuOpen(false)}>Sản phẩm</Link>
+            <Link to="#" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>Khuyến mãi</Link>
+            <Link to="#" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>Về chúng tôi</Link>
           </nav>
 
           <div className="header-right">

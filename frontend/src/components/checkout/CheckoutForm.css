@@ -63,7 +63,8 @@
     grid-template-columns: 1fr;
   }
   
-  .form-group-half {
+  .form-group-half,
+  .form-group-full {
     grid-column: span 1;
   }
   
