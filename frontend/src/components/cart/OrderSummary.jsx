@@ -22,13 +22,6 @@ export default function OrderSummary({ subtotal, shippingFee = 30000, onCheckout
           <span className="summary-value">{formatPrice(subtotal)}</span>
         </div>
         
-        <div className="summary-row">
-          <span className="summary-label">Phí vận chuyển</span>
-          <span className="summary-value">
-            {subtotal > 0 ? formatPrice(shippingFee) : formatPrice(0)}
-          </span>
-        </div>
-        
         <div className="summary-divider"></div>
         
         <div className="summary-row summary-total">

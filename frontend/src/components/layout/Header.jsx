@@ -27,7 +27,7 @@ export default function Header() {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  const cartItemCount = cart?.items?.reduce((total, item) => total + item.quantity, 0) || 0;
+  const cartItemCount = cart?.items?.length || 0;
 
   return (
     <>

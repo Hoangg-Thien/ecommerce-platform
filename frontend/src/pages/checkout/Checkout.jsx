@@ -84,8 +84,9 @@ export default function Checkout() {
     id: item.id,
     name: item.productName,
     price: item.productPrice,
-    image: item.productImageUrl,
-    quantity: item.quantity
+    image: item.imageUrl,
+    quantity: item.quantity,
+    size: item.size
   }));
 
   // Kiểm tra xem tất cả các field đã được nhập và phương thức thanh toán đã được chọn chưa

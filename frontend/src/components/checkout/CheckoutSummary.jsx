@@ -24,7 +24,12 @@ export default function CheckoutSummary({ cartItems, subtotal, shippingFee, onCo
             </div>
             <div className="mini-item-details">
               <h4 className="mini-item-name">{item.name}</h4>
-              <span className="mini-item-qty">SL: {item.quantity}</span>
+              <div className="mini-item-meta" style={{ display: 'flex', gap: '8px', fontSize: '13px', color: '#666', marginTop: '4px' }}>
+                <span className="mini-item-size">Size: {item.size}</span>
+              </div>
+              <div className="mini-item-meta" style={{ display: 'flex', gap: '8px', fontSize: '13px', color: '#666', marginTop: '4px' }}>
+                  <span className="mini-item-qty">Số lượng: {item.quantity}</span>
+              </div>
             </div>
             <div className="mini-item-price">{formatPrice(item.price * item.quantity)}</div>
           </div>

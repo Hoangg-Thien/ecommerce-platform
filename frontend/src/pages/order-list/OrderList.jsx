@@ -67,7 +67,7 @@ export default function OrderList() {
           ) : orders.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '100px 0', background: '#f9f9f9', borderRadius: '8px' }}>
               <h2>Bạn chưa có đơn hàng nào!</h2>
-              <Button style={{ marginTop: '20px' }} onClick={() => navigate('/')}>Đi mua sắm ngay</Button>
+              <Button style={{ marginTop: '20px',  }} onClick={() => navigate('/')}>Đi mua sắm ngay</Button>
             </div>
           ) : (
             <>
@@ -168,6 +168,7 @@ export default function OrderList() {
                       <div className="order-modal-item-name">{item.productName}</div>
                       <div className="order-modal-item-price-qty">
                         <div>Đơn giá: {formatPrice(item.price)}</div>
+                        <div>Size: {item.size}</div>
                         <div>Số lượng: {item.quantity}</div>
                       </div>
                     </div>
