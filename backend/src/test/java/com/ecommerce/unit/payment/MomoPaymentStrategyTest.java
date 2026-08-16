@@ -74,7 +74,7 @@ class MomoPaymentStrategyTest {
 
         when(orderRepository.save(any(Order.class))).thenAnswer(i -> i.getArgument(0));
         when(paymentRepository.save(any(Payment.class))).thenAnswer(i -> i.getArgument(0));
-        when(momoService.createPaymentUrl(any(Payment.class))).thenReturn(FAKE_PAY_URL);
+        lenient().when(momoService.createPaymentUrl(any(Payment.class))).thenReturn(FAKE_PAY_URL);
     }
 
     @Test
@@ -107,5 +107,29 @@ class MomoPaymentStrategyTest {
         // cart vẫn còn items
         assertFalse(cart.getItems().isEmpty());
         assertEquals(1, cart.getItems().size());
+    }
+
+    @Test
+    void processPayment_WhenMockEnabled_ShouldReturnMockUrlAndNotCallMomoApi() throws Exception {
+        // Use reflection to set private mockEnabled field to true
+        java.lang.reflect.Field field = momoPaymentStrategy.getClass().getDeclaredField("mockEnabled");
+        field.setAccessible(true);
+        field.set(momoPaymentStrategy, true);
+
+        CheckoutResponse response = momoPaymentStrategy.processPayment(order, cart);
+
+        assertEquals("/mock-payment?orderId=" + order.getId(), response.getPaymentUrl());
+        verify(momoService, never()).createPaymentUrl(any(Payment.class));
+
+        // Restore to false
+        field.set(momoPaymentStrategy, false);
+    }
+
+    @Test
+    void processPayment_WhenMockDisabled_ShouldReturnRealMomoUrlAndCallMomoApi() {
+        CheckoutResponse response = momoPaymentStrategy.processPayment(order, cart);
+
+        assertEquals(FAKE_PAY_URL, response.getPaymentUrl());
+        verify(momoService, times(1)).createPaymentUrl(any(Payment.class));
     }
 }

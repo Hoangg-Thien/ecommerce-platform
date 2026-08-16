@@ -11,7 +11,7 @@ import './Checkout.css';
 export default function Checkout() {
   const navigate = useNavigate();
   const { cart, isLoading: isCartLoading, fetchCart, clearCart } = useCart();
-  
+
   const [formData, setFormData] = useState({
     email: '',
     firstName: '',
@@ -21,7 +21,7 @@ export default function Checkout() {
     ward: '',
     phone: ''
   });
-  
+
   const [shippingMethod, setShippingMethod] = useState('standard');
   const [paymentMethod, setPaymentMethod] = useState('COD');
   const [isSuccess, setIsSuccess] = useState(false);
@@ -52,15 +52,16 @@ export default function Checkout() {
         paymentMethod: paymentMethod === 'cod' ? 'COD' : (paymentMethod === 'momo' ? 'MOMO' : paymentMethod)
       };
 
+      console.log('Sending Idempotency-Key:', idempotencyKey);
       const response = await checkoutApi.checkout(payload, idempotencyKey);
-      
+
       setIsSuccess(true);
       clearCart(); // Xóa giỏ hàng khỏi state ngay lập tức
 
       // Nếu là COD -> Chuyển thẳng tới trang thành công
       if (payload.paymentMethod === 'COD') {
         navigate(`/payment-result?orderId=${response.orderId}`);
-      } 
+      }
       // Nếu là MoMo -> Backend sẽ trả về payUrl -> Redirect tới MoMo
       else if (payload.paymentMethod === 'MOMO' && response.payUrl) {
         window.location.href = response.payUrl;
@@ -77,7 +78,7 @@ export default function Checkout() {
 
   const subtotal = cart.totalPrice || 0;
   const shippingFee = shippingMethod === 'express' ? 30000 : 0;
-  
+
   // Format items for CheckoutSummary
   const cartItemsFormatted = cart.items.map(item => ({
     id: item.id,
@@ -98,7 +99,7 @@ export default function Checkout() {
 
           <div className="checkout-layout">
             <div className="checkout-form-side">
-              <CheckoutForm 
+              <CheckoutForm
                 formData={formData}
                 onChange={handleInputChange}
                 shippingMethod={shippingMethod}
@@ -107,9 +108,9 @@ export default function Checkout() {
                 setPaymentMethod={setPaymentMethod}
               />
             </div>
-            
+
             <div className="checkout-summary-side">
-              <CheckoutSummary 
+              <CheckoutSummary
                 cartItems={cartItemsFormatted}
                 subtotal={subtotal}
                 shippingFee={shippingFee}
