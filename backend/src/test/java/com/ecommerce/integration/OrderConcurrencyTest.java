@@ -62,9 +62,13 @@ public class OrderConcurrencyTest {
     private PaymentRepository paymentRepository;
 
     @Autowired
+    private ProductVariantRepository productVariantRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     private Long testProductId;
+    private Long testVariantId;
     private static final String USER1_EMAIL = "buyer1@example.com";
     private static final String USER2_EMAIL = "buyer2@example.com";
 
@@ -82,11 +86,17 @@ public class OrderConcurrencyTest {
         Product product = new Product();
         product.setName("Limited Edition Smartphone");
         product.setPrice(BigDecimal.valueOf(1000));
-        product.setStock(1); // Chỉ còn 1 sản phẩm duy nhất trong kho
         product.setDescription("Rare item");
         product.setCategory(category);
         product = productRepository.save(product);
         testProductId = product.getId();
+
+        ProductVariant variant = new ProductVariant();
+        variant.setProduct(product);
+        variant.setSize("42");
+        variant.setStock(1);
+        variant = productVariantRepository.save(variant);
+        testVariantId = variant.getId();
 
         // 2. Tạo User 1 & Cart chứa 1 sản phẩm
         User user1 = new User();
@@ -99,7 +109,7 @@ public class OrderConcurrencyTest {
         cart1.setUser(user1);
         CartItem cartItem1 = new CartItem();
         cartItem1.setCart(cart1);
-        cartItem1.setProduct(product);
+        cartItem1.setProductVariant(variant);
         cartItem1.setQuantity(1);
         cart1.getItems().add(cartItem1);
         cartRepository.save(cart1);
@@ -115,7 +125,7 @@ public class OrderConcurrencyTest {
         cart2.setUser(user2);
         CartItem cartItem2 = new CartItem();
         cartItem2.setCart(cart2);
-        cartItem2.setProduct(product);
+        cartItem2.setProductVariant(variant);
         cartItem2.setQuantity(1);
         cart2.getItems().add(cartItem2);
         cartRepository.save(cart2);
@@ -130,6 +140,7 @@ public class OrderConcurrencyTest {
         paymentRepository.deleteAll();
         orderRepository.deleteAll();
         cartRepository.deleteAll();
+        productVariantRepository.deleteAll();
         productRepository.deleteAll();
         categoryRepository.deleteAll();
         userRepository.deleteAll();
@@ -196,9 +207,9 @@ public class OrderConcurrencyTest {
                 "Request thứ hai phải bị từ chối với 409 Conflict hoặc 400 Bad Request, nhưng nhận statuses: " + responseStatuses);
 
         // 2. Kiểm chứng Database Integrity (Không bao giờ bị âm kho):
-        Product updatedProduct = productRepository.findById(testProductId).orElseThrow();
-        assertEquals(0, updatedProduct.getStock(), "Tồn kho sau khi tranh chấp phải là 0, tuyệt đối không bị âm!");
-        assertTrue(updatedProduct.getStock() >= 0, "Tồn kho không được âm!");
+        ProductVariant updatedVariant = productVariantRepository.findById(testVariantId).orElseThrow();
+        assertEquals(0, updatedVariant.getStock(), "Tồn kho sau khi tranh chấp phải là 0, tuyệt đối không bị âm!");
+        assertTrue(updatedVariant.getStock() >= 0, "Tồn kho không được âm!");
 
         // 3. Kiểm chứng số lượng đơn hàng được tạo trong database:
         long totalOrders = orderRepository.count();
@@ -264,8 +275,8 @@ public class OrderConcurrencyTest {
         assertEquals(1, successCount, "Chỉ được duy nhất 1 checkout thành công (HTTP 201)");
         assertEquals(1, failureCount, "Checkout thứ 2 phải thất bại (409 Conflict hoặc 400 Bad Request)");
 
-        Product updatedProduct = productRepository.findById(testProductId).orElseThrow();
-        assertEquals(0, updatedProduct.getStock(), "Tồn kho phải là 0!");
+        ProductVariant updatedVariant = productVariantRepository.findById(testVariantId).orElseThrow();
+        assertEquals(0, updatedVariant.getStock(), "Tồn kho phải là 0!");
         assertEquals(1, orderRepository.count(), "Chỉ có duy nhất 1 đơn hàng được tạo!");
     }
 
@@ -275,9 +286,9 @@ public class OrderConcurrencyTest {
         String idempotencyKey = java.util.UUID.randomUUID().toString();
 
         // 1. Force a failure by setting the product stock to 0
-        Product product = productRepository.findById(testProductId).orElseThrow();
-        product.setStock(0);
-        productRepository.save(product);
+        ProductVariant variant = productVariantRepository.findById(testVariantId).orElseThrow();
+        variant.setStock(0);
+        productVariantRepository.save(variant);
 
         // 2. User 1 calls checkout with the key -> should fail with 400 Bad Request (Insufficient stock)
         mockMvc.perform(post("/api/v1/checkout")
@@ -288,9 +299,9 @@ public class OrderConcurrencyTest {
                 .andExpect(status().isBadRequest()); 
         
         // 3. Fix the product stock back to 1
-        Product latestProduct = productRepository.findById(testProductId).orElseThrow();
-        latestProduct.setStock(1);
-        productRepository.save(latestProduct);
+        ProductVariant latestVariant = productVariantRepository.findById(testVariantId).orElseThrow();
+        latestVariant.setStock(1);
+        productVariantRepository.save(latestVariant);
 
         // 4. Call checkout again with the EXACT SAME KEY -> must SUCCEED (201 Created)
         // If the key wasn't rolled back, this would fail (409 Conflict or 400 Bad Request due to Duplicate Key)

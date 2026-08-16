@@ -25,8 +25,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -55,6 +53,7 @@ class OrderServiceTest {
 
     private User user;
     private Product product;
+    private ProductVariant variant;
     private Cart cart;
     private CartItem cartItem;
 
@@ -68,7 +67,13 @@ class OrderServiceTest {
         product.setId(1L);
         product.setName("Laptop");
         product.setPrice(BigDecimal.valueOf(1000));
-        product.setStock(10);
+        
+        variant = new ProductVariant();
+        variant.setId(10L);
+        variant.setProduct(product);
+        variant.setSize("42");
+        variant.setStock(10);
+        product.setVariants(List.of(variant));
 
         cart = new Cart();
         cart.setId(1L);
@@ -78,17 +83,11 @@ class OrderServiceTest {
         cartItem = new CartItem();
         cartItem.setId(10L);
         cartItem.setCart(cart);
-        cartItem.setProduct(product);
+        cartItem.setProductVariant(variant);
         cartItem.setQuantity(2);
 
         cart.getItems().add(cartItem);
     }
-
-
-
-    // ==========================================
-    // TEST GET USER ORDERS (Lịch sử đơn hàng)
-    // ==========================================
 
     @Test
     void getUserOrders_WhenUserExists_ShouldReturnPageResponse() {
@@ -125,10 +124,6 @@ class OrderServiceTest {
         verify(orderRepository, never()).findByUserId(any(), any());
     }
 
-    // ==========================================
-    // TEST UPDATE ORDER STATUS (Admin duyệt đơn)
-    // ==========================================
-
     @Test
     void updateOrderStatus_WhenValidTransition_ShouldUpdateStatusSuccessfully() {
         Order order = new Order();
@@ -151,7 +146,7 @@ class OrderServiceTest {
     void updateOrderStatus_WhenOrderAlreadyDone_ShouldThrowException() {
         Order order = new Order();
         order.setId(100L);
-        order.setStatus(OrderStatus.DONE); // Đơn đã hoàn tất
+        order.setStatus(OrderStatus.DONE); 
 
         when(orderRepository.findById(100L)).thenReturn(Optional.of(order));
 
@@ -164,15 +159,14 @@ class OrderServiceTest {
         Order order = new Order();
         order.setId(100L);
         order.setStatus(OrderStatus.PENDING);
-        order.setUser(user); // OrderMapper.tOrderResponse() cần user để gọi getUser().getId()
-
+        order.setUser(user); 
 
         OrderItem item = new OrderItem();
-        item.setProduct(product); // product có stock = 10
+        item.setProduct(product); 
+        item.setSize("42");
         item.setQuantity(2);
-        item.setPrice(product.getPrice()); // cần set price để OrderMapper không NPE
+        item.setPrice(product.getPrice()); 
         order.getItems().add(item);
-
 
         when(orderRepository.findById(100L)).thenReturn(Optional.of(order));
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -181,9 +175,7 @@ class OrderServiceTest {
 
         assertNotNull(result);
         assertEquals(OrderStatus.CANCELLED, result.getStatus());
-        // Kiểm tra đã hoàn lại 2 sản phẩm vào kho: 10 + 2 = 12
-        assertEquals(12, product.getStock());
+        assertEquals(12, product.getVariants().get(0).getStock());
         verify(productRepository, times(1)).save(product);
     }
-
 }

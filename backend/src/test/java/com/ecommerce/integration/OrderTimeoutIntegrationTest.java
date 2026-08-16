@@ -40,14 +40,21 @@ class OrderTimeoutIntegrationTest {
     private ProductRepository productRepository;
 
     @Autowired
+    private com.ecommerce.repository.ProductVariantRepository productVariantRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private jakarta.persistence.EntityManager entityManager;
     
     @org.junit.jupiter.api.AfterEach
     void tearDown() {
         orderRepository.deleteAll();
+        productVariantRepository.deleteAll();
         productRepository.deleteAll();
         userRepository.deleteAll();
     }
@@ -59,8 +66,15 @@ class OrderTimeoutIntegrationTest {
         Product product = new Product();
         product.setName("Test Product");
         product.setPrice(BigDecimal.valueOf(100));
-        product.setStock(100);
+        
+        com.ecommerce.entity.ProductVariant variant = new com.ecommerce.entity.ProductVariant();
+        variant.setProduct(product);
+        variant.setSize("42");
+        variant.setStock(100);
+        product.setVariants(java.util.List.of(variant));
+        
         product = productRepository.save(product);
+        variant = product.getVariants().get(0); // get the saved variant
 
         // 2. Create User
         User user = new User();
@@ -86,12 +100,9 @@ class OrderTimeoutIntegrationTest {
         
         order = orderRepository.save(order);
         
-        // Force update the create_at column to be 16 minutes in the past
+        // Force update the create_at column to be 1 day in the past to avoid timezone issues
         jdbcTemplate.update("UPDATE orders SET create_at = ? WHERE id = ?",
-                LocalDateTime.now().minusMinutes(16), order.getId());
-
-        // We flush or clear to ensure the next read comes from DB if needed, but 
-        // since we are using jdbcTemplate to modify, let's just proceed.
+                LocalDateTime.now().minusDays(1), order.getId());
 
         // 4. Act: run scheduler
         scheduler.cancelExpiredMomoPayments();
@@ -101,7 +112,7 @@ class OrderTimeoutIntegrationTest {
         assertEquals(OrderStatus.CANCELLED, updatedOrder.getStatus());
         assertEquals(PaymentStatus.FAILED, updatedOrder.getPayment().getPaymentStatus());
 
-        Product updatedProduct = productRepository.findById(product.getId()).orElseThrow();
-        assertEquals(100, updatedProduct.getStock(), "Stock should remain unchanged");
+        com.ecommerce.entity.ProductVariant updatedVariant = productVariantRepository.findById(variant.getId()).orElseThrow();
+        assertEquals(100, updatedVariant.getStock(), "Stock should remain unchanged");
     }
 }
