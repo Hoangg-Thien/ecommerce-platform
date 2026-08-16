@@ -6,16 +6,16 @@ const cartApi = {
         return axiosClient.get('/carts');
     },
 
-    addToCart: (productId, quantity = 1) => {
-        return axiosClient.post('/carts/add', {productId, quantity});
+    addToCart: (variantId, quantity = 1) => {
+        return axiosClient.post('/carts/add', {variantId, quantity});
     },
 
     removeCartItem: (itemId) => {
         return axiosClient.delete(`/carts/${itemId}`);
     },
     
-    updateQuantity: (productId, quantity) => {
-        return axiosClient.put('/carts/update', {productId, quantity});
+    updateQuantity: (variantId, quantity) => {
+        return axiosClient.put('/carts/update', {variantId, quantity});
     },
 };
 

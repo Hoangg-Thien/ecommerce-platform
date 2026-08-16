@@ -66,9 +66,25 @@ export default function ProductDetail() {
       return;
     }
 
+    const variant = product.variants?.find(v => v.size === selectedSize);
+    if (!variant) {
+      showToast('Vui lòng chọn kích cỡ hợp lệ!', 'error');
+      return;
+    }
+
+    if (variant.stock <= 0) {
+      showToast('Kích cỡ này đã hết hàng!', 'error');
+      return;
+    }
+
+    if (quantity > variant.stock) {
+      showToast(`Rất tiếc, chỉ còn ${variant.stock} sản phẩm cho kích cỡ này!`, 'error');
+      return;
+    }
+
     setIsAdding(true);
     try {
-      await addToCart(product.id, quantity);
+      await addToCart(variant.id, quantity);
       showToast('Đã thêm vào giỏ hàng!');
     } catch (err) {
       console.error('Lỗi khi thêm vào giỏ hàng', err);

@@ -30,9 +30,9 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const addToCart = async (productId, quantity = 1) => {
+  const addToCart = async (variantId, quantity = 1) => {
     try {
-      const updatedCart = await cartApi.addToCart(productId, quantity);
+      const updatedCart = await cartApi.addToCart(variantId, quantity);
       setCart(updatedCart); // Server trả về giỏ hàng mới nhất kèm tổng tiền -> update luôn
       return true;
     } catch (error) {
@@ -51,9 +51,9 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const updateQuantity = async (productId, quantity) => {
+  const updateQuantity = async (variantId, quantity) => {
     try {
-      const updatedCart = await cartApi.updateQuantity(productId, quantity);
+      const updatedCart = await cartApi.updateQuantity(variantId, quantity);
       setCart(updatedCart);
     } catch (error) {
       console.error('Lỗi cập nhật số lượng', error);

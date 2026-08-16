@@ -56,7 +56,7 @@ export default function Cart() {
     if (!item) return;
 
     try {
-      await updateQuantity(item.productId, newQuantity);
+      await updateQuantity(item.variantId, newQuantity);
     } catch (error) {
       console.error('Lỗi khi cập nhật số lượng', error);
       showToast(error.response?.data?.message || 'Có lỗi xảy ra!', 'error', 4000);
@@ -91,11 +91,12 @@ export default function Cart() {
   const formattedCartItems = cartItems.map(item => ({
     id: item.id,
     productId: item.productId,
+    variantId: item.variantId,
     name: item.productName,
     price: item.productPrice,
-    image: item.productImageUrl,
+    image: item.imageUrl,
     quantity: item.quantity,
-    variant: '' // Placeholder vì backend chưa có variant
+    variant: item.size || ''
   }));
 
   return (

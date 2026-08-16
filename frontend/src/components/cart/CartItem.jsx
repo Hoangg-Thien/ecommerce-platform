@@ -10,13 +10,13 @@ export default function CartItem({ item, onUpdateQuantity, onRemove }) {
 
   return (
     <div className="cart-item">
-      <Link to={`/product/${item.id}`} className="cart-item-image-wrapper">
+      <Link to={`/product/${item.productId}`} className="cart-item-image-wrapper">
         <img src={item.image} alt={item.name} className="cart-item-image" />
       </Link>
       
       <div className="cart-item-details">
         <div className="cart-item-header">
-          <Link to={`/product/${item.id}`} className="cart-item-title-link">
+          <Link to={`/product/${item.productId}`} className="cart-item-title-link">
             <h3 className="cart-item-title">{item.name}</h3>
           </Link>
           <button 
@@ -28,7 +28,7 @@ export default function CartItem({ item, onUpdateQuantity, onRemove }) {
           </button>
         </div>
         
-        {item.variant && <p className="cart-item-variant">Phân loại: {item.variant}</p>}
+        {item.variant && <p className="cart-item-variant">Size: {item.variant}</p>}
         
         <div className="cart-item-footer">
           <div className="quantity-selector">

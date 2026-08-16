@@ -60,12 +60,12 @@ export default function ProductCard({ product }) {
         <Button 
           variant="secondary" 
           className="add-to-cart-btn" 
-          aria-label="Thêm vào giỏ"
-          onClick={handleAddToCart}
+          aria-label="Xem chi tiết"
+          onClick={() => navigate(`/product/${id}`)}
           disabled={product.stock === 0}
         >
           <ShoppingCart size={18} className="btn-icon" />
-          {product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ'}
+          {product.stock === 0 ? 'Hết hàng' : 'Xem tùy chọn'}
         </Button>
       </div>
       
