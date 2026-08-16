@@ -53,8 +53,14 @@ public class CodPaymentStrategy implements PaymentStrategy{
         // tru stock
         for(OrderItem item : savedOrder.getItems()){
             Product product = item.getProduct();
-            product.setStock(product.getStock() - item.getQuantity());
-            productRepository.save(product);
+            com.ecommerce.entity.ProductVariant variant = product.getVariants().stream()
+                    .filter(v -> v.getSize().equals(item.getSize()))
+                    .findFirst()
+                    .orElse(null);
+            if (variant != null) {
+                variant.setStock(variant.getStock() - item.getQuantity());
+                productRepository.save(product);
+            }
         }
 
         // xoa cart sau khi dat hang thanh cong

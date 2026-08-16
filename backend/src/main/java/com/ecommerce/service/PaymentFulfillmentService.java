@@ -38,9 +38,14 @@ public class PaymentFulfillmentService {
         // VALIDATE STOCK TRƯỚC TIÊN
         for (OrderItem orderItem : order.getItems()) {
             Product product = orderItem.getProduct();
-            if (product.getStock() < orderItem.getQuantity()) {
+            com.ecommerce.entity.ProductVariant variant = product.getVariants().stream()
+                    .filter(v -> v.getSize().equals(orderItem.getSize()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (variant == null || variant.getStock() < orderItem.getQuantity()) {
                 log.warn("Out of stock during IPN process for Order {}. Product: {}, Required: {}, Available: {}",
-                        order.getId(), product.getName(), orderItem.getQuantity(), product.getStock());
+                        order.getId(), product.getName(), orderItem.getQuantity(), variant != null ? variant.getStock() : 0);
 
                 // Lưu transactionId để biết mã mà refund
                 payment.setTransactionId(transactionId);
@@ -75,8 +80,14 @@ public class PaymentFulfillmentService {
         // Trừ stock
         for (OrderItem orderItem : order.getItems()) {
             Product product = orderItem.getProduct();
-            product.setStock(product.getStock() - orderItem.getQuantity());
-            productRepository.save(product);
+            com.ecommerce.entity.ProductVariant variant = product.getVariants().stream()
+                    .filter(v -> v.getSize().equals(orderItem.getSize()))
+                    .findFirst()
+                    .orElse(null);
+            if (variant != null) {
+                variant.setStock(variant.getStock() - orderItem.getQuantity());
+                productRepository.save(product);
+            }
         }
 
         // Xóa cart (xóa các CartItem trong database)
