@@ -12,6 +12,7 @@ import com.ecommerce.enums.OrderStatus;
 import com.ecommerce.enums.PaymentMethod;
 import com.ecommerce.enums.PaymentStatus;
 import com.ecommerce.mapper.PaymentMapper;
+import com.ecommerce.repository.CartItemRepository;
 import com.ecommerce.repository.CartRepository;
 import com.ecommerce.repository.OrderRepository;
 import com.ecommerce.repository.PaymentRepository;
@@ -29,6 +30,7 @@ public class CodPaymentStrategy implements PaymentStrategy{
     private final PaymentRepository paymentRepository;
     private final ProductRepository productRepository;
     private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
     private final PaymentMapper paymentMapper;
 
     @Override
@@ -53,12 +55,11 @@ public class CodPaymentStrategy implements PaymentStrategy{
             Product product = item.getProduct();
             product.setStock(product.getStock() - item.getQuantity());
             productRepository.save(product);
-
         }
 
         // xoa cart sau khi dat hang thanh cong
+        cartItemRepository.deleteAll(cart.getItems());
         cart.getItems().clear();
-        cartRepository.save(cart);
         
         log.info("COD order processed successfully: orderId={}, paymentId={}, status={}",
         savedOrder.getId(), savedPayment.getId(), savedOrder.getStatus());

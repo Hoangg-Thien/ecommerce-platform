@@ -62,9 +62,9 @@ export default function Checkout() {
       if (payload.paymentMethod === 'COD') {
         navigate(`/payment-result?orderId=${response.orderId}`);
       }
-      // Nếu là MoMo -> Backend sẽ trả về payUrl -> Redirect tới MoMo
-      else if (payload.paymentMethod === 'MOMO' && response.payUrl) {
-        window.location.href = response.payUrl;
+      // Nếu là MoMo -> Backend sẽ trả về paymentUrl -> Redirect tới MoMo (hoặc Mock)
+      else if (payload.paymentMethod === 'MOMO' && (response.paymentUrl || response.payUrl)) {
+        window.location.href = response.paymentUrl || response.payUrl;
       }
     } catch (error) {
       console.error('Lỗi khi đặt hàng', error);

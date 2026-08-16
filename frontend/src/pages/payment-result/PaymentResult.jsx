@@ -3,10 +3,12 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
 import paymentApi from '../../api/paymentApi';
 import Button from '../../components/ui/Button';
+import { useCart } from '../../context/CartContext';
 
 export default function PaymentResult() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { fetchCart } = useCart();
   
   const orderId = searchParams.get('orderId');
   const [status, setStatus] = useState('PENDING'); // PENDING, SUCCESS, FAILED
@@ -25,6 +27,7 @@ export default function PaymentResult() {
         
         if (payment.paymentStatus === 'PAID' || payment.paymentMethod === 'COD') {
           setStatus('SUCCESS');
+          fetchCart(); // Cập nhật lại giỏ hàng trên Header
         } else if (payment.paymentStatus === 'FAILED' || payment.paymentStatus === 'CANCELLED') {
           setStatus('FAILED');
         } else {

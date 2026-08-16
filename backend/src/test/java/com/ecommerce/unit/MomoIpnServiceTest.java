@@ -32,6 +32,7 @@ class MomoIpnServiceTest {
     @Mock private OrderRepository orderRepository;
     @Mock private ProductRepository productRepository;
     @Mock private CartRepository cartRepository;
+    @Mock private CartItemRepository cartItemRepository;
     @Mock private MomoService momoService;
     @Mock private PaymentRefundService paymentRefundService;
 
@@ -50,7 +51,7 @@ class MomoIpnServiceTest {
     @BeforeEach
     void setUp() {
         paymentFulfillmentService = new PaymentFulfillmentService(
-            paymentRepository, orderRepository, cartRepository, productRepository, paymentRefundService
+            paymentRepository, orderRepository, cartRepository, cartItemRepository, productRepository, paymentRefundService
         );
         momoIpnService = new MomoIpnService(
             paymentRepository, momoService, paymentRefundService, paymentFulfillmentService
@@ -145,11 +146,11 @@ class MomoIpnServiceTest {
         when(paymentRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         when(orderRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
-        when(cartRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         momoIpnService.handleIpn(ipnSuccess);
 
         assertTrue(cart.getItems().isEmpty());
+        verify(cartItemRepository, times(1)).deleteAll(any());
     }
 
     @Test

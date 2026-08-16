@@ -35,4 +35,4 @@ momo:
 
 payment:
   momo:
-    mock-enabled: false
+    mock-enabled: true

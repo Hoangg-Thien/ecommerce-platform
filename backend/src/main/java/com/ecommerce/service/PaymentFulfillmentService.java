@@ -11,6 +11,7 @@ import com.ecommerce.entity.Product;
 import com.ecommerce.enums.OrderStatus;
 import com.ecommerce.enums.PaymentStatus;
 import com.ecommerce.repository.CartRepository;
+import com.ecommerce.repository.CartItemRepository;
 import com.ecommerce.repository.OrderRepository;
 import com.ecommerce.repository.PaymentRepository;
 import com.ecommerce.repository.ProductRepository;
@@ -26,6 +27,7 @@ public class PaymentFulfillmentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
     private final PaymentRefundService paymentRefundService;
 
@@ -77,11 +79,11 @@ public class PaymentFulfillmentService {
             productRepository.save(product);
         }
 
-        // Xóa cart
+        // Xóa cart (xóa các CartItem trong database)
         Cart cart = cartRepository.findByUserId(order.getUser().getId()).orElse(null);
         if (cart != null) {
-            cart.getItems().clear();
-            cartRepository.save(cart);
+            cartItemRepository.deleteAll(cart.getItems());
+            cart.getItems().clear(); // Clear the collection in memory for consistency
         }
 
         log.info("Payment SUCCESS for order {}. TransactionId: {}", order.getId(), transactionId);

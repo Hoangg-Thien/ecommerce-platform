@@ -29,6 +29,7 @@ class CodPaymentStrategyTest {
     @Mock private PaymentRepository paymentRepository;
     @Mock private ProductRepository productRepository;
     @Mock private CartRepository cartRepository;
+    @Mock private CartItemRepository cartItemRepository;
     @Spy  private PaymentMapper paymentMapper;
 
     @InjectMocks
@@ -74,7 +75,6 @@ class CodPaymentStrategyTest {
         // save() trả về chính object được truyền vào
         when(orderRepository.save(any(Order.class))).thenAnswer(i -> i.getArgument(0));
         when(paymentRepository.save(any(Payment.class))).thenAnswer(i -> i.getArgument(0));
-        when(cartRepository.save(any(Cart.class))).thenAnswer(i -> i.getArgument(0));
     }
 
     @Test
@@ -114,6 +114,6 @@ class CodPaymentStrategyTest {
         codPaymentStrategy.processPayment(order, cart);
 
         assertTrue(cart.getItems().isEmpty());
-        verify(cartRepository, times(1)).save(cart);
+        verify(cartItemRepository, times(1)).deleteAll(any());
     }
 }
