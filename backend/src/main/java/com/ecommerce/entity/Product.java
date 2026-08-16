@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "products")
@@ -30,9 +32,11 @@ public class Product {
     @Column(nullable = false)
     private BigDecimal price;
 
-    @Min(value = 0, message = "Stock must be >= 0")
-    @Column(nullable = false)
-    private Integer stock = 0;
+    @Column(name = "image_url")
+    private String imageUrl;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductVariant> variants = new ArrayList<>();
 
     @Version
     private Long version;
