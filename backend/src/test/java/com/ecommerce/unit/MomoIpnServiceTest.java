@@ -23,6 +23,8 @@ import com.ecommerce.service.MomoIpnService;
 import com.ecommerce.service.MomoService;
 import com.ecommerce.service.PaymentRefundService;
 
+import com.ecommerce.service.PaymentFulfillmentService;
+
 @ExtendWith(MockitoExtension.class)
 class MomoIpnServiceTest {
 
@@ -33,7 +35,7 @@ class MomoIpnServiceTest {
     @Mock private MomoService momoService;
     @Mock private PaymentRefundService paymentRefundService;
 
-    @InjectMocks
+    private PaymentFulfillmentService paymentFulfillmentService;
     private MomoIpnService momoIpnService;
 
     private User user;
@@ -47,6 +49,12 @@ class MomoIpnServiceTest {
 
     @BeforeEach
     void setUp() {
+        paymentFulfillmentService = new PaymentFulfillmentService(
+            paymentRepository, orderRepository, cartRepository, productRepository, paymentRefundService
+        );
+        momoIpnService = new MomoIpnService(
+            paymentRepository, momoService, paymentRefundService, paymentFulfillmentService
+        );
         user = new User();
         user.setId(1L);
 

@@ -82,12 +82,12 @@ public class MomoServiceImpl implements MomoService {
                 return (String) body.get("payUrl");
             }
             log.error("MoMo response missing payUrl: {}", body);
-            throw new PaymentException("MoMo did not return a payment URL");
+            throw new PaymentException("MoMo không trả về đường dẫn thanh toán. Vui lòng thử lại sau.");
         } catch (PaymentException e) {
             throw e; // re-throw không wrap
         } catch (Exception e) {
             log.error("Failed to create MoMo payment for order {}", payment.getOrder().getId(), e);
-            throw new PaymentException("Cannot connect to MoMo payment gateway: " + e.getMessage());
+            throw new PaymentException("Không thể kết nối đến cổng thanh toán MoMo: " + e.getMessage());
         }
     }
 
