@@ -7,8 +7,8 @@ import lombok.Data;
 @Data
 public class UpdateCartItemRequest {
 
-    @NotNull(message = "Product ID is required")
-    private Long productId;
+    @NotNull(message = "Variant ID is required")
+    private Long variantId;
 
     @Min(value = 1, message = "Quantity must be at least 1")
     private Integer quantity;
