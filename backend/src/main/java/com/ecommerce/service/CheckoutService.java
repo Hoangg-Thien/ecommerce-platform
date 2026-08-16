@@ -81,19 +81,20 @@ public class CheckoutService {
         BigDecimal totalPrice = BigDecimal.ZERO;
 
         for(CartItem cartItem : cart.getItems()){
-            Product product = cartItem.getProduct();
+            Product product = cartItem.getProductVariant().getProduct();
 
             // validate stock
-            if(product.getStock() < cartItem.getQuantity()){
+            if(cartItem.getProductVariant().getStock() < cartItem.getQuantity()){
                 log.warn("Checkout rejected: Product '{}' out of stock (requested: {}, available: {})",
-                product.getName(), cartItem.getQuantity(), product.getStock());
-                throw new IllegalArgumentException("Not enough stock for product: " + product.getName());
+                product.getName(), cartItem.getQuantity(), cartItem.getProductVariant().getStock());
+                throw new IllegalArgumentException("Not enough stock for product: " + product.getName() + " Size: " + cartItem.getProductVariant().getSize());
             }
 
             // tao orderItem
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(order);
             orderItem.setProduct(product);
+            orderItem.setSize(cartItem.getProductVariant().getSize()); // set snapshot size
             orderItem.setQuantity(cartItem.getQuantity());
             orderItem.setPrice(product.getPrice());
             order.getItems().add(orderItem);

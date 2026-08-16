@@ -13,7 +13,10 @@ import lombok.NoArgsConstructor;
 public class OrderItemResponse {
     private Long id;
     private Long productId;
+    private Long variantId;
     private String productName;
+    private String imageUrl;
+    private String size;
     private Integer quantity;
     private BigDecimal price;
     private BigDecimal subTotal;

@@ -72,10 +72,16 @@ public class OrderService {
         if (stockWasDeducted) {
             for (OrderItem orderItem : order.getItems()) {
                     Product product = orderItem.getProduct();
-                    product.setStock(product.getStock() + orderItem.getQuantity());
-                    productRepository.save(product);
-                    log.info("Restocked {} units for product '{}' (id={}) due to order cancellation",
-                    orderItem.getQuantity(), product.getName(), product.getId());
+                    com.ecommerce.entity.ProductVariant variant = product.getVariants().stream()
+                            .filter(v -> v.getSize().equals(orderItem.getSize()))
+                            .findFirst()
+                            .orElse(null);
+                    if (variant != null) {
+                        variant.setStock(variant.getStock() + orderItem.getQuantity());
+                        productRepository.save(product);
+                        log.info("Restocked {} units for product '{}' (size={}, id={}) due to order cancellation",
+                        orderItem.getQuantity(), product.getName(), variant.getSize(), product.getId());
+                    }
                 }
             }
         }
