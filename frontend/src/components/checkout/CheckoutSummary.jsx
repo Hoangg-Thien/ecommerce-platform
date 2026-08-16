@@ -2,7 +2,7 @@ import { Lock } from 'lucide-react';
 import Button from '../ui/Button';
 import './CheckoutSummary.css';
 
-export default function CheckoutSummary({ cartItems, subtotal, shippingFee, onCompleteOrder, isProcessing }) {
+export default function CheckoutSummary({ cartItems, subtotal, shippingFee, onCompleteOrder, isProcessing, isFormValid = true }) {
   const total = subtotal + shippingFee;
 
   const formatPrice = (price) => {
@@ -57,12 +57,18 @@ export default function CheckoutSummary({ cartItems, subtotal, shippingFee, onCo
       <Button 
         variant="primary" 
         onClick={onCompleteOrder}
-        disabled={isProcessing}
+        disabled={isProcessing || !isFormValid}
         isLoading={isProcessing}
         className="complete-order-btn"
       >
         <span>Hoàn tất đặt hàng</span>
       </Button>
+
+      {!isFormValid && (
+        <p style={{ color: '#ef4444', fontSize: '13px', marginTop: '12px', textAlign: 'center', fontWeight: '500' }}>
+          Vui lòng điền đầy đủ thông tin để tiếp tục.
+        </p>
+      )}
     </div>
   );
 }

@@ -1,223 +1,105 @@
 .payment-result-page {
-  width: 100%;
-  min-height: calc(100vh - 72px - 100px); /* Adjust for header and footer */
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
-  padding: 40px var(--space-gutter-mobile);
-  background-color: #F8F9FA; /* Light gray background */
+  align-items: center;
+  min-height: calc(100vh - 80px);
+  background-color: #f9fafb;
+  padding: 40px 20px;
 }
 
 .payment-result-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  padding: 48px;
+  max-width: 480px;
   width: 100%;
-  max-width: 460px;
-  background-color: #FFFFFF;
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
-  padding: 48px 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
+  text-align: center;
+  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Hero Icon (MoMo + Status) */
-.payment-hero-icon {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px; /* Khoảng cách giữa logo và icon trạng thái */
-}
-
-.provider-logo {
-  width: 72px;
-  height: 72px;
-  border-radius: 16px;
-  display: block;
-  object-fit: cover;
-}
-
-/* Status Icon */
-.status-badge {
-  display: flex;
-  justify-content: center;
-}
-
-.status-icon-wrapper {
-  width: 56px;
-  height: 56px;
+.result-icon-wrapper {
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 0 auto 24px;
 }
 
-.status-icon-inner {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #FFFFFF;
+.result-icon-wrapper.success {
+  background-color: #dcfce7;
+  color: #16a34a;
 }
 
-.status-icon-wrapper.success {
-  background-color: #5290ee;
-}
-.status-icon-wrapper.success .status-icon-inner {
-  background-color: #0A52FF;
+.result-icon-wrapper.failed {
+  background-color: #fee2e2;
+  color: #dc2626;
 }
 
-.status-icon-wrapper.failure {
-  background-color: #eba5a5;
-}
-.status-icon-wrapper.failure .status-icon-inner {
-  background-color: #E53935;
+.result-icon-wrapper.pending {
+  background-color: #fef9c3;
+  color: #ca8a04;
 }
 
-.status-icon-wrapper.loading{
-  background-color: #9b9da4;
-}
-
-.status-icon-wrapper.loading .status-icon-inner{
-  background-color: #6B6B6B;
-}
-
-.status-icon-wrapper.refunded {
-  background-color: #0ea84e;
-}
-
-.status-icon-wrapper.refunded .status-icon-inner {
-  background-color: #06ec5e4a;
-}
-
-/* Title & Amount */
-.payment-title {
-  font-family: var(--font-display);
+.result-title {
   font-size: 24px;
   font-weight: 700;
-  color: var(--color-ink-deep);
-  margin-top: 24px;
-  margin-bottom: 8px;
-  text-align: center;
+  color: #111827;
+  margin-bottom: 12px;
 }
 
-.payment-amount {
-  font-family: var(--font-display);
-  font-size: 36px;
-  font-weight: 800;
+.result-message {
+  font-size: 15px;
+  color: #4b5563;
   margin-bottom: 32px;
-  text-align: center;
+  line-height: 1.6;
 }
 
-/* Details Box */
-.payment-details-box {
-  width: 100%;
-  border: 1px solid var(--color-border-soft);
-  border-radius: 8px;
-  padding: 16px 20px;
-  margin-bottom: 40px;
-}
-
-.payment-detail-row {
+.result-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.detail-label {
-  color: #6B6B6B;
-  font-size: var(--text-body-md);
-  font-weight: 500;
-}
-
-.detail-value {
-  color: var(--color-ink-deep);
-  font-size: var(--text-body-md);
-  font-weight: 700;
-}
-
-.payment-detail-divider {
-  height: 1px;
-  background-color: var(--color-border-soft);
-  margin: 16px 0;
-}
-
-/* Action Button */
-.payment-action {
-  width: 100%;
-}
-
-.payment-btn {
-  width: 100%;
-  height: 48px;
-  font-size: var(--text-body-md);
-  border-radius: 8px;
-}
-
-/* Dev State Toggles */
-.dev-state-toggles {
-  margin-top: 40px;
-  display: flex;
+  flex-direction: column;
   gap: 12px;
-  flex-wrap: wrap;
+}
+
+.result-actions .btn {
+  width: 100%;
   justify-content: center;
 }
 
-.dev-toggle {
-  padding: 6px 16px;
-  border-radius: 4px;
-  font-size: 13px;
-  font-weight: 600;
-  background-color: #F0F0F0;
-  color: #666;
-  border: 1px solid transparent;
-  transition: all 0.2s;
+/* Spinner for pending state */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(202, 138, 4, 0.2);
+  border-left-color: #ca8a04;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
-.dev-toggle:hover {
-  background-color: #E2E2E2;
-}
-
-.dev-toggle.active {
-  border-color: rgba(0,0,0,0.2);
-}
-
-.dev-toggle.default.active {
-  background-color: #EAEFFF;
-}
-
-.dev-toggle.success {
-  background-color: #EAEFFF;
-  color: #0A52FF;
-}
-.dev-toggle.success.active {
-  background-color: #D6E4FF;
-}
-
-.dev-toggle.failure {
-  background-color: #FFE9E9;
-  color: #E53935;
-}
-.dev-toggle.failure.active {
-  background-color: #FFCDD2;
-}
-
-.dev-toggle.refunded {
-  background-color: #9ceeaf; 
-}
-.dev-toggle.refunded.active {
-  background-color: #9ceeaf;
-}
-
-@media (max-width: 600px) {
-  .payment-result-page {
-    padding: 32px 16px;
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
   }
-  
-  .payment-result-card {
-    padding: 32px 24px;
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes slideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 640px) {
+  .result-actions {
+    flex-direction: row;
   }
 }

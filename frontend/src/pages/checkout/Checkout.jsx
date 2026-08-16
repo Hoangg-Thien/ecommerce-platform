@@ -23,7 +23,7 @@ export default function Checkout() {
   });
 
   const [shippingMethod, setShippingMethod] = useState('standard');
-  const [paymentMethod, setPaymentMethod] = useState('COD');
+  const [paymentMethod, setPaymentMethod] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -88,6 +88,9 @@ export default function Checkout() {
     quantity: item.quantity
   }));
 
+  // Kiểm tra xem tất cả các field đã được nhập và phương thức thanh toán đã được chọn chưa
+  const isFormValid = Object.values(formData).every(value => value.trim() !== '') && paymentMethod !== '';
+
   return (
     <MainLayout>
       <div className="checkout-page">
@@ -116,6 +119,7 @@ export default function Checkout() {
                 shippingFee={shippingFee}
                 onCompleteOrder={handlePlaceOrder}
                 isProcessing={isProcessing}
+                isFormValid={isFormValid}
               />
             </div>
           </div>
