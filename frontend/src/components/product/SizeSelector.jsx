@@ -1,6 +1,8 @@
 import './SizeSelector.css';
 
-export default function SizeSelector({ sizes, selectedSize, onSelectSize }) {
+export default function SizeSelector({ variants, selectedSize, onSelectSize }) {
+  if (!variants || variants.length === 0) return null;
+
   return (
     <div className="size-selector-container">
       <div className="size-selector-header">
@@ -8,15 +10,20 @@ export default function SizeSelector({ sizes, selectedSize, onSelectSize }) {
       </div>
       
       <div className="size-grid">
-        {sizes.map((size) => (
-          <button
-            key={size}
-            className={`size-btn ${selectedSize === size ? 'size-btn-active' : ''}`}
-            onClick={() => onSelectSize(size)}
-          >
-            {size}
-          </button>
-        ))}
+        {variants.map((variant) => {
+          const isDisabled = variant.stock === 0;
+          return (
+            <button
+              key={variant.id || variant.size}
+              className={`size-btn ${selectedSize === variant.size ? 'size-btn-active' : ''} ${isDisabled ? 'size-btn-disabled' : ''}`}
+              onClick={() => !isDisabled && onSelectSize(variant.size)}
+              disabled={isDisabled}
+              title={isDisabled ? 'Hết hàng' : `Còn ${variant.stock} sản phẩm`}
+            >
+              {variant.size}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

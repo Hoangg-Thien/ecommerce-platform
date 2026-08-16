@@ -32,6 +32,14 @@ export default function ProductDetail() {
       try {
         const data = await productApi.getProductById(id);
         setProduct(data);
+        if (data.variants && data.variants.length > 0) {
+          const availableVariant = data.variants.find(v => v.stock > 0);
+          if (availableVariant) {
+            setSelectedSize(availableVariant.size);
+          } else {
+            setSelectedSize(data.variants[0].size); // Fallback to first if all out of stock
+          }
+        }
       } catch (error) {
         console.error('Lỗi khi tải chi tiết', error);
         showToast('Sản phẩm không tồn tại!', 'error');
@@ -99,27 +107,29 @@ export default function ProductDetail() {
           </div>
 
           <div className="product-info-col">
-            <span className="product-category">Thời Trang</span>
+            <span className="product-category">{product.categoryName || 'Sản phẩm'}</span>
             <h1 className="product-title">{product.name}</h1>
             <div className="product-price">{formatPrice(product.price)}</div>
 
             <p className="product-desc">{product.description}</p>
 
-            {product.stockQuantity > 0 && product.stockQuantity <= 5 && (
+            {product.stock > 0 && product.stock <= 5 && (
               <div className="stock-warning">
                 <Clock size={16} />
-                Chỉ còn {product.stockQuantity} sản phẩm
+                Chỉ còn {product.stock} sản phẩm
               </div>
             )}
 
             {/* Giả định sản phẩm có size, nếu không có thì ẩn đi */}
-            <div className="product-options">
-              <SizeSelector
-                sizes={['40', '41', '42', '43', '44']}
-                selectedSize={selectedSize}
-                onSelectSize={setSelectedSize}
-              />
-            </div>
+            {product.variants && product.variants.length > 0 && (
+              <div className="product-options">
+                <SizeSelector
+                  variants={product.variants}
+                  selectedSize={selectedSize}
+                  onSelectSize={setSelectedSize}
+                />
+              </div>
+            )}
 
             <div className="product-actions">
               <div className="qty-selector-lg">

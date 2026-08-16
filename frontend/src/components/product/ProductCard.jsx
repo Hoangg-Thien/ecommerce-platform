@@ -62,9 +62,10 @@ export default function ProductCard({ product }) {
           className="add-to-cart-btn" 
           aria-label="Thêm vào giỏ"
           onClick={handleAddToCart}
+          disabled={product.stock === 0}
         >
           <ShoppingCart size={18} className="btn-icon" />
-          Thêm vào giỏ
+          {product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ'}
         </Button>
       </div>
       
