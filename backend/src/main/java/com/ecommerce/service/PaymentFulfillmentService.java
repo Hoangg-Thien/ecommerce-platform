@@ -8,6 +8,7 @@ import com.ecommerce.entity.Order;
 import com.ecommerce.entity.OrderItem;
 import com.ecommerce.entity.Payment;
 import com.ecommerce.entity.Product;
+import com.ecommerce.entity.ProductVariant;
 import com.ecommerce.enums.OrderStatus;
 import com.ecommerce.enums.PaymentStatus;
 import com.ecommerce.repository.CartRepository;
@@ -38,10 +39,8 @@ public class PaymentFulfillmentService {
         // VALIDATE STOCK TRƯỚC TIÊN
         for (OrderItem orderItem : order.getItems()) {
             Product product = orderItem.getProduct();
-            com.ecommerce.entity.ProductVariant variant = product.getVariants().stream()
-                    .filter(v -> v.getSize().equals(orderItem.getSize()))
-                    .findFirst()
-                    .orElse(null);
+            ProductVariant variant = product.getVariantBySize(orderItem.getSize())
+            .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy size: " + orderItem.getSize()));
 
             if (variant == null || variant.getStock() < orderItem.getQuantity()) {
                 log.warn("Out of stock during IPN process for Order {}. Product: {}, Required: {}, Available: {}",
@@ -80,10 +79,8 @@ public class PaymentFulfillmentService {
         // Trừ stock
         for (OrderItem orderItem : order.getItems()) {
             Product product = orderItem.getProduct();
-            com.ecommerce.entity.ProductVariant variant = product.getVariants().stream()
-                    .filter(v -> v.getSize().equals(orderItem.getSize()))
-                    .findFirst()
-                    .orElse(null);
+            ProductVariant variant = product.getVariantBySize(orderItem.getSize())
+            .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy size: " + orderItem.getSize()));
             if (variant != null) {
                 variant.setStock(variant.getStock() - orderItem.getQuantity());
                 productRepository.save(product);
