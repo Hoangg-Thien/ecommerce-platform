@@ -4,8 +4,10 @@ import com.ecommerce.dto.request.LoginRequest;
 import com.ecommerce.dto.request.RegisterRequest;
 import com.ecommerce.dto.response.AuthResponse;
 import com.ecommerce.dto.response.UserResponse;
+import com.ecommerce.entity.User;
 import com.ecommerce.exception.InvalidTokenException;
 import com.ecommerce.service.JwtService;
+import com.ecommerce.service.RefreshTokenService;
 import com.ecommerce.service.UserService;
 
 import jakarta.servlet.http.Cookie;
@@ -34,6 +36,10 @@ public class AuthController {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
+    private final RefreshTokenService refreshTokenService;
+
+    @org.springframework.beans.factory.annotation.Value("${application.security.jwt.refresh-token.expiration:604800000}")
+    private long refreshExpiration;
 
     private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken){
         Cookie cookie = new Cookie("refreshToken", refreshToken);
@@ -56,6 +62,9 @@ public class AuthController {
 
         String accessToken = jwtService.generateToken(userDetails);
         String refreshToken = jwtService.generateRefreshToken(userDetails);
+
+        User user = userService.findByEmail(userRespone.getEmail());
+        refreshTokenService.createRefreshToken(user, refreshToken, refreshExpiration);
 
         // set cookie
         setRefreshTokenCookie(response, refreshToken);
@@ -92,7 +101,9 @@ public class AuthController {
         setRefreshTokenCookie(response, refreshToken);
         
         // Fetch user from DB to get ID and roles
-        com.ecommerce.entity.User user = userService.findByEmail(request.getEmail());
+        User user = userService.findByEmail(request.getEmail());
+
+        refreshTokenService.createRefreshToken(user, refreshToken, refreshExpiration);
         
         // Return AuthRespone
         AuthResponse authRespone = AuthResponse.builder()
@@ -115,6 +126,8 @@ public class AuthController {
         if(refreshToken == null){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
+        refreshTokenService.verifyNotRevoked(refreshToken);
 
         // Extract email from refresh token
         String userEmail;
@@ -147,4 +160,6 @@ public class AuthController {
 
         return ResponseEntity.ok(authResponse);
     }
+
+    
 }
