@@ -44,7 +44,6 @@ export default function Header() {
 
           <nav className={`desktop-nav ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
             <Link to="/" className="nav-link active" onClick={() => setIsMobileMenuOpen(false)}>Sản phẩm</Link>
-            <Link to="#" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>Khuyến mãi</Link>
             <Link to="#" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>Về chúng tôi</Link>
           </nav>
 

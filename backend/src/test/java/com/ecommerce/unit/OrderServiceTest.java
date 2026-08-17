@@ -178,4 +178,18 @@ class OrderServiceTest {
         assertEquals(12, product.getVariants().get(0).getStock());
         verify(productRepository, times(1)).save(product);
     }
+
+    @Test
+    void getOrderById_WhenUserDoesNotOwnOrder_ShouldThrowUnauthorizedAccessException() {
+        Order order = new Order();
+        order.setId(100L);
+        User owner = new User();
+        owner.setEmail("owner@gmail.com");
+        order.setUser(owner);
+
+        when(orderRepository.findById(100L)).thenReturn(Optional.of(order));
+
+        assertThrows(com.ecommerce.exception.UnauthorizedAccessException.class, 
+                () -> orderService.getOrderById(100L, "hacker@gmail.com"));
+    }
 }
