@@ -6,7 +6,7 @@ export default function CategoryChips({ categories, activeCategory, onSelectCate
       {categories.map((category) => (
         <button
           key={category.id}
-          className={`chip ${activeCategory === category.id ? 'chip-active' : ''}`}
+          className={`chip ${String(activeCategory) === String(category.id) ? 'chip-active' : ''}`}
           onClick={() => onSelectCategory(category.id)}
         >
           {category.name}

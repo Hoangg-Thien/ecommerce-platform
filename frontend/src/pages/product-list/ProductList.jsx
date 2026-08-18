@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
 import ProductCard from '../../components/product/ProductCard';
 import CategoryChips from '../../components/product/CategoryChips';
@@ -12,8 +13,11 @@ export default function ProductList() {
   const [categories, setCategories] = useState([{ id: '', name: 'Tất cả sản phẩm' }]);
   
   // Các state để fetch API
-  const [activeCategoryId, setActiveCategoryId] = useState(''); // Rỗng = tất cả
-  const [currentPage, setCurrentPage] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeCategoryId = searchParams.get('category') || '';
+  const urlPage = parseInt(searchParams.get('page') || '1', 10);
+  const currentPage = urlPage > 0 ? urlPage - 1 : 0;
+
   const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -59,8 +63,20 @@ export default function ProductList() {
 
   // Handler khi click chọn category khác
   const handleCategorySelect = (categoryId) => {
-    setActiveCategoryId(categoryId);
-    setCurrentPage(0); // Reset về trang 1 khi đổi danh mục
+    const params = new URLSearchParams(searchParams);
+    if (categoryId) {
+      params.set('category', categoryId.toString());
+    } else {
+      params.delete('category');
+    }
+    params.set('page', '1'); // Reset về trang 1
+    setSearchParams(params);
+  };
+
+  const handlePageChange = (newPage) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', (newPage + 1).toString());
+    setSearchParams(params);
   };
 
   return (
@@ -102,7 +118,7 @@ export default function ProductList() {
               <Pagination 
                 currentPage={currentPage}
                 totalPages={totalPages}
-                onPageChange={setCurrentPage}
+                onPageChange={handlePageChange}
               />
             </>
           )}
