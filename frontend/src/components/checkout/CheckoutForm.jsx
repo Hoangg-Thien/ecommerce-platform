@@ -56,16 +56,6 @@ export default function CheckoutForm({ formData, onChange, shippingMethod, setSh
                 onChange={onChange}
               />
             </div>
-            
-            <div className="form-group-half">
-              <Input
-                label="Thành phố"
-                name="city"
-                placeholder="Tên thành phố"
-                value={formData.city}
-                onChange={onChange}
-              />
-            </div>
 
             <div className="form-group-half">
               <Input
@@ -73,6 +63,16 @@ export default function CheckoutForm({ formData, onChange, shippingMethod, setSh
                 name="ward"
                 placeholder="Tên phường/xã"
                 value={formData.ward}
+                onChange={onChange}
+              />
+            </div>
+            
+            <div className="form-group-half">
+              <Input
+                label="Thành phố"
+                name="city"
+                placeholder="Tên thành phố"
+                value={formData.city}
                 onChange={onChange}
               />
             </div>

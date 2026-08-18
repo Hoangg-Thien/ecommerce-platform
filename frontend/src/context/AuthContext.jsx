@@ -60,10 +60,16 @@ export const AuthProvider = ({children}) => {
         localStorage.setItem('user', JSON.stringify(userData));
     };
 
-    const logout = () => {
-    setUser(null);
-    setAccessToken(null);
-    localStorage.removeItem('user');
+    const logout = async () => {
+        try {
+            await authApi.logout();
+        } catch (error) {
+            console.error("Logout API failed, forcing local logout", error);
+        } finally {
+            setUser(null);
+            setAccessToken(null);
+            localStorage.removeItem('user');
+        }
     };
 
     return(
