@@ -94,7 +94,15 @@ export default function OrderList() {
                           <div className="order-images-stack">
                             {order.items && order.items.slice(0, 3).map((item, index) => (
                               <div key={item.id} className="order-item-img-wrapper" style={{ zIndex: 3 - index }}>
-                                <div style={{width: '60px', height: '60px', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', fontSize: '24px'}}>📦</div>
+                                {item.imageUrl ? (
+                                  <img 
+                                    src={item.imageUrl} 
+                                    alt={item.productName} 
+                                    style={{width: '60px', height: '60px', borderRadius: '4px', objectFit: 'cover', border: '1px solid var(--color-border-soft)'}}
+                                  />
+                                ) : (
+                                  <div style={{width: '60px', height: '60px', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', fontSize: '24px'}}>📦</div>
+                                )}
                               </div>
                             ))}
                             {order.items && totalItems > order.items.length && (
@@ -163,7 +171,11 @@ export default function OrderList() {
               <div className="order-modal-items">
                 {selectedOrder.items && selectedOrder.items.map(item => (
                   <div key={item.id} className="order-modal-item">
-                    <div className="order-modal-item-icon">📦</div>
+                    {item.imageUrl ? (
+                      <img src={item.imageUrl} alt={item.productName} className="order-modal-item-image" />
+                    ) : (
+                      <div className="order-modal-item-icon">📦</div>
+                    )}
                     <div className="order-modal-item-details">
                       <div className="order-modal-item-name">{item.productName}</div>
                       <div className="order-modal-item-price-qty">
