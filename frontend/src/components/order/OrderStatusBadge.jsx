@@ -27,7 +27,7 @@ export default function OrderStatusBadge({ status }) {
   }
 
   return (
-    <div style={{
+    <span style={{
       display: 'inline-flex',
       alignItems: 'center',
       gap: '6px',
@@ -40,6 +40,6 @@ export default function OrderStatusBadge({ status }) {
     }}>
       {config.icon}
       <span>{config.label}</span>
-    </div>
+    </span>
   );
 }

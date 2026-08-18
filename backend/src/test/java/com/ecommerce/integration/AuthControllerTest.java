@@ -26,6 +26,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -57,6 +61,9 @@ class AuthControllerTest {
 
     @MockBean 
     private IdempotencyKeyRepository idempotencyKeyRepository;
+
+    @MockBean
+    private com.ecommerce.service.RefreshTokenService refreshTokenService;
 
     // ==========================================
     // REGISTER TESTS
@@ -283,5 +290,28 @@ class AuthControllerTest {
     void refreshToken_WhenTokenMissing_ShouldReturn401Unauthorized() throws Exception {
         mockMvc.perform(post("/api/v1/auth/refresh"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    // ==========================================
+    // LOGOUT TESTS
+    // ==========================================
+
+    @Test
+    void logout_WithRefreshToken_ShouldRevokeTokenAndClearCookie() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .cookie(new jakarta.servlet.http.Cookie("refreshToken", "valid-refresh-token")))
+                .andExpect(status().isOk())
+                .andExpect(cookie().maxAge("refreshToken", 0));
+                
+        verify(refreshTokenService, times(1)).revokeToken("valid-refresh-token");
+    }
+
+    @Test
+    void logout_WithoutRefreshToken_ShouldClearCookieAndNotCallRevoke() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/logout"))
+                .andExpect(status().isOk())
+                .andExpect(cookie().maxAge("refreshToken", 0));
+                
+        verify(refreshTokenService, never()).revokeToken(anyString());
     }
 }

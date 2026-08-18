@@ -46,7 +46,7 @@ public class RefreshTokenService {
     }
 
     // huy token khi user logout
-    public void RevokeToken(String rawToken){
+    public void revokeToken(String rawToken){
 
         String hash = hashToken(rawToken);
         refreshTokenRepository.findByTokenHash(hash).ifPresent(rt -> {

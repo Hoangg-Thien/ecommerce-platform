@@ -181,7 +181,7 @@ public class AuthController {
         // revoke token trong db neu trinh duyen gui cookie len
         if(refreshToken != null){
             try {
-                refreshTokenService.RevokeToken(refreshToken);
+                refreshTokenService.revokeToken(refreshToken);
             } catch (Exception e) {
             }
         }
