@@ -1,5 +1,7 @@
 package com.ecommerce.dto.request;
 
+import java.util.List;
+
 import com.ecommerce.enums.PaymentMethod;
 
 import jakarta.validation.constraints.NotBlank;
@@ -36,4 +38,6 @@ public class CheckoutRequest {
 
     @NotNull(message = "Payment method is required")
     private PaymentMethod paymentMethod = PaymentMethod.COD; // default COD
+
+    private List<Long> cartItemIds;
 }

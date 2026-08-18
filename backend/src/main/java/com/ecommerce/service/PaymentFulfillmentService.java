@@ -1,9 +1,13 @@
 package com.ecommerce.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ecommerce.entity.Cart;
+import com.ecommerce.entity.CartItem;
 import com.ecommerce.entity.Order;
 import com.ecommerce.entity.OrderItem;
 import com.ecommerce.entity.Payment;
@@ -90,8 +94,15 @@ public class PaymentFulfillmentService {
         // Xóa cart (xóa các CartItem trong database)
         Cart cart = cartRepository.findByUserId(order.getUser().getId()).orElse(null);
         if (cart != null) {
-            cartItemRepository.deleteAll(cart.getItems());
-            cart.getItems().clear(); // Clear the collection in memory for consistency
+           List <CartItem> itemsToRemove = cart.getItems().stream()
+           .filter(cartItem -> order.getItems().stream().anyMatch(
+            orderItem -> orderItem.getProduct().getId().equals(cartItem.getProductVariant().getProduct().getId())
+            && orderItem.getSize().equals(cartItem.getProductVariant().getSize())
+           )
+        ).collect(Collectors.toList());
+
+        cartItemRepository.deleteAll(itemsToRemove);
+        cart.getItems().removeAll(itemsToRemove);
         }
 
         log.info("Payment SUCCESS for order {}. TransactionId: {}", order.getId(), transactionId);

@@ -1,9 +1,13 @@
 package com.ecommerce.service.payment;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Component;
 
 import com.ecommerce.dto.response.CheckoutResponse;
 import com.ecommerce.entity.Cart;
+import com.ecommerce.entity.CartItem;
 import com.ecommerce.entity.Order;
 import com.ecommerce.entity.OrderItem;
 import com.ecommerce.entity.Payment;
@@ -64,8 +68,15 @@ public class CodPaymentStrategy implements PaymentStrategy{
         }
 
         // xoa cart sau khi dat hang thanh cong
-        cartItemRepository.deleteAll(cart.getItems());
-        cart.getItems().clear();
+        List <CartItem> itemsToRemove = cart.getItems().stream()
+        .filter(cartItem -> savedOrder.getItems().stream().anyMatch(
+            orderItem -> orderItem.getProduct().getId().equals(cartItem.getProductVariant().getProduct().getId())
+            && orderItem.getSize().equals(cartItem.getProductVariant().getSize())
+            )
+        ).collect(Collectors.toList());
+
+        cartItemRepository.deleteAll(itemsToRemove);
+        cart.getItems().removeAll(itemsToRemove);
         
         log.info("COD order processed successfully: orderId={}, paymentId={}, status={}",
         savedOrder.getId(), savedPayment.getId(), savedOrder.getStatus());

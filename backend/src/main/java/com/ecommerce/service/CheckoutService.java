@@ -81,6 +81,12 @@ public class CheckoutService {
         BigDecimal totalPrice = BigDecimal.ZERO;
 
         for(CartItem cartItem : cart.getItems()){
+            if(request.getCartItemIds() != null 
+            && !request.getCartItemIds().isEmpty() 
+            && !request.getCartItemIds().contains(cartItem.getId())) {{
+                continue;
+            }}
+
             Product product = cartItem.getProductVariant().getProduct();
 
             // validate stock
