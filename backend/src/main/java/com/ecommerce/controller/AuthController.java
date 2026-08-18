@@ -161,5 +161,34 @@ public class AuthController {
         return ResponseEntity.ok(authResponse);
     }
 
-    
+    // ham phu tro de xoa cookie
+    private void cleanRefreshTokenCookies(HttpServletResponse response){
+
+      Cookie cookie = new Cookie("refreshToken", null);
+      cookie.setHttpOnly(true);
+      cookie.setSecure(false); // dat true neu chay https(prod)
+
+      cookie.setPath("/api/v1/auth/refresh");
+      cookie.setMaxAge(0);
+      response.addCookie(cookie);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(
+        @CookieValue(name = "refreshToken", required = false) String refreshToken,
+        HttpServletResponse response
+    ){
+        // revoke token trong db neu trinh duyen gui cookie len
+        if(refreshToken != null){
+            try {
+                refreshTokenService.RevokeToken(refreshToken);
+            } catch (Exception e) {
+            }
+        }
+
+        // phan hoi va bat trinh duyet xoa cookie
+        cleanRefreshTokenCookies(response);
+
+        return ResponseEntity.ok().build();
+    }
 }
