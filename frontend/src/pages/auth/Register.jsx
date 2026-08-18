@@ -4,7 +4,6 @@ import AuthLayout from '../../components/auth/AuthLayout';
 import Input from '../../components/ui/Input';
 import PasswordInput from '../../components/auth/PasswordInput';
 import Button from '../../components/ui/Button';
-import SocialButton from '../../components/auth/SocialButton';
 import '../../components/auth/Auth.css';
 import { useAuth } from '../../context/AuthContext';
 
@@ -17,6 +16,7 @@ export default function Register() {
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -63,8 +63,7 @@ export default function Register() {
       setIsLoading(true);
       try {
         await register({ email: formData.email, password: formData.password });
-        alert('Đăng ký thành công!');
-        navigate('/');
+        setIsRegistered(true);
       } catch (err) {
         setErrors((prev) => ({ 
           ...prev, 
@@ -79,6 +78,21 @@ export default function Register() {
   const handleGoogleLogin = () => {
     alert('Giả lập đăng ký bằng Google');
   };
+
+  if (isRegistered) {
+    return (
+      <AuthLayout>
+        <div className="auth-header">
+          <h1 className="auth-title" style={{ color: '#10b981' }}>Đăng ký thành công!</h1>
+          <p className="auth-subtitle" style={{ marginTop: '16px' }}>
+            <Link to="/login" className="auth-link" style={{ fontSize: '1.1rem', fontWeight: '500' }}>
+              Vui lòng đăng nhập để tiếp tục
+            </Link>
+          </p>
+        </div>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout>
@@ -143,8 +157,6 @@ export default function Register() {
       </form>
 
       <div className="auth-divider">Hoặc</div>
-
-      <SocialButton provider="google" onClick={handleGoogleLogin} disabled={isLoading} />
 
       <div className="auth-redirect">
         Đã có tài khoản? <Link to="/login" className="auth-link">Đăng nhập</Link>

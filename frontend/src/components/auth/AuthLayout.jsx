@@ -1,4 +1,5 @@
 import './AuthLayout.css';
+import backgroundImage from '../../assets/images/background.jpg';
 
 export default function AuthLayout({ children }) {
   return (
@@ -10,18 +11,14 @@ export default function AuthLayout({ children }) {
       </div>
       <div className="auth-visual-container">
         <img 
-          src="/assets/images/auth-hero-placeholder.jpg" 
+          src={backgroundImage} 
           alt="Brand Visual" 
-          className="auth-hero-image"
+          className="background-image"
           onError={(e) => {
             e.target.style.display = 'none';
             e.target.parentElement.classList.add('fallback-bg');
           }}
         />
-        <div className="auth-visual-overlay">
-          <h2 className="auth-visual-title">Discover Kinetic Energy</h2>
-          <p className="auth-visual-subtitle">Your premium tech-forward e-commerce experience starts here.</p>
-        </div>
       </div>
     </div>
   );

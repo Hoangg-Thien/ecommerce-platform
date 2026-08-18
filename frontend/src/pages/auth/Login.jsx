@@ -4,7 +4,6 @@ import AuthLayout from '../../components/auth/AuthLayout';
 import Input from '../../components/ui/Input';
 import PasswordInput from '../../components/auth/PasswordInput';
 import Button from '../../components/ui/Button';
-import SocialButton from '../../components/auth/SocialButton';
 import '../../components/auth/Auth.css';
 import { useAuth } from '../../context/AuthContext';
 
@@ -119,8 +118,6 @@ export default function Login() {
       </form>
 
       <div className="auth-divider">Hoặc</div>
-
-      <SocialButton provider="google" onClick={handleGoogleLogin} disabled={isLoading} />
 
       <div className="auth-redirect">
         Chưa có tài khoản? <Link to="/register" className="auth-link">Đăng ký ngay</Link>
