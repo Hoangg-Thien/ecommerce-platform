@@ -145,6 +145,7 @@ class MomoIpnServiceTest {
         cart.setItems(new ArrayList<>());
         CartItem cartItem = new CartItem();
         cartItem.setCart(cart);
+        cartItem.setProductVariant(variant);
         cart.getItems().add(cartItem);
 
         when(momoService.verifySignature(ipnSuccess)).thenReturn(true);
