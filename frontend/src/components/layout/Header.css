@@ -190,6 +190,9 @@
   .header-container {
     padding: 24px var(--space-gutter-desktop);
   }
+  .desktop-nav {
+    display: none !important;
+  }
 }
 
 @media (max-width: 900px) {

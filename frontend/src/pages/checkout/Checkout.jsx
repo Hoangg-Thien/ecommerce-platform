@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
 import CheckoutForm from '../../components/checkout/CheckoutForm';
 import CheckoutSummary from '../../components/checkout/CheckoutSummary';
@@ -10,7 +10,9 @@ import './Checkout.css';
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const { cart, isLoading: isCartLoading, fetchCart, clearCart } = useCart();
+  const { cart, isLoading: isCartLoading, fetchCart } = useCart();
+  const location = useLocation();
+  const selectedItems = location.state?.selectedItems || [];
 
   const [formData, setFormData] = useState({
     email: '',
@@ -49,14 +51,15 @@ export default function Checkout() {
         ...formData,
         shippingMethod: shippingMethod,
         shippingFee: shippingMethod === 'express' ? 30000 : 0,
-        paymentMethod: paymentMethod === 'cod' ? 'COD' : (paymentMethod === 'momo' ? 'MOMO' : paymentMethod)
+        paymentMethod: paymentMethod === 'cod' ? 'COD' : (paymentMethod === 'momo' ? 'MOMO' : paymentMethod),
+        cartItemIds: selectedItems
       };
 
       console.log('Sending Idempotency-Key:', idempotencyKey);
       const response = await checkoutApi.checkout(payload, idempotencyKey);
 
       setIsSuccess(true);
-      clearCart(); // Xóa giỏ hàng khỏi state ngay lập tức
+      fetchCart();
 
       // Nếu là COD -> Chuyển thẳng tới trang thành công
       if (payload.paymentMethod === 'COD') {
@@ -76,11 +79,10 @@ export default function Checkout() {
 
   if (!cart) return null;
 
-  const subtotal = cart.totalPrice || 0;
-  const shippingFee = shippingMethod === 'express' ? 30000 : 0;
-
   // Format items for CheckoutSummary
-  const cartItemsFormatted = cart.items.map(item => ({
+  const cartItemsFormatted = cart.items
+  .filter(item => selectedItems.length === 0 || selectedItems.includes(item.id))
+  .map(item => ({
     id: item.id,
     name: item.productName,
     price: item.productPrice,
@@ -88,6 +90,9 @@ export default function Checkout() {
     quantity: item.quantity,
     size: item.size
   }));
+
+  const subtotal = cartItemsFormatted.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const shippingFee = shippingMethod === 'express' ? 30000 : 0;
 
   // Kiểm tra xem tất cả các field đã được nhập và phương thức thanh toán đã được chọn chưa
   const isFormValid = Object.values(formData).every(value => value.trim() !== '') && paymentMethod !== '';

@@ -32,3 +32,9 @@
   color: var(--color-paper-bright);
   opacity: 0.9;
 }
+
+@media (max-width: 767px) {
+  .category-chips-container {
+    display: none !important;
+  }
+}

@@ -1,10 +1,11 @@
 import { ShoppingCart, Search, Menu, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState, userEffect } from 'react';
 import './Header.css';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import ConfirmModal from '../ui/ConfirmModal';
+import categoryApi from '../../api/categoryApi';
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -12,6 +13,19 @@ export default function Header() {
   const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await categoryApi.getAllCategories();
+        setCategories([{ id: '', name: 'Tất cả sản phẩm'}, ...data]);
+      } catch (error) {
+        console.error('Lỗi khi tải danh mục', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const confirmLogout = () => {
     logout();
@@ -43,9 +57,18 @@ export default function Header() {
           </div>
 
           <nav className={`desktop-nav ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-            <Link to="/" className="nav-link active" onClick={() => setIsMobileMenuOpen(false)}>Sản phẩm</Link>
-            <Link to="#" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>Về chúng tôi</Link>
+            {categories.map(category => (
+              <Link 
+                key={category.id || 'all'}
+                to={category.id ? `/?category=${category.id}` : '/'} 
+                className="nav-link" 
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {category.name}
+              </Link>
+            ))}
           </nav>
+
 
           <div className="header-right">
             <div className="search-box">

@@ -18,6 +18,7 @@ export default function Cart() {
   const { showToast } = useToast();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [itemToRemove, setItemToRemove] = useState(null);
+  const [selectedItem, setSelectedItem] = useState([]);
 
   if (!user) {
     return (
@@ -81,12 +82,24 @@ export default function Cart() {
 
   const handleCheckout = () => {
     setIsCheckingOut(true);
-    navigate('/checkout');
+    const idsToPass = selectedItem.length > 0 ? selectedItem : cartItems.map(item => item.id);
+    navigate('/checkout', {state: { selectedItems : idsToPass}});
     setIsCheckingOut(false);
   };
 
+  const handleSelecItem = (id, isChecked) => {
+    if(isChecked){
+      setSelectedItem(prev => [...prev,id]);
+    } else {
+      setSelectedItem(prev => prev.filter(itemId => itemId !== id));
+    }
+  };
+
   const cartItems = cart?.items || [];
-  const subtotal = cart?.totalPrice || 0;
+
+  const itemsToCheckout = selectedItem.length > 0 ? cartItems.filter(item => selectedItem.includes(item.id)) : cartItems;
+  const subtotal = itemsToCheckout.reduce((total, item) => 
+    total + (item.productPrice * item.quantity),0);
 
   const formattedCartItems = cartItems.map(item => ({
     id: item.id,
@@ -121,6 +134,8 @@ export default function Cart() {
                         item={item}
                         onUpdateQuantity={(id, newQty) => handleUpdateQuantity(id, newQty, item.quantity)}
                         onRemove={handleRemoveClick}
+                        isSelected= {selectedItem.includes(item.id)}
+                        onSelect = {handleSelecItem}
                       />
                     ))}
                   </div>

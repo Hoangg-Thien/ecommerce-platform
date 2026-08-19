@@ -26,13 +26,14 @@ export default function OrderSummary({ subtotal, shippingFee = 30000, onCheckout
         
         <div className="summary-row summary-total">
           <span className="summary-label">Tổng cộng</span>
-          <span className="summary-value">{formatPrice(total)}</span>
+          <span className="summary-value">{formatPrice(subtotal)}</span>
         </div>
       </div>
       
-      <Link to="/checkout" className="checkout-btn-wrapper">
+      <div className = "checkout-btn-wrapper">
         <Button 
           variant="primary" 
+          onClick={onCheckout}
           disabled={subtotal === 0 || isCheckingOut}
           isLoading={isCheckingOut}
           className="checkout-btn"
@@ -40,11 +41,7 @@ export default function OrderSummary({ subtotal, shippingFee = 30000, onCheckout
         >
           Tiến hành thanh toán
         </Button>
-      </Link>
-      
-      <p className="summary-note">
-        Thuế và mã giảm giá có thể được áp dụng ở bước tiếp theo.
-      </p>
+      </div>
     </div>
   );
 }

@@ -85,7 +85,7 @@ export default function ProductList() {
         <section className="hero-section">
           <div className="hero-content">
             <h1 className="hero-title">Khám phá Năng lượng Kinetic</h1>
-            <p className="hero-subtitle">Bộ sưu tập thời trang công nghệ mới nhất dành cho bạn.</p>
+            <p className="hero-subtitle">Bộ sưu tập giày thể thao mới nhất dành cho bạn.</p>
           </div>
         </section>
 
