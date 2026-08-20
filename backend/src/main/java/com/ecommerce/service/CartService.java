@@ -1,6 +1,5 @@
 package com.ecommerce.service;
 
-import com.ecommerce.controller.ProductController;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

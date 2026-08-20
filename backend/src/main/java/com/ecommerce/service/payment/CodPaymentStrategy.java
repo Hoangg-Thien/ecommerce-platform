@@ -12,6 +12,7 @@ import com.ecommerce.entity.Order;
 import com.ecommerce.entity.OrderItem;
 import com.ecommerce.entity.Payment;
 import com.ecommerce.entity.Product;
+import com.ecommerce.entity.ProductVariant;
 import com.ecommerce.enums.OrderStatus;
 import com.ecommerce.enums.PaymentMethod;
 import com.ecommerce.enums.PaymentStatus;
@@ -57,10 +58,8 @@ public class CodPaymentStrategy implements PaymentStrategy{
         // tru stock
         for(OrderItem item : savedOrder.getItems()){
             Product product = item.getProduct();
-            com.ecommerce.entity.ProductVariant variant = product.getVariants().stream()
-                    .filter(v -> v.getSize().equals(item.getSize()))
-                    .findFirst()
-                    .orElse(null);
+            ProductVariant variant = product.getVariantBySize(item.getSize())
+            .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy size: " + item.getSize()));
             if (variant != null) {
                 variant.setStock(variant.getStock() - item.getQuantity());
                 productRepository.save(product);

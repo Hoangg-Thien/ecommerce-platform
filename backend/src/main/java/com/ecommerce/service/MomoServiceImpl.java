@@ -27,7 +27,7 @@ public class MomoServiceImpl implements MomoService {
     private final RestTemplate restTemplate;
 
     @Override
-    public String createPaymentUrl(Payment payment){
+    public String createPaymentUrl(Payment payment) {
 
         // Tạo requestId và orderId duy nhất cho mỗi lần thanh toán
         String requestId = UUID.randomUUID().toString();
@@ -45,17 +45,17 @@ public class MomoServiceImpl implements MomoService {
 
         // ===== BƯỚC 1: Tạo chữ ký =====
         String rawHasForCreate = "accessKey=" + momoConfig.getAccessKey()
-        + "&amount=" + amount
-        + "&extraData=" + extraData
-        + "&ipnUrl=" + momoConfig.getIpnUrl()
-        + "&orderId=" + momoOrderId
-        + "&orderInfo=" + orderInfo
-        + "&partnerCode=" + momoConfig.getPartnerCode()
-        + "&redirectUrl=" + momoConfig.getRedirectUrl()
-        + "&requestId=" + requestId
-        + "&requestType=" + requestType;
+                + "&amount=" + amount
+                + "&extraData=" + extraData
+                + "&ipnUrl=" + momoConfig.getIpnUrl()
+                + "&orderId=" + momoOrderId
+                + "&orderInfo=" + orderInfo
+                + "&partnerCode=" + momoConfig.getPartnerCode()
+                + "&redirectUrl=" + momoConfig.getRedirectUrl()
+                + "&requestId=" + requestId
+                + "&requestType=" + requestType;
 
-        String signature = hmacSHA256(rawHasForCreate,momoConfig.getSecretKey());
+        String signature = hmacSHA256(rawHasForCreate, momoConfig.getSecretKey());
 
         // ===== BƯỚC 2: Gửi request lên MoMo =====
         Map<String, Object> requestBody = new LinkedHashMap<>();
@@ -92,26 +92,26 @@ public class MomoServiceImpl implements MomoService {
     }
 
     @Override
-    public boolean verifySignature(MomoIpnRequest request){
+    public boolean verifySignature(MomoIpnRequest request) {
         // verify IPN
         String rawHash = "accessKey=" + momoConfig.getAccessKey()
-            + "&amount=" + request.getAmount().toBigInteger()
-            + "&extraData=" + request.getExtraData()
-            + "&message=" + request.getMessage()
-            + "&orderId=" + request.getOrderId()
-            + "&orderInfo=" + request.getOrderInfo()
-            + "&orderType=" + request.getOrderType()
-            + "&partnerCode=" + request.getPartnerCode()
-            + "&payType=" + request.getPayType()
-            + "&requestId=" + request.getRequestId()
-            + "&responseTime=" + request.getResponseTime()
-            + "&resultCode=" + request.getResultCode()
-            + "&transId=" + request.getTransId();
+                + "&amount=" + request.getAmount().toBigInteger()
+                + "&extraData=" + request.getExtraData()
+                + "&message=" + request.getMessage()
+                + "&orderId=" + request.getOrderId()
+                + "&orderInfo=" + request.getOrderInfo()
+                + "&orderType=" + request.getOrderType()
+                + "&partnerCode=" + request.getPartnerCode()
+                + "&payType=" + request.getPayType()
+                + "&requestId=" + request.getRequestId()
+                + "&responseTime=" + request.getResponseTime()
+                + "&resultCode=" + request.getResultCode()
+                + "&transId=" + request.getTransId();
         String computed = hmacSHA256(rawHash, momoConfig.getSecretKey());
         return computed.equals(request.getSignature());
     }
 
-      // ===== Tính HMAC-SHA256 =====
+    // ===== Tính HMAC-SHA256 =====
     private String hmacSHA256(String data, String key) {
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
@@ -131,8 +131,8 @@ public class MomoServiceImpl implements MomoService {
     }
 
     @Override
-    public void refundPayment(Payment payment){
-        log.info("Calling MoMo Refund API... Amount: {}, Original TransID: {}", 
-        payment.getAmount(), payment.getTransactionId());
+    public void refundPayment(Payment payment) {
+        log.info("Calling MoMo Refund API... Amount: {}, Original TransID: {}",
+                payment.getAmount(), payment.getTransactionId());
     }
 }

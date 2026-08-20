@@ -44,7 +44,7 @@ public class PaymentFulfillmentService {
         for (OrderItem orderItem : order.getItems()) {
             Product product = orderItem.getProduct();
             ProductVariant variant = product.getVariantBySize(orderItem.getSize())
-            .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy size: " + orderItem.getSize()));
+            .orElse(null);
 
             if (variant == null || variant.getStock() < orderItem.getQuantity()) {
                 log.warn("Out of stock during IPN process for Order {}. Product: {}, Required: {}, Available: {}",
@@ -84,7 +84,7 @@ public class PaymentFulfillmentService {
         for (OrderItem orderItem : order.getItems()) {
             Product product = orderItem.getProduct();
             ProductVariant variant = product.getVariantBySize(orderItem.getSize())
-            .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy size: " + orderItem.getSize()));
+            .orElse(null);
             if (variant != null) {
                 variant.setStock(variant.getStock() - orderItem.getQuantity());
                 productRepository.save(product);
