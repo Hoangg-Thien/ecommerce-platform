@@ -64,7 +64,14 @@ public class RefreshTokenService {
         .orElseThrow(() -> new InvalidTokenException("Refresh token does not exist in database"));
 
         if(rt.isRevoked()){
-            throw new InvalidTokenException("Refresh token has been revoked. Please login again");
+            // reuse detection: neu token truyen len bi huy -> bao dong
+            revokeAllUserToken(rt.getUser().getId());
+            throw new InvalidTokenException("Detected reuse of a revoked refresh token. Please login again");
         }
+    }
+
+    public void revokeAllUserToken(Long userId){
+        refreshTokenRepository.revokeAllUserTokens(userId);
+        log.warn("Revoked all refresh tokens for user id {} due to reuse detection!", userId);
     }
 }

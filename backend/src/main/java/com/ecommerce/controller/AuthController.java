@@ -147,11 +147,21 @@ public class AuthController {
             throw new InvalidTokenException("Refresh token is expired or invalid");
         }
 
-        // Create a new access token
-        String newAccessToken = jwtService.generateToken(userDetails);
-        com.ecommerce.entity.User user = userService.findByEmail(userEmail);
+        // rotation: revoke the old refresh token currently in use
+        refreshTokenService.revokeToken(refreshToken);
 
-        AuthResponse authResponse = AuthResponse.builder()
+        // create new access token and refresh token
+        String newAccessToken = jwtService.generateToken(userDetails);
+        String newRefreshToken = jwtService.generateRefreshToken(userDetails);
+
+        // save new refresh token in database
+        User user = userService.findByEmail(userEmail);
+        refreshTokenService.createRefreshToken(user, newRefreshToken, refreshExpiration);
+
+        // set a new cookie to return to the client
+        setRefreshTokenCookie(response, newRefreshToken);
+
+        AuthResponse  authResponse = AuthResponse.builder()
         .accessToken(newAccessToken)
         .id(user.getId())
         .email(user.getEmail())

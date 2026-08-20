@@ -80,6 +80,7 @@ class RefreshTokenServiceTest {
         // Arrange
         RefreshToken token = new RefreshToken();
         token.setRevoked(true);
+        token.setUser(testUser);
         
         when(refreshTokenRepository.findByTokenHash(anyString())).thenReturn(Optional.of(token));
 
@@ -87,7 +88,8 @@ class RefreshTokenServiceTest {
         InvalidTokenException exception = assertThrows(InvalidTokenException.class, 
             () -> refreshTokenService.verifyNotRevoked(rawToken));
             
-        assertEquals("Refresh token has been revoked. Please login again", exception.getMessage());
+        assertEquals("Detected reuse of a revoked refresh token. Please login again", exception.getMessage());
+        verify(refreshTokenRepository, times(1)).revokeAllUserTokens(testUser.getId());
     }
 
     @Test

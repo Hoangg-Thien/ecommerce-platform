@@ -28,6 +28,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -254,13 +256,18 @@ class AuthControllerTest {
         when(userDetailsService.loadUserByUsername("user@example.com")).thenReturn(springUser);
         when(jwtService.isTokenValid("valid-refresh-token", springUser)).thenReturn(true);
         when(jwtService.generateToken(springUser)).thenReturn("new-access-token");
+        when(jwtService.generateRefreshToken(springUser)).thenReturn("new-refresh-token");
         when(userService.findByEmail("user@example.com")).thenReturn(user);
 
         mockMvc.perform(post("/api/v1/auth/refresh")
                         .cookie(new jakarta.servlet.http.Cookie("refreshToken", "valid-refresh-token")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("new-access-token"))
-                .andExpect(jsonPath("$.email").value("user@example.com"));
+                .andExpect(jsonPath("$.email").value("user@example.com"))
+                .andExpect(cookie().value("refreshToken", "new-refresh-token"));
+
+        verify(refreshTokenService, times(1)).revokeToken("valid-refresh-token");
+        verify(refreshTokenService, times(1)).createRefreshToken(eq(user), eq("new-refresh-token"), anyLong());
     }
 
     @Test
