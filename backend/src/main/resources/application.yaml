@@ -3,6 +3,8 @@ spring:
     import: optional:file:.env[.properties],optional:file:../.env[.properties]
   application:
     name: ecommerce-backend
+  flyway:
+    baseline-on-migrate: true
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5433/ecommerce}
     username: ${DB_USERNAME:postgres}
@@ -13,6 +15,8 @@ spring:
       ddl-auto: update
     show-sql: true
     properties:
+      # jakarta.persistence.schema-generation.scripts.action: create
+      # jakarta.persistence.schema-generation.scripts.create-target: src/main/resources/db/migration/V1__init_schema.sql
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -42,7 +46,7 @@ payment:
 
 rate-limit:
   enabled: true
-  trust-proxy: false  # Set to true when deployed
+  trust-proxy: true  # Set to true when deployed
 
   auth:
     login:
