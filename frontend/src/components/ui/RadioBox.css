@@ -1,0 +1,71 @@
+.radio-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  background-color: var(--color-surface-container-lowest);
+  transition: all 0.2s ease;
+  margin-bottom: var(--space-stack-sm);
+}
+
+.radio-box:hover {
+  border-color: var(--color-outline-variant);
+  background-color: var(--color-surface-container-low);
+}
+
+.radio-box-checked {
+  border-color: var(--color-primary);
+  background-color: var(--color-surface-container-lowest);
+  box-shadow: 0 0 0 1px var(--color-primary); /* sharp outline */
+}
+
+.radio-box-checked:hover {
+  background-color: var(--color-surface-container-low);
+  border-color: var(--color-primary);
+}
+
+.radio-box-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.radio-box-input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.radio-box-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-ink-deep);
+}
+
+.radio-box-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.radio-box-label {
+  font-weight: 600;
+  color: var(--color-ink-deep);
+  font-size: var(--text-body-md);
+}
+
+.radio-box-desc {
+  font-size: var(--text-body-sm);
+  color: var(--color-on-surface-variant);
+  margin-top: 4px;
+}
+
+.radio-box-price {
+  font-weight: 700;
+  color: var(--color-ink-deep);
+  font-size: var(--text-body-md);
+}

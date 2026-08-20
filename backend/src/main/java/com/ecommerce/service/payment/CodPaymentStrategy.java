@@ -1,17 +1,23 @@
 package com.ecommerce.service.payment;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Component;
 
 import com.ecommerce.dto.response.CheckoutResponse;
 import com.ecommerce.entity.Cart;
+import com.ecommerce.entity.CartItem;
 import com.ecommerce.entity.Order;
 import com.ecommerce.entity.OrderItem;
 import com.ecommerce.entity.Payment;
 import com.ecommerce.entity.Product;
+import com.ecommerce.entity.ProductVariant;
 import com.ecommerce.enums.OrderStatus;
 import com.ecommerce.enums.PaymentMethod;
 import com.ecommerce.enums.PaymentStatus;
 import com.ecommerce.mapper.PaymentMapper;
+import com.ecommerce.repository.CartItemRepository;
 import com.ecommerce.repository.CartRepository;
 import com.ecommerce.repository.OrderRepository;
 import com.ecommerce.repository.PaymentRepository;
@@ -29,6 +35,7 @@ public class CodPaymentStrategy implements PaymentStrategy{
     private final PaymentRepository paymentRepository;
     private final ProductRepository productRepository;
     private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
     private final PaymentMapper paymentMapper;
 
     @Override
@@ -51,14 +58,24 @@ public class CodPaymentStrategy implements PaymentStrategy{
         // tru stock
         for(OrderItem item : savedOrder.getItems()){
             Product product = item.getProduct();
-            product.setStock(product.getStock() - item.getQuantity());
-            productRepository.save(product);
-
+            ProductVariant variant = product.getVariantBySize(item.getSize())
+            .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy size: " + item.getSize()));
+            if (variant != null) {
+                variant.setStock(variant.getStock() - item.getQuantity());
+                productRepository.save(product);
+            }
         }
 
         // xoa cart sau khi dat hang thanh cong
-        cart.getItems().clear();
-        cartRepository.save(cart);
+        List <CartItem> itemsToRemove = cart.getItems().stream()
+        .filter(cartItem -> savedOrder.getItems().stream().anyMatch(
+            orderItem -> orderItem.getProduct().getId().equals(cartItem.getProductVariant().getProduct().getId())
+            && orderItem.getSize().equals(cartItem.getProductVariant().getSize())
+            )
+        ).collect(Collectors.toList());
+
+        cartItemRepository.deleteAll(itemsToRemove);
+        cart.getItems().removeAll(itemsToRemove);
         
         log.info("COD order processed successfully: orderId={}, paymentId={}, status={}",
         savedOrder.getId(), savedPayment.getId(), savedOrder.getStatus());

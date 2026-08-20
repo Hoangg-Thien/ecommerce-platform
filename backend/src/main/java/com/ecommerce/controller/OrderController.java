@@ -29,8 +29,6 @@ public class OrderController {
 
     private final OrderService orderService;
 
-
-
     // GET /api/orders?page=0&size=10&sortBy=createAt&sortDir=desc
     @GetMapping
     public ResponseEntity<PageResponse<OrderResponse>> getUserOrders(
@@ -67,5 +65,14 @@ public class OrderController {
     ){
         OrderResponse responses = orderService.updateOrderStatus(id, request.getOrderStatus());
         return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<OrderResponse> getOrderById(
+        @AuthenticationPrincipal UserDetails userDetails,
+        @PathVariable Long id
+    ){
+        OrderResponse order = orderService.getOrderById(id, userDetails.getUsername());
+        return ResponseEntity.ok(order);
     }
 }

@@ -1,5 +1,6 @@
 package com.ecommerce.dto.request;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -7,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -19,10 +21,13 @@ public class ProductRequest {
     @Min(value = 0, message = "Price must be >= 0")
     private BigDecimal price;
 
-    @Min(value = 0, message = "Stock must be >= 0")
-    private Integer stock = 0;
+    private String imageUrl;
 
     private String description;
 
+    @NotNull(message = "Category is required")
     private Long categoryId;
+
+    @Valid
+    private List<VariantRequest> variants;
 }

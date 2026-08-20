@@ -1,6 +1,7 @@
 package com.ecommerce.integration;
 
 import com.ecommerce.config.JwtAuthenticationFilter;
+import com.ecommerce.ratelimit.RateLimitFilter;
 import com.ecommerce.controller.CheckoutController;
 import com.ecommerce.dto.request.CheckoutRequest;
 import com.ecommerce.dto.response.CheckoutResponse;
@@ -42,6 +43,7 @@ class CheckoutControllerTest {
     @MockBean private JwtService jwtService;
     @MockBean private UserDetailsService userDetailsService;
     @MockBean private JwtAuthenticationFilter jwtAuthenticationFilter;
+    @MockBean private RateLimitFilter rateLimitFilter;
     @MockBean private IdempotencyKeyRepository idempotencyKeyRepository;
 
     @Test
@@ -49,6 +51,12 @@ class CheckoutControllerTest {
     void checkout_WithCod_ShouldReturn201WithPayment() throws Exception {
         CheckoutRequest request = new CheckoutRequest();
         request.setPaymentMethod(PaymentMethod.COD);
+        request.setFirstName("Test");
+        request.setLastName("User");
+        request.setAddress("123 Street");
+        request.setCity("HCM");
+        request.setWard("Ward 1");
+        request.setPhone("0123456789");
 
         PaymentResponse paymentResponse = PaymentResponse.builder()
                 .id(1L).orderId(1L)
@@ -83,6 +91,12 @@ class CheckoutControllerTest {
     void checkout_WithMomo_ShouldReturn201WithPaymentUrl() throws Exception {
         CheckoutRequest request = new CheckoutRequest();
         request.setPaymentMethod(PaymentMethod.MOMO);
+        request.setFirstName("Test");
+        request.setLastName("User");
+        request.setAddress("123 Street");
+        request.setCity("HCM");
+        request.setWard("Ward 1");
+        request.setPhone("0123456789");
 
         CheckoutResponse checkoutResponse = CheckoutResponse.builder()
                 .orderId(2L)
@@ -108,6 +122,12 @@ class CheckoutControllerTest {
         CheckoutRequest request = new CheckoutRequest();
         // paymentMethod = null (không set gì cả)
         request.setPaymentMethod(null);
+        request.setFirstName("Test");
+        request.setLastName("User");
+        request.setAddress("123 Street");
+        request.setCity("HCM");
+        request.setWard("Ward 1");
+        request.setPhone("0123456789");
 
         mockMvc.perform(post("/api/v1/checkout").header("Idempotency-Key", "test-uuid-1234")
                 .contentType(MediaType.APPLICATION_JSON)

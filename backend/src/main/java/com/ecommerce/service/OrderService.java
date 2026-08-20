@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ecommerce.dto.response.PageResponse;
+
+import com.ecommerce.exception.UnauthorizedAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -12,8 +14,11 @@ import com.ecommerce.dto.response.OrderResponse;
 import com.ecommerce.entity.Order;
 import com.ecommerce.entity.OrderItem;
 import com.ecommerce.entity.Product;
+import com.ecommerce.entity.ProductVariant;
 import com.ecommerce.entity.User;
 import com.ecommerce.enums.OrderStatus;
+import com.ecommerce.enums.PaymentMethod;
+import com.ecommerce.enums.PaymentStatus;
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.mapper.OrderMapper;
 import com.ecommerce.repository.CartRepository;
@@ -34,8 +39,6 @@ public class OrderService {
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
     private final OrderMapper orderMapper;
-
-
 
     @Transactional(readOnly = true)
     public PageResponse<OrderResponse> getUserOrders(String userEmail, Pageable pageable) {
@@ -70,17 +73,43 @@ public class OrderService {
         if (stockWasDeducted) {
             for (OrderItem orderItem : order.getItems()) {
                     Product product = orderItem.getProduct();
-                    product.setStock(product.getStock() + orderItem.getQuantity());
-                    productRepository.save(product);
-                    log.info("Restocked {} units for product '{}' (id={}) due to order cancellation",
-                    orderItem.getQuantity(), product.getName(), product.getId());
+                    ProductVariant variant = product.getVariantBySize(orderItem.getSize())
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy size: " + orderItem.getSize()));
+                    if (variant != null) {
+                        variant.setStock(variant.getStock() + orderItem.getQuantity());
+                        productRepository.save(product);
+                        log.info("Restocked {} units for product '{}' (size={}, id={}) due to order cancellation",
+                        orderItem.getQuantity(), product.getName(), variant.getSize(), product.getId());
+                    }
                 }
             }
         }
         // cap nhat va luu
         order.setStatus(newStatus);
+        
+        // tu dong cap nhat payment status khi giao hang thanh cong
+        if(newStatus == OrderStatus.DONE){
+            if(order.getPayment() != null && order.getPaymentMethod() == PaymentMethod.COD){
+                order.getPayment().setPaymentStatus(PaymentStatus.PAID);
+                log.info("Automatically marked COD Payment as PAID for orderId={}", orderId);
+            }
+        }
+
         Order updatedOrder = orderRepository.save(order);
         log.info("Order status updated successfully: orderId={}, status={}", updatedOrder.getId(), updatedOrder.getStatus());
         return orderMapper.tOrderResponse(updatedOrder);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderById(Long orderId, String username){
+
+        Order order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+
+        if(!order.getUser().getEmail().equals(username)){
+            throw new UnauthorizedAccessException("Bạn không có quyền truy cập vào đơn hàng này!");
+        }
+
+        return orderMapper.tOrderResponse(order);
     }
 }

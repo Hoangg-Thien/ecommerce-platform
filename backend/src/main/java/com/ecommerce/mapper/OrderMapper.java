@@ -20,10 +20,22 @@ public class OrderMapper {
 
         BigDecimal subTotal = orderItem.getPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity()));
 
+        Long variantId = null;
+        if (orderItem.getProduct() != null && orderItem.getProduct().getVariants() != null) {
+            variantId = orderItem.getProduct().getVariants().stream()
+                .filter(v -> v.getSize().equals(orderItem.getSize()))
+                .map(com.ecommerce.entity.ProductVariant::getId)
+                .findFirst()
+                .orElse(null);
+        }
+
         return OrderItemResponse.builder()
         .id(orderItem.getId())
         .productId(orderItem.getProduct().getId())
+        .variantId(variantId)
         .productName(orderItem.getProduct().getName())
+        .imageUrl(orderItem.getProduct().getImageUrl())
+        .size(orderItem.getSize())
         .quantity(orderItem.getQuantity())
         .price(orderItem.getPrice())
         .subTotal(subTotal)

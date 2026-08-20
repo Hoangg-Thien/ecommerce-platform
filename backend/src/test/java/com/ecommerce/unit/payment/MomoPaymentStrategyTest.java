@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,7 @@ class MomoPaymentStrategyTest {
     private MomoPaymentStrategy momoPaymentStrategy;
 
     private Product product;
+    private ProductVariant variant;
     private Order order;
     private Cart cart;
     private static final String FAKE_PAY_URL = "https://test-payment.momo.vn/pay/abc123";
@@ -48,7 +50,13 @@ class MomoPaymentStrategyTest {
         product.setId(1L);
         product.setName("iPhone");
         product.setPrice(BigDecimal.valueOf(5000));
-        product.setStock(5);
+        
+        variant = new ProductVariant();
+        variant.setId(10L);
+        variant.setProduct(product);
+        variant.setSize("42");
+        variant.setStock(5);
+        product.setVariants(List.of(variant));
 
         order = new Order();
         order.setUser(user);
@@ -58,6 +66,7 @@ class MomoPaymentStrategyTest {
 
         OrderItem item = new OrderItem();
         item.setProduct(product);
+        item.setSize("42");
         item.setQuantity(1);
         item.setPrice(BigDecimal.valueOf(5000));
         item.setOrder(order);
@@ -67,14 +76,14 @@ class MomoPaymentStrategyTest {
         cart.setUser(user);
         cart.setItems(new ArrayList<>());
         CartItem cartItem = new CartItem();
-        cartItem.setProduct(product);
+        cartItem.setProductVariant(variant);
         cartItem.setQuantity(1);
         cartItem.setCart(cart);
         cart.getItems().add(cartItem);
 
         when(orderRepository.save(any(Order.class))).thenAnswer(i -> i.getArgument(0));
         when(paymentRepository.save(any(Payment.class))).thenAnswer(i -> i.getArgument(0));
-        when(momoService.createPaymentUrl(any(Payment.class))).thenReturn(FAKE_PAY_URL);
+        lenient().when(momoService.createPaymentUrl(any(Payment.class))).thenReturn(FAKE_PAY_URL);
     }
 
     @Test
@@ -96,16 +105,36 @@ class MomoPaymentStrategyTest {
     void processPayment_ShouldNotDeductStock() {
         momoPaymentStrategy.processPayment(order, cart);
 
-        // stock phải giữ nguyên = 5
-        assertEquals(5, product.getStock());
+        assertEquals(5, product.getVariants().get(0).getStock());
     }
 
     @Test
     void processPayment_ShouldNotClearCart() {
         momoPaymentStrategy.processPayment(order, cart);
 
-        // cart vẫn còn items
         assertFalse(cart.getItems().isEmpty());
         assertEquals(1, cart.getItems().size());
+    }
+
+    @Test
+    void processPayment_WhenMockEnabled_ShouldReturnMockUrlAndNotCallMomoApi() throws Exception {
+        java.lang.reflect.Field field = momoPaymentStrategy.getClass().getDeclaredField("mockEnabled");
+        field.setAccessible(true);
+        field.set(momoPaymentStrategy, true);
+
+        CheckoutResponse response = momoPaymentStrategy.processPayment(order, cart);
+
+        assertEquals("/mock-payment?orderId=" + order.getId(), response.getPaymentUrl());
+        verify(momoService, never()).createPaymentUrl(any(Payment.class));
+
+        field.set(momoPaymentStrategy, false);
+    }
+
+    @Test
+    void processPayment_WhenMockDisabled_ShouldReturnRealMomoUrlAndCallMomoApi() {
+        CheckoutResponse response = momoPaymentStrategy.processPayment(order, cart);
+
+        assertEquals(FAKE_PAY_URL, response.getPaymentUrl());
+        verify(momoService, times(1)).createPaymentUrl(any(Payment.class));
     }
 }

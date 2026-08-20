@@ -2,8 +2,10 @@ package com.ecommerce.integration;
 
 import com.ecommerce.entity.Category;
 import com.ecommerce.entity.Product;
+import com.ecommerce.entity.ProductVariant;
 import com.ecommerce.repository.CategoryRepository;
 import com.ecommerce.repository.ProductRepository;
+import com.ecommerce.repository.ProductVariantRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -28,12 +31,16 @@ public class ProductConcurrencyTest {
     private ProductRepository productRepository;
 
     @Autowired
+    private ProductVariantRepository productVariantRepository;
+
+    @Autowired
     private CategoryRepository categoryRepository;
 
-    private Long testProductId;
+    private Long testVariantId;
 
     @BeforeEach
     void setUp() {
+        productVariantRepository.deleteAll();
         productRepository.deleteAll();
         categoryRepository.deleteAll();
 
@@ -45,20 +52,27 @@ public class ProductConcurrencyTest {
         Product product = new Product();
         product.setName("MacBook Pro M3");
         product.setPrice(BigDecimal.valueOf(2000));
-        product.setStock(1); // Chỉ còn 1 sản phẩm
         product.setCategory(category);
+        
+        ProductVariant variant = new ProductVariant();
+        variant.setProduct(product);
+        variant.setSize("42");
+        variant.setStock(1);
+        product.setVariants(List.of(variant));
+        
         product = productRepository.save(product);
-        testProductId = product.getId();
+        testVariantId = product.getVariants().get(0).getId();
     }
 
     @AfterEach
     void tearDown() {
+        productVariantRepository.deleteAll();
         productRepository.deleteAll();
         categoryRepository.deleteAll();
     }
 
     @Test
-    @DisplayName("Direct JPA Optimistic Locking: 2 concurrent transactions updating same product version=0 -> 1 success, 1 OptimisticLockException, final stock=0")
+    @DisplayName("Direct JPA Optimistic Locking: 2 concurrent transactions updating same variant version=0 -> 1 success, 1 OptimisticLockException, final stock=0")
     void concurrentDirectProductStockUpdate_ShouldThrowOptimisticLockException() throws InterruptedException {
         int threads = 2;
         ExecutorService executorService = Executors.newFixedThreadPool(threads);
@@ -70,21 +84,19 @@ public class ProductConcurrencyTest {
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger optimisticLockExceptionCount = new AtomicInteger(0);
 
-        // Cả 2 thread cùng đọc snapshot product từ DB (khi version = 0, stock = 1)
-        Product productThread1 = productRepository.findById(testProductId).orElseThrow();
-        Product productThread2 = productRepository.findById(testProductId).orElseThrow();
+        ProductVariant variantThread1 = productVariantRepository.findById(testVariantId).orElseThrow();
+        ProductVariant variantThread2 = productVariantRepository.findById(testVariantId).orElseThrow();
 
-        assertEquals(0L, productThread1.getVersion());
-        assertEquals(0L, productThread2.getVersion());
+        assertEquals(0L, variantThread1.getVersion());
+        assertEquals(0L, variantThread2.getVersion());
 
-        // Thread 1 trừ kho và lưu
         executorService.submit(() -> {
             try {
                 readyLatch.countDown();
                 startLatch.await();
 
-                productThread1.setStock(productThread1.getStock() - 1);
-                productRepository.save(productThread1);
+                variantThread1.setStock(variantThread1.getStock() - 1);
+                productVariantRepository.save(variantThread1);
                 successCount.incrementAndGet();
             } catch (ObjectOptimisticLockingFailureException | jakarta.persistence.OptimisticLockException e) {
                 optimisticLockExceptionCount.incrementAndGet();
@@ -95,16 +107,14 @@ public class ProductConcurrencyTest {
             }
         });
 
-        // Thread 2 cũng trừ kho và lưu (trên entity snapshot version = 0 cũ)
         executorService.submit(() -> {
             try {
                 readyLatch.countDown();
                 startLatch.await();
 
-                // Chờ một chút để Thread 1 commit trước, làm version trong DB nhảy lên 1
                 Thread.sleep(20);
-                productThread2.setStock(productThread2.getStock() - 1);
-                productRepository.save(productThread2);
+                variantThread2.setStock(variantThread2.getStock() - 1);
+                productVariantRepository.save(variantThread2);
                 successCount.incrementAndGet();
             } catch (ObjectOptimisticLockingFailureException | jakarta.persistence.OptimisticLockException e) {
                 optimisticLockExceptionCount.incrementAndGet();
@@ -121,15 +131,11 @@ public class ProductConcurrencyTest {
         assertTrue(completed, "Product Concurrency test timed out");
         executorService.shutdown();
 
-        // Kiểm tra kết quả:
-        // Đúng 1 thread save thành công
         assertEquals(1, successCount.get(), "Chỉ có 1 thread cập nhật thành công");
-        // Đúng 1 thread bị OptimisticLockException
-        assertEquals(1, optimisticLockExceptionCount.get(), "Thread còn lại phải ném OptimisticLockException / ObjectOptimisticLockingFailureException");
+        assertEquals(1, optimisticLockExceptionCount.get(), "Thread còn lại phải ném OptimisticLockException");
 
-        // Kiểm tra trong DB: stock = 0, version = 1, tuyệt đối không bị âm
-        Product finalProduct = productRepository.findById(testProductId).orElseThrow();
-        assertEquals(0, finalProduct.getStock(), "Stock cuối cùng trong DB phải là 0, không được âm");
-        assertEquals(1L, finalProduct.getVersion(), "Version của Product phải tăng lên 1 sau khi 1 thread update thành công");
+        ProductVariant finalVariant = productVariantRepository.findById(testVariantId).orElseThrow();
+        assertEquals(0, finalVariant.getStock(), "Stock cuối cùng trong DB phải là 0, không được âm");
+        assertEquals(1L, finalVariant.getVersion(), "Version của ProductVariant phải tăng lên 1 sau khi update thành công");
     }
 }

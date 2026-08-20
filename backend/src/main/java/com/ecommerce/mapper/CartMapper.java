@@ -18,17 +18,21 @@ public class CartMapper {
             return null;
         }
         
-        BigDecimal price = cartItem.getProduct().getPrice();
-        BigDecimal subTotal = price.multiply(BigDecimal.valueOf(cartItem.getQuantity()));
+        return mapToItemResponse(cartItem);
+    }
 
+    private CartItemResponse mapToItemResponse(CartItem cartItem) {
         return CartItemResponse.builder()
-               .id(cartItem.getId())
-               .productId(cartItem.getProduct().getId())
-               .productName(cartItem.getProduct().getName())
-               .productPrice(price)
-               .quantity(cartItem.getQuantity())
-               .subTotal(subTotal)
-               .build();
+                .id(cartItem.getId())
+                .productId(cartItem.getProductVariant().getProduct().getId())
+                .variantId(cartItem.getProductVariant().getId())
+                .productName(cartItem.getProductVariant().getProduct().getName())
+                .imageUrl(cartItem.getProductVariant().getProduct().getImageUrl())
+                .size(cartItem.getProductVariant().getSize())
+                .productPrice(cartItem.getProductVariant().getProduct().getPrice())
+                .quantity(cartItem.getQuantity())
+                .subTotal(cartItem.getProductVariant().getProduct().getPrice().multiply(new BigDecimal(cartItem.getQuantity())))
+                .build();
     }
 
     public CartResponse toCartResponse(Cart cart){

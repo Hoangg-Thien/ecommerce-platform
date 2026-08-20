@@ -25,3 +25,9 @@ logging:
     com.ecommerce: INFO
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql: WARN
+
+rate-limit:
+  enabled: true
+  trust-proxy: true  # Production is behind a reverse proxy (Nginx/Railway/Render)
+  # Auth limits remain strict in prod (same as dev defaults)
+  # Adjust public/sensitive if needed based on actual traffic

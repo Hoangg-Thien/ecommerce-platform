@@ -1,5 +1,6 @@
 package com.ecommerce.service.payment;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.ecommerce.dto.response.CheckoutResponse;
@@ -27,6 +28,9 @@ public class MomoPaymentStrategy implements PaymentStrategy{
     private final MomoService momoService;
     private final PaymentMapper paymentMapper;
 
+    @Value("${payment.momo.mock-enabled:false}")
+    private boolean mockEnabled;
+
     @Override
     public CheckoutResponse processPayment(Order order, Cart cart){
         
@@ -42,12 +46,17 @@ public class MomoPaymentStrategy implements PaymentStrategy{
         payment.setAmount(savedOrder.getTotalPrice());
         Payment savedPayment = paymentRepository.save(payment);
 
-        // Gọi MoMo API để lấy URL thanh toán
-        // createPaymentUrl() sẽ SET momoOrderId và momoRequestId vào savedPayment
-        String paymentUrl = momoService.createPaymentUrl(savedPayment);
-
-        // Lưu lại momoOrderId và momoRequestId vào DB
-        paymentRepository.save(savedPayment);
+        String paymentUrl;
+        
+        if (mockEnabled) {
+            paymentUrl = "/mock-payment?orderId=" + savedOrder.getId();
+            log.info("Mock payment enabled. Redirecting order {} to mock gateway.", savedOrder.getId());
+        } else {
+            // Gọi MoMo API để lấy URL thanh toán thật
+            paymentUrl = momoService.createPaymentUrl(savedPayment);
+            // Lưu lại momoOrderId và momoRequestId vào DB
+            paymentRepository.save(savedPayment);
+        }
 
         // Ko trừ stock, KHÔNG xóa cart — chờ IPN xác nhận
         log.info("Created MoMo payment for order {}, waiting for IPN callback", savedOrder.getId());

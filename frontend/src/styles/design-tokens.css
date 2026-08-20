@@ -1,0 +1,89 @@
+:root {
+  /* Colors */
+  --color-surface: #f9f9f8;
+  --color-surface-dim: #dadad9;
+  --color-surface-bright: #f9f9f8;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f3f4f3;
+  --color-surface-container: #eeeeed;
+  --color-surface-container-high: #e8e8e7;
+  --color-surface-container-highest: #e2e2e2;
+  --color-on-surface: #1a1c1c;
+  --color-on-surface-variant: #434656;
+  --color-inverse-surface: #2f3130;
+  --color-inverse-on-surface: #f1f1f0;
+  --color-outline: #737688;
+  --color-outline-variant: #c3c5d9;
+  --color-surface-tint: #004ced;
+  
+  --color-primary: #003ec7;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #0052ff;
+  --color-on-primary-container: #dfe3ff;
+  --color-inverse-primary: #b7c4ff;
+  
+  --color-secondary: #ae3200;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #fd591e;
+  --color-on-secondary-container: #521300;
+  
+  --color-tertiary: #435400;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #586e00;
+  --color-on-tertiary-container: #caf534;
+  
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+  
+  --color-background: #f9f9f8;
+  --color-on-background: #1a1c1c;
+  --color-surface-variant: #e2e2e2;
+  --color-ink-deep: #0E0E10;
+  --color-paper-bright: #FFFFFF;
+  --color-slate-dim: #8A8A8A;
+  --color-border-soft: #E2E2E2;
+  
+  /* Stock / Alert colors */
+  --color-stock-warning-bg: #FFE9E9;
+  --color-stock-warning-text: #E53935;
+
+  /* Typography */
+  --font-display: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  
+  --text-display-hero: 48px;
+  --text-display-hero-mobile: 32px;
+  --text-headline-lg: 20px;
+  --text-headline-md: 24px;
+  --text-body-lg: 18px;
+  --text-body-md: 15px;
+  --text-body-sm: 13px;
+  --text-label-bold: 14px;
+  --text-label-caps: 12px;
+  --text-micro: 11px;
+
+  /* Rounded / Radius */
+  --radius-sm: 0.25rem;
+  --radius-default: 0.5rem; /* 8px */
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Spacing */
+  --space-base: 8px;
+  --space-gutter-mobile: 24px;
+  --space-gutter-desktop: 40px;
+  --space-container-max: 1280px;
+  --space-stack-sm: 12px;
+  --space-stack-md: 24px;
+  --space-stack-lg: 48px;
+  --space-stack-xl: 64px;
+
+  /* Shadows */
+  --shadow-soft-bloom: 0 8px 30px rgba(0, 0, 0, 0.04);
+  --shadow-active-bloom: 0 12px 40px rgba(0, 82, 255, 0.15);
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
+}

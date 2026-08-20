@@ -38,7 +38,6 @@ class CheckoutServiceTest {
     private PaymentStrategyFactory strategyFactory;
     @Mock private PaymentStrategy mockStrategy;
 
-    // CheckoutService có field momoPaymentStrategy (do bạn inject trực tiếp)
     @Mock private MomoPaymentStrategy momoPaymentStrategy;
 
     @InjectMocks
@@ -46,6 +45,7 @@ class CheckoutServiceTest {
 
     private User user;
     private Product product;
+    private ProductVariant variant;
     private Cart cart;
     private CheckoutRequest codRequest;
 
@@ -59,14 +59,19 @@ class CheckoutServiceTest {
         product.setId(1L);
         product.setName("Laptop");
         product.setPrice(BigDecimal.valueOf(1000));
-        product.setStock(5);
+        
+        variant = new ProductVariant();
+        variant.setProduct(product);
+        variant.setSize("42");
+        variant.setStock(5);
+        product.setVariants(java.util.List.of(variant));
 
         cart = new Cart();
         cart.setUser(user);
         cart.setItems(new ArrayList<>());
 
         CartItem cartItem = new CartItem();
-        cartItem.setProduct(product);
+        cartItem.setProductVariant(variant);
         cartItem.setQuantity(2);
         cartItem.setCart(cart);
         cart.getItems().add(cartItem);
@@ -94,7 +99,7 @@ class CheckoutServiceTest {
 
     @Test
     void checkout_WhenCartIsEmpty_ShouldThrowIllegalArgumentException() {
-        cart.getItems().clear(); // cart rỗng
+        cart.getItems().clear(); 
 
         when(userRepository.findByEmail("user@gmail.com")).thenReturn(Optional.of(user));
         when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
@@ -107,7 +112,7 @@ class CheckoutServiceTest {
 
     @Test
     void checkout_WhenStockNotEnough_ShouldThrowIllegalArgumentException() {
-        product.setStock(1); // chỉ còn 1 nhưng quantity = 2
+        variant.setStock(1); 
 
         when(userRepository.findByEmail("user@gmail.com")).thenReturn(Optional.of(user));
         when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));

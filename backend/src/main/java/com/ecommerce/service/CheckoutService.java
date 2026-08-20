@@ -67,29 +67,50 @@ public class CheckoutService {
         Order order = new Order();
         order.setUser(user);
         order.setPaymentMethod(request.getPaymentMethod());
+        
+        // map thong tin giao hang
+        String fullName = request.getLastName() + " " + request.getFirstName();
+        order.setCustomerName(fullName);
+        order.setCustomerPhone(request.getPhone());
+        order.setShippingAddress(request.getAddress());
+        order.setShippingCity(request.getCity());
+        order.setShippingWard(request.getWard());
+        order.setShippingMethod(request.getShippingMethod());
+        order.setShippingFee(request.getShippingFee());
 
         BigDecimal totalPrice = BigDecimal.ZERO;
 
         for(CartItem cartItem : cart.getItems()){
-            Product product = cartItem.getProduct();
+            if(request.getCartItemIds() != null 
+            && !request.getCartItemIds().isEmpty() 
+            && !request.getCartItemIds().contains(cartItem.getId())) {{
+                continue;
+            }}
+
+            Product product = cartItem.getProductVariant().getProduct();
 
             // validate stock
-            if(product.getStock() < cartItem.getQuantity()){
+            if(cartItem.getProductVariant().getStock() < cartItem.getQuantity()){
                 log.warn("Checkout rejected: Product '{}' out of stock (requested: {}, available: {})",
-                product.getName(), cartItem.getQuantity(), product.getStock());
-                throw new IllegalArgumentException("Not enough stock for product: " + product.getName());
+                product.getName(), cartItem.getQuantity(), cartItem.getProductVariant().getStock());
+                throw new IllegalArgumentException("Not enough stock for product: " + product.getName() + " Size: " + cartItem.getProductVariant().getSize());
             }
 
             // tao orderItem
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(order);
             orderItem.setProduct(product);
+            orderItem.setSize(cartItem.getProductVariant().getSize()); // set snapshot size
             orderItem.setQuantity(cartItem.getQuantity());
             orderItem.setPrice(product.getPrice());
             order.getItems().add(orderItem);
 
             BigDecimal subTotal = product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()));
             totalPrice = totalPrice.add(subTotal);
+        }
+
+        if (request.getShippingFee() != null) {
+            totalPrice = totalPrice.add(request.getShippingFee());
         }
 
         order.setTotalPrice(totalPrice);

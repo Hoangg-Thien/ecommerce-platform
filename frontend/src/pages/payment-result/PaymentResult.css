@@ -1,0 +1,105 @@
+.payment-result-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 80px);
+  background-color: #f9fafb;
+  padding: 40px 20px;
+}
+
+.payment-result-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  padding: 48px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.result-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+}
+
+.result-icon-wrapper.success {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.result-icon-wrapper.failed {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.result-icon-wrapper.pending {
+  background-color: #fef9c3;
+  color: #ca8a04;
+}
+
+.result-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 12px;
+}
+
+.result-message {
+  font-size: 15px;
+  color: #4b5563;
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+.result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.result-actions .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Spinner for pending state */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(202, 138, 4, 0.2);
+  border-left-color: #ca8a04;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes slideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 640px) {
+  .result-actions {
+    flex-direction: row;
+  }
+}

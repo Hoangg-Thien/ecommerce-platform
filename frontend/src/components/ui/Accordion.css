@@ -1,0 +1,68 @@
+/* Accordion items: ~56px height, border-top 1px #eee */
+.accordion {
+  border-top: 1px solid #EEEEEE;
+}
+
+.accordion:last-child {
+  border-bottom: 1px solid #EEEEEE;
+}
+
+/* Header: padding 16px 0 → total height ~56px */
+.accordion-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-ink-deep);
+  user-select: none;
+}
+
+.accordion-title {
+  font-family: var(--font-body);
+  font-size: var(--text-body-md);
+  font-weight: 600;
+}
+
+/* Mũi tên: mặc định xuống ▼, xoay lên ▲ khi open */
+.accordion-icon {
+  color: var(--color-outline);
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.accordion-icon-open {
+  transform: rotate(180deg);
+}
+
+/*
+  Grid trick: grid-template-rows 0fr → 1fr
+  - Đóng: hàng có chiều cao = 0 (nội dung ẩn hoàn toàn)
+  - Mở:   hàng giãn ra tự nhiên chứa nội dung
+  - Smooth animation không bị giật
+*/
+.accordion-content-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
+}
+
+.accordion-content-wrapper--open {
+  grid-template-rows: 1fr;
+}
+
+/* overflow: hidden BẮT BUỘC để grid trick hoạt động */
+.accordion-content {
+  overflow: hidden;
+  color: var(--color-on-surface-variant);
+  font-size: var(--text-body-md);
+  line-height: 1.7;
+}
+
+/* Padding trong div con để animation không cắt padding */
+.accordion-content-inner {
+  padding: 4px 0 20px;
+}

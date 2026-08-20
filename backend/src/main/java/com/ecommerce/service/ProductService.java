@@ -1,9 +1,11 @@
 package com.ecommerce.service;
 
 import com.ecommerce.dto.request.ProductRequest;
+import com.ecommerce.dto.request.VariantRequest;
 import com.ecommerce.dto.response.ProductResponse;
 import com.ecommerce.entity.Category;
 import com.ecommerce.entity.Product;
+import com.ecommerce.entity.ProductVariant;
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.mapper.ProductMapper;
 import com.ecommerce.repository.CategoryRepository;
@@ -11,16 +13,18 @@ import com.ecommerce.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-
 import com.ecommerce.dto.response.PageResponse;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -76,7 +80,7 @@ public class ProductService {
     private void mapRequestToProduct(ProductRequest request, Product product) {
         product.setName(request.getName());
         product.setPrice(request.getPrice());
-        product.setStock(request.getStock() != null ? request.getStock() : 0);
+        product.setImageUrl(request.getImageUrl());
         product.setDescription(request.getDescription());
 
         if (request.getCategoryId() != null) {
@@ -85,6 +89,39 @@ public class ProductService {
             product.setCategory(category);
         } else {
             product.setCategory(null);
+        }
+
+        if (request.getVariants() != null) {
+            // Check for duplicate sizes in request
+            Set<String> seenSizes = new HashSet<>();
+            for (VariantRequest v : request.getVariants()) {
+                if (!seenSizes.add(v.getSize())) {
+                    throw new IllegalArgumentException("Duplicate size found in request: " + v.getSize());
+                }
+            }
+
+            // Update existing or add new
+            for (VariantRequest variantReq : request.getVariants()) {
+                Optional<ProductVariant> existingVariantOpt = product.getVariants().stream()
+                        .filter(v -> v.getSize().equals(variantReq.getSize()))
+                        .findFirst();
+
+                if (existingVariantOpt.isPresent()) {
+                    ProductVariant existingVariant = existingVariantOpt.get();
+                    existingVariant.setStock(variantReq.getStock());
+                } else {
+                    ProductVariant newVariant = new ProductVariant();
+                    newVariant.setProduct(product);
+                    newVariant.setSize(variantReq.getSize());
+                    newVariant.setStock(variantReq.getStock());
+                    product.getVariants().add(newVariant);
+                }
+            }
+
+            // Set stock to 0 for variants that are not in the request to prevent deletion constraint failures
+            product.getVariants().stream()
+                    .filter(v -> request.getVariants().stream().noneMatch(reqV -> reqV.getSize().equals(v.getSize())))
+                    .forEach(v -> v.setStock(0));
         }
     }
 }

@@ -10,7 +10,7 @@ import lombok.Setter;
 @Table(
     name = "cart_items",
     uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"cart_id", "product_id"})
+        @UniqueConstraint(columnNames = {"cart_id", "product_variant_id"})
     }
 )
 @Getter
@@ -23,8 +23,8 @@ public class CartItem {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+    @JoinColumn(name = "product_variant_id", nullable = false)
+    private ProductVariant productVariant;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cart_id", nullable = false)

@@ -2,8 +2,9 @@ package com.ecommerce.integration;
 
 import com.ecommerce.controller.AuthController;
 import com.ecommerce.config.JwtAuthenticationFilter;
+import com.ecommerce.ratelimit.RateLimitFilter;
 import com.ecommerce.dto.request.LoginRequest;
-import com.ecommerce.dto.request.RefeshTokenRequest;
+import com.ecommerce.dto.request.RefreshTokenRequest;
 import com.ecommerce.dto.request.RegisterRequest;
 import com.ecommerce.dto.response.UserResponse;
 import com.ecommerce.entity.User;
@@ -26,6 +27,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -55,8 +60,14 @@ class AuthControllerTest {
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @MockBean
+    private RateLimitFilter rateLimitFilter;
+
     @MockBean 
     private IdempotencyKeyRepository idempotencyKeyRepository;
+
+    @MockBean
+    private com.ecommerce.service.RefreshTokenService refreshTokenService;
 
     // ==========================================
     // REGISTER TESTS
@@ -75,14 +86,14 @@ class AuthControllerTest {
         when(userService.register(any(RegisterRequest.class))).thenReturn(userResponse);
         when(userDetailsService.loadUserByUsername("user@example.com")).thenReturn(springUser);
         when(jwtService.generateToken(any())).thenReturn("dummy-jwt-token");
-        when(jwtService.generateRefeshToken(any())).thenReturn("dummy-refresh-token");
+        when(jwtService.generateRefreshToken(any())).thenReturn("dummy-refresh-token");
 
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.accessToken").value("dummy-jwt-token"))
-                .andExpect(jsonPath("$.refeshToken").value("dummy-refresh-token"))
+                .andExpect(cookie().value("refreshToken", "dummy-refresh-token"))
                 .andExpect(jsonPath("$.email").value("user@example.com"));
     }
 
@@ -168,7 +179,7 @@ class AuthControllerTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(null);
         when(userDetailsService.loadUserByUsername("user@example.com")).thenReturn(springUser);
         when(jwtService.generateToken(any())).thenReturn("dummy-jwt-token");
-        when(jwtService.generateRefeshToken(any())).thenReturn("dummy-refresh-token");
+        when(jwtService.generateRefreshToken(any())).thenReturn("dummy-refresh-token");
         when(userService.findByEmail("user@example.com")).thenReturn(user);
 
         mockMvc.perform(post("/api/v1/auth/login")
@@ -176,7 +187,7 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("dummy-jwt-token"))
-                .andExpect(jsonPath("$.refeshToken").value("dummy-refresh-token"))
+                .andExpect(cookie().value("refreshToken", "dummy-refresh-token"))
                 .andExpect(jsonPath("$.email").value("user@example.com"));
     }
 
@@ -230,9 +241,7 @@ class AuthControllerTest {
     // ==========================================
 
     @Test
-    void refeshToken_WithValidToken_ShouldReturn200AndNewAccessToken() throws Exception {
-        RefeshTokenRequest request = new RefeshTokenRequest("valid-refresh-token");
-
+    void refreshToken_WithValidToken_ShouldReturn200AndNewAccessToken() throws Exception {
         User user = new User();
         user.setId(1L);
         user.setEmail("user@example.com");
@@ -248,18 +257,14 @@ class AuthControllerTest {
         when(userService.findByEmail("user@example.com")).thenReturn(user);
 
         mockMvc.perform(post("/api/v1/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .cookie(new jakarta.servlet.http.Cookie("refreshToken", "valid-refresh-token")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("new-access-token"))
-                .andExpect(jsonPath("$.refeshToken").value("valid-refresh-token"))
                 .andExpect(jsonPath("$.email").value("user@example.com"));
     }
 
     @Test
-    void refeshToken_WhenTokenExpiredOrInvalid_ShouldReturn401Unauthorized() throws Exception {
-        RefeshTokenRequest request = new RefeshTokenRequest("expired-refresh-token");
-
+    void refreshToken_WhenTokenExpiredOrInvalid_ShouldReturn401Unauthorized() throws Exception {
         org.springframework.security.core.userdetails.User springUser =
                 new org.springframework.security.core.userdetails.User("user@example.com", "pass", java.util.List.of());
 
@@ -268,36 +273,49 @@ class AuthControllerTest {
         when(jwtService.isTokenValid("expired-refresh-token", springUser)).thenReturn(false);
 
         mockMvc.perform(post("/api/v1/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .cookie(new jakarta.servlet.http.Cookie("refreshToken", "expired-refresh-token")))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.message").value("Refresh token is expired or invalid"));
     }
 
     @Test
-    void refeshToken_WhenTokenMalformed_ShouldReturn401Unauthorized() throws Exception {
-        RefeshTokenRequest request = new RefeshTokenRequest("malformed-token");
-
+    void refreshToken_WhenTokenMalformed_ShouldReturn401Unauthorized() throws Exception {
         when(jwtService.extractUsername("malformed-token")).thenThrow(new RuntimeException("Malformed token"));
 
         mockMvc.perform(post("/api/v1/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .cookie(new jakarta.servlet.http.Cookie("refreshToken", "malformed-token")))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.message").value("Invalid refresh token format or signature"));
     }
 
     @Test
-    void refeshToken_WhenTokenBlank_ShouldReturn400BadRequest() throws Exception {
-        RefeshTokenRequest request = new RefeshTokenRequest("");
+    void refreshToken_WhenTokenMissing_ShouldReturn401Unauthorized() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/refresh"))
+                .andExpect(status().isUnauthorized());
+    }
 
-        mockMvc.perform(post("/api/v1/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.error").value("Validation Failed"));
+    // ==========================================
+    // LOGOUT TESTS
+    // ==========================================
+
+    @Test
+    void logout_WithRefreshToken_ShouldRevokeTokenAndClearCookie() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .cookie(new jakarta.servlet.http.Cookie("refreshToken", "valid-refresh-token")))
+                .andExpect(status().isOk())
+                .andExpect(cookie().maxAge("refreshToken", 0));
+                
+        verify(refreshTokenService, times(1)).revokeToken("valid-refresh-token");
+    }
+
+    @Test
+    void logout_WithoutRefreshToken_ShouldClearCookieAndNotCallRevoke() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/logout"))
+                .andExpect(status().isOk())
+                .andExpect(cookie().maxAge("refreshToken", 0));
+                
+        verify(refreshTokenService, never()).revokeToken(anyString());
     }
 }

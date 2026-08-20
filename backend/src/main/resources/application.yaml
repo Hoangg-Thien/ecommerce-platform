@@ -22,7 +22,7 @@ application:
     jwt:
       secret-key: ${JWT_SECRET_KEY}
       expiration: 900000 # 15 minutes (access token)
-      refesh-token:
+      refresh-token:
         expiration: 604800000 # 7 days
 
 momo:
@@ -32,3 +32,54 @@ momo:
   api-url: https://test-payment.momo.vn/v2/gateway/api/create
   redirect-url: ${MOMO_REDIRECT_URL}
   ipn-url: ${MOMO_IPN_URL}
+
+payment:
+  momo:
+    mock-enabled: true
+
+rate-limit:
+  enabled: true
+  trust-proxy: false  # Set to true when deployed
+
+  auth:
+    login:
+      capacity: 5
+      refill-tokens: 5
+      refill-duration-seconds: 60
+    register:
+      capacity: 3
+      refill-tokens: 3
+      refill-duration-seconds: 60
+    refresh:
+      capacity: 10
+      refill-tokens: 10
+      refill-duration-seconds: 60
+    logout:
+      capacity: 20
+      refill-tokens: 20
+      refill-duration-seconds: 60
+
+  pub:
+    capacity: 100
+    refill-tokens: 100
+    refill-duration-seconds: 60
+
+  sensitive:
+    capacity: 30
+    refill-tokens: 30
+    refill-duration-seconds: 60
+
+  checkout:
+    capacity: 10
+    refill-tokens: 10
+    refill-duration-seconds: 60
+
+  order-read:
+    capacity: 60
+    refill-tokens: 60
+    refill-duration-seconds: 60
+
+  mock-payment:
+    capacity: 10
+    refill-tokens: 10
+    refill-duration-seconds: 60

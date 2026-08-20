@@ -1,0 +1,84 @@
+.size-selector-container {
+  margin-bottom: 24px; /* size section → 24px → actions */
+}
+
+.size-selector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px; /* label → 16px → size buttons */
+}
+
+.size-selector-label {
+  font-family: var(--font-body);
+  font-size: var(--text-body-md);
+  font-weight: 600;
+  color: var(--color-ink-deep);
+}
+
+.size-guide-btn {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.size-guide-btn:hover {
+  color: var(--color-primary-container);
+}
+
+.size-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px; /* gap giữa các size button: 8px */
+}
+
+/* Size btn: height 44px, min-width 44px, radius 8px */
+.size-btn {
+  min-width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #E5E5E5;
+  border-radius: 8px;
+  background-color: var(--color-surface-container-lowest);
+  font-family: var(--font-body);
+  font-size: var(--text-body-md);
+  font-weight: 500;
+  color: var(--color-ink-deep);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0 8px;
+}
+
+.size-btn:hover {
+  border-color: var(--color-ink-deep);
+}
+
+.size-btn-active {
+  background-color: var(--color-ink-deep);
+  color: var(--color-paper-bright);
+  border-color: var(--color-ink-deep);
+}
+
+.size-btn-active:hover {
+  background-color: var(--color-ink-deep);
+}
+
+.size-btn-disabled {
+  color: #ccc;
+  background-color: #f9f9f9;
+  border-color: #eee;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.size-btn-disabled:hover {
+  border-color: #eee;
+}

@@ -59,14 +59,12 @@ class ProductServiceTest {
         product.setId(1L);
         product.setName("Laptop");
         product.setPrice(new BigDecimal("1000.00"));
-        product.setStock(10);
         product.setDescription("Gaming Laptop");
         product.setCategory(category);
 
         productRequest = new ProductRequest();
         productRequest.setName("Laptop");
         productRequest.setPrice(new BigDecimal("1000.00"));
-        productRequest.setStock(10);
         productRequest.setDescription("Gaming Laptop");
         productRequest.setCategoryId(1L);
     }

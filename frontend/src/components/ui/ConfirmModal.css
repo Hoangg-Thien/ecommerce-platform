@@ -1,0 +1,92 @@
+.confirm-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.confirm-modal-content {
+  background: var(--color-surface-container-lowest, #ffffff);
+  width: 100%;
+  max-width: 400px;
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.confirm-modal-header {
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.confirm-modal-title {
+  font-family: var(--font-display, inherit);
+  font-size: var(--text-headline-sm, 20px);
+  font-weight: 700;
+  color: var(--color-ink-deep, #1a1a1a);
+  margin: 0;
+}
+
+.confirm-modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--color-outline, #888);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.confirm-modal-close:hover {
+  background: var(--color-surface-container, #f0f0f0);
+  color: var(--color-ink-deep, #1a1a1a);
+}
+
+.confirm-modal-body {
+  padding: 0 24px 24px 24px;
+}
+
+.confirm-modal-message {
+  margin: 0;
+  color: var(--color-ink-medium, #4a4a4a);
+  font-size: var(--text-body-md, 16px);
+  line-height: 1.5;
+}
+
+.confirm-modal-footer {
+  padding: 16px 24px;
+  background-color: var(--color-surface-container-lowest, #ffffff);
+  border-top: 1px solid var(--color-border-soft, #eaeaea);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-bottom-left-radius: var(--radius-lg, 12px);
+  border-bottom-right-radius: var(--radius-lg, 12px);
+}

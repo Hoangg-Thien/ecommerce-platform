@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +24,8 @@ import com.ecommerce.service.MomoIpnService;
 import com.ecommerce.service.MomoService;
 import com.ecommerce.service.PaymentRefundService;
 
+import com.ecommerce.service.PaymentFulfillmentService;
+
 @ExtendWith(MockitoExtension.class)
 class MomoIpnServiceTest {
 
@@ -30,14 +33,16 @@ class MomoIpnServiceTest {
     @Mock private OrderRepository orderRepository;
     @Mock private ProductRepository productRepository;
     @Mock private CartRepository cartRepository;
+    @Mock private CartItemRepository cartItemRepository;
     @Mock private MomoService momoService;
     @Mock private PaymentRefundService paymentRefundService;
 
-    @InjectMocks
+    private PaymentFulfillmentService paymentFulfillmentService;
     private MomoIpnService momoIpnService;
 
     private User user;
     private Product product;
+    private ProductVariant variant;
     private Order order;
     private Payment payment;
     private MomoIpnRequest ipnSuccess;
@@ -47,13 +52,25 @@ class MomoIpnServiceTest {
 
     @BeforeEach
     void setUp() {
+        paymentFulfillmentService = new PaymentFulfillmentService(
+            paymentRepository, orderRepository, cartRepository, cartItemRepository, productRepository, paymentRefundService
+        );
+        momoIpnService = new MomoIpnService(
+            paymentRepository, momoService, paymentRefundService, paymentFulfillmentService
+        );
         user = new User();
         user.setId(1L);
 
         product = new Product();
         product.setId(1L);
         product.setName("Test Product");
-        product.setStock(10);
+        
+        variant = new ProductVariant();
+        variant.setId(10L);
+        variant.setProduct(product);
+        variant.setSize("42");
+        variant.setStock(10);
+        product.setVariants(List.of(variant));
 
         order = new Order();
         order.setId(1L);
@@ -64,6 +81,7 @@ class MomoIpnServiceTest {
 
         OrderItem item = new OrderItem();
         item.setProduct(product);
+        item.setSize("42");
         item.setQuantity(3);
         item.setOrder(order);
         order.getItems().add(item);
@@ -79,8 +97,6 @@ class MomoIpnServiceTest {
         ipnSuccess = buildIpn(0, "Successful.");
         ipnFailed  = buildIpn(1006, "Payment was cancelled by the user.");
     }
-
-    // ===== Happy path: IPN thành công =====
 
     @Test
     void handleIpn_WhenSuccessful_ShouldSetPaymentToPaid() {
@@ -118,8 +134,7 @@ class MomoIpnServiceTest {
 
         momoIpnService.handleIpn(ipnSuccess);
 
-        // stock ban đầu = 10, quantity = 3 → còn 7
-        assertEquals(7, product.getStock());
+        assertEquals(7, product.getVariants().get(0).getStock());
         verify(productRepository, times(1)).save(product);
     }
 
@@ -130,6 +145,7 @@ class MomoIpnServiceTest {
         cart.setItems(new ArrayList<>());
         CartItem cartItem = new CartItem();
         cartItem.setCart(cart);
+        cartItem.setProductVariant(variant);
         cart.getItems().add(cartItem);
 
         when(momoService.verifySignature(ipnSuccess)).thenReturn(true);
@@ -137,11 +153,11 @@ class MomoIpnServiceTest {
         when(paymentRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         when(orderRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
-        when(cartRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         momoIpnService.handleIpn(ipnSuccess);
 
         assertTrue(cart.getItems().isEmpty());
+        verify(cartItemRepository, times(1)).deleteAll(any());
     }
 
     @Test
@@ -154,11 +170,8 @@ class MomoIpnServiceTest {
 
         momoIpnService.handleIpn(ipnSuccess);
 
-        // transId = "987654321" (từ buildIpn), MomoIpnService lưu String.valueOf(request.getTransId())
         assertEquals("987654321", payment.getTransactionId());
     }
-
-    // ===== Failed: IPN thất bại =====
 
     @Test
     void handleIpn_WhenFailed_ShouldSetPaymentToFailed() {
@@ -193,12 +206,9 @@ class MomoIpnServiceTest {
 
         momoIpnService.handleIpn(ipnFailed);
 
-        // stock phải giữ nguyên = 10
-        assertEquals(10, product.getStock());
+        assertEquals(10, product.getVariants().get(0).getStock());
         verify(productRepository, never()).save(any());
     }
-
-    // ===== Security: Signature sai =====
 
     @Test
     void handleIpn_WhenSignatureInvalid_ShouldThrowSecurityException() {
@@ -216,20 +226,15 @@ class MomoIpnServiceTest {
         verify(paymentRepository, never()).findByMomoOrderId(any());
     }
 
-    // ===== Idempotency: IPN đến lần 2 =====
-
     @Test
     void handleIpn_WhenAlreadyProcessed_ShouldNotSaveAnything() {
-        // Giả sử payment đã được xử lý thành công rồi
         payment.setPaymentStatus(PaymentStatus.PAID);
 
         when(momoService.verifySignature(ipnSuccess)).thenReturn(true);
         when(paymentRepository.findByMomoOrderId(MOMO_ORDER_ID)).thenReturn(Optional.of(payment));
 
-        // Gọi lần 2
         momoIpnService.handleIpn(ipnSuccess);
 
-        // Không save lại gì cả
         verify(paymentRepository, never()).save(any());
         verify(orderRepository, never()).save(any());
         verify(productRepository, never()).save(any());
@@ -246,8 +251,6 @@ class MomoIpnServiceTest {
 
         verify(orderRepository, never()).save(any());
     }
-
-    // ===== Helper =====
 
     private MomoIpnRequest buildIpn(int resultCode, String message) {
         MomoIpnRequest req = new MomoIpnRequest();
@@ -269,43 +272,36 @@ class MomoIpnServiceTest {
 
     @Test
     void handleIpn_PaymentFailedAndResultCode0_ShouldTriggerRefundAndNotConfirmOrder() {
-        // Arrange
         payment.setPaymentStatus(PaymentStatus.FAILED);
         order.setStatus(OrderStatus.CANCELLED);
         
         when(momoService.verifySignature(ipnSuccess)).thenReturn(true);
         when(paymentRepository.findByMomoOrderId(MOMO_ORDER_ID)).thenReturn(Optional.of(payment));
 
-        // Act
         momoIpnService.handleIpn(ipnSuccess);
 
-        // Assert
         verify(paymentRefundService).processRefund(payment.getId());
-        verify(orderRepository, never()).save(any(Order.class)); // Order NOT CONFIRMED
+        verify(orderRepository, never()).save(any(Order.class)); 
         assertEquals(OrderStatus.CANCELLED, order.getStatus());
     }
+    
     @Test
     void handleIpn_WhenStockIsZeroAndPaymentSuccessful_ShouldFailOrderAndNotDeductStock() {
-        // Arrange
-        product.setStock(0); // Setup stock=0, simulate another order took it
+        variant.setStock(0); 
         
         when(momoService.verifySignature(ipnSuccess)).thenReturn(true);
         when(paymentRepository.findByMomoOrderId(MOMO_ORDER_ID)).thenReturn(Optional.of(payment));
 
-        // Act
         momoIpnService.handleIpn(ipnSuccess);
 
-        // Assert
-        assertEquals(0, product.getStock(), "Stock MUST NOT be negative!");
-        verify(productRepository, never()).save(any(Product.class)); // Không bao giờ lưu tồn kho âm
+        assertEquals(0, product.getVariants().get(0).getStock(), "Stock MUST NOT be negative!");
+        verify(productRepository, never()).save(any(Product.class)); 
         
-        // Đơn hàng phải bị HỦY và Thanh toán đánh dấu là LỖI
         assertEquals(OrderStatus.CANCELLED, order.getStatus());
         assertEquals(PaymentStatus.FAILED, payment.getPaymentStatus());
         
         verify(orderRepository).save(order);
         
-        // Bắt buộc gọi Refund vì tiền đã thu bên MoMo rồi
         verify(paymentRefundService).processRefund(payment.getId());
     }
 }

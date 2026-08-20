@@ -26,21 +26,21 @@ public class Payment {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(nullable = false)
+    @JoinColumn(name = "order_id")
     private Order order;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "payment_method")
     private PaymentMethod paymentMethod; 
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "payment_status")
     private PaymentStatus paymentStatus;  
 
     @Version
     private Long version;
 
-    @Column(nullable = false)
+    @Column(name = "amount")
     private BigDecimal amount; // order.totalPrice
 
     private String transactionId;  // MoMo return (null with COD)

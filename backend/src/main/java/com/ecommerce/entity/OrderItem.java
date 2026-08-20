@@ -27,6 +27,9 @@ public class OrderItem {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
+    // kich thuoc chon tai thoi diem dat hang
+    private String size;
+
     // so luong mua
     @NotNull(message = "Quantity is required")
     @Min(value = 1, message = "Quantity must be at least 1")
