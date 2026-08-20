@@ -98,7 +98,7 @@ export default function Register() {
     <AuthLayout>
       <div className="auth-header">
         <h1 className="auth-title">Tạo tài khoản</h1>
-        <p className="auth-subtitle">Tham gia cùng chúng tôi và khám phá Năng lượng Kinetic.</p>
+        <p className="auth-subtitle">Tham gia cùng chúng tôi.</p>
       </div>
 
       <form className="auth-form" onSubmit={handleSubmit}>

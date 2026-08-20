@@ -9,15 +9,6 @@ export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Lấy giỏ hàng mỗi khi user đăng nhập thành công
-  useEffect(() => {
-    if (user) {
-      fetchCart();
-    } else {
-      setCart(null); // Xóa giỏ hàng local khi logout
-    }
-  }, [user]);
-
   const fetchCart = async () => {
     setIsLoading(true);
     try {
@@ -29,6 +20,15 @@ export const CartProvider = ({ children }) => {
       setIsLoading(false);
     }
   };
+
+  // Lấy giỏ hàng mỗi khi user đăng nhập thành công
+  useEffect(() => {
+    if (user) {
+      fetchCart();
+    } else {
+      setCart(null); // Xóa giỏ hàng local khi logout
+    }
+  }, [user]);
 
   const addToCart = async (variantId, quantity = 1) => {
     try {
