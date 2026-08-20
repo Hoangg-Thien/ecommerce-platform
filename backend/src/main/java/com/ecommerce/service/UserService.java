@@ -2,10 +2,12 @@ package com.ecommerce.service;
 
 import com.ecommerce.dto.request.RegisterRequest;
 import com.ecommerce.dto.response.UserResponse;
+import com.ecommerce.entity.Cart;
 import com.ecommerce.entity.User;
 import com.ecommerce.enums.Role;
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.mapper.UserMapper;
+import com.ecommerce.repository.CartRepository;
 import com.ecommerce.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final CartRepository cartRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
 
@@ -36,10 +39,16 @@ public class UserService {
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-
         user.setRole(Role.USER);
 
         User savedUser = userRepository.save(user);
+        
+        // Khởi tạo ngay giỏ hàng trống cho user để tránh lỗi Race Condition (409 Conflict)
+        // khi gọi getCart và addToCart đồng thời ở lần đầu tiên.
+        Cart cart = new Cart();
+        cart.setUser(savedUser);
+        cartRepository.save(cart);
+        
         log.info("User registered successfully: id={}, email={}, role={}",
         savedUser.getId(), savedUser.getEmail(), savedUser.getRole());
         return userMapper.toUserRespone(savedUser);
