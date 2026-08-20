@@ -26,6 +26,12 @@ logging:
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql: WARN
 
+application:
+  security:
+    cookie:
+      secure: true
+      same-site: None
+
 rate-limit:
   enabled: true
   trust-proxy: true  # Production is behind a reverse proxy (Nginx/Railway/Render)

@@ -10,12 +10,14 @@ import com.ecommerce.service.JwtService;
 import com.ecommerce.service.RefreshTokenService;
 import com.ecommerce.service.UserService;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -41,13 +43,22 @@ public class AuthController {
     @org.springframework.beans.factory.annotation.Value("${application.security.jwt.refresh-token.expiration:604800000}")
     private long refreshExpiration;
 
-    private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken){
-        Cookie cookie = new Cookie("refreshToken", refreshToken);
-        cookie.setHttpOnly(true); // js ko doc duoc
-        cookie.setSecure(false); // dat true neu chay https(production)
-        cookie.setPath("/api/v1/auth/refresh");
-        cookie.setMaxAge(7 * 24 * 60 * 60); // 7 ngay
-        response.addCookie(cookie);
+    @Value("${application.security.cookie.secure:false}")
+    private boolean cookieSecure;
+
+    @Value("${application.security.cookie.same-site:Lax}")
+    private String cookieSameSite;
+
+     private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+        .httpOnly(true)
+        .secure(cookieSecure)
+        .sameSite(cookieSameSite)
+        .path("/api/v1/auth/refresh")
+        .maxAge(7 * 24 * 60 * 60)
+        .build();
+        
+        response.addHeader(org.springframework.http.HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
     @PostMapping("/register")
@@ -172,15 +183,16 @@ public class AuthController {
     }
 
     // ham phu tro de xoa cookie
-    private void cleanRefreshTokenCookies(HttpServletResponse response){
-
-      Cookie cookie = new Cookie("refreshToken", null);
-      cookie.setHttpOnly(true);
-      cookie.setSecure(false); // dat true neu chay https(prod)
-
-      cookie.setPath("/api/v1/auth/refresh");
-      cookie.setMaxAge(0);
-      response.addCookie(cookie);
+    private void cleanRefreshTokenCookies(HttpServletResponse response, String refreshToken){
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
+        .httpOnly(true)
+        .secure(cookieSecure)
+        .sameSite(cookieSameSite)
+        .path("/api/v1/auth/refresh")
+        .maxAge(0)
+        .build();
+        
+        response.addHeader(org.springframework.http.HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
     @PostMapping("/logout")
@@ -197,7 +209,7 @@ public class AuthController {
         }
 
         // phan hoi va bat trinh duyet xoa cookie
-        cleanRefreshTokenCookies(response);
+        cleanRefreshTokenCookies(response, refreshToken);
 
         return ResponseEntity.ok().build();
     }

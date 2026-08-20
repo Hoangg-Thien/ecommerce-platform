@@ -19,6 +19,9 @@ spring:
 
 application:
   security:
+    cookie:
+      secure: false
+      same-site: Lax
     jwt:
       secret-key: ${JWT_SECRET_KEY}
       expiration: 900000 # 15 minutes (access token)
