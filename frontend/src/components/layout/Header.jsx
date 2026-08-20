@@ -69,12 +69,14 @@ export default function Header() {
             ))}
           </nav>
 
-
           <div className="header-right">
+
+            {/*
             <div className="search-box">
               <Search size={18} className="search-icon" />
               <input type="text" placeholder="Tìm kiếm..." className="search-input" />
             </div>
+            */}
 
             <Link to="/cart" className="icon-btn cart-btn" aria-label="Giỏ hàng">
               <ShoppingCart size={22} />
