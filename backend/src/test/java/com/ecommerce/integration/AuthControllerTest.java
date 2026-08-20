@@ -2,6 +2,7 @@ package com.ecommerce.integration;
 
 import com.ecommerce.controller.AuthController;
 import com.ecommerce.config.JwtAuthenticationFilter;
+import com.ecommerce.ratelimit.RateLimitFilter;
 import com.ecommerce.dto.request.LoginRequest;
 import com.ecommerce.dto.request.RefreshTokenRequest;
 import com.ecommerce.dto.request.RegisterRequest;
@@ -58,6 +59,9 @@ class AuthControllerTest {
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @MockBean
+    private RateLimitFilter rateLimitFilter;
 
     @MockBean 
     private IdempotencyKeyRepository idempotencyKeyRepository;

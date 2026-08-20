@@ -1,6 +1,7 @@
 package com.ecommerce.integration;
 
 import com.ecommerce.config.JwtAuthenticationFilter;
+import com.ecommerce.ratelimit.RateLimitFilter;
 import com.ecommerce.controller.CheckoutController;
 import com.ecommerce.dto.request.CheckoutRequest;
 import com.ecommerce.dto.response.CheckoutResponse;
@@ -42,6 +43,7 @@ class CheckoutControllerTest {
     @MockBean private JwtService jwtService;
     @MockBean private UserDetailsService userDetailsService;
     @MockBean private JwtAuthenticationFilter jwtAuthenticationFilter;
+    @MockBean private RateLimitFilter rateLimitFilter;
     @MockBean private IdempotencyKeyRepository idempotencyKeyRepository;
 
     @Test

@@ -1,6 +1,7 @@
 package com.ecommerce.integration;
 
 import com.ecommerce.config.JwtAuthenticationFilter;
+import com.ecommerce.ratelimit.RateLimitFilter;
 import com.ecommerce.controller.PaymentController;
 import com.ecommerce.dto.request.MomoIpnRequest;
 import com.ecommerce.dto.response.PaymentResponse;
@@ -58,6 +59,7 @@ class PaymentControllerTest {
     }
 
     @MockBean private JwtAuthenticationFilter jwtAuthenticationFilter;
+    @MockBean private RateLimitFilter rateLimitFilter;
     @MockBean private IdempotencyKeyRepository idempotencyKeyRepository;
 
     // ===== IPN endpoint =====
