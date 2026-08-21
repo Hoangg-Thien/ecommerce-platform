@@ -7,6 +7,7 @@ import com.ecommerce.enums.Role;
 import com.ecommerce.exception.EmailAlreadyExistsException;
 import com.ecommerce.mapper.UserMapper;
 import com.ecommerce.repository.UserRepository;
+import com.ecommerce.repository.CartRepository;
 import com.ecommerce.service.UserService;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +29,9 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private CartRepository cartRepository;
 
     @Mock
     private PasswordEncoder passwordEncoder;

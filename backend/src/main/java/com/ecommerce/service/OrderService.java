@@ -129,7 +129,7 @@ public class OrderService {
         }
 
         Payment payment = order.getPayment();
-        if(payment.getPaymentStatus() == PaymentStatus.PAID){
+        if(payment == null || payment.getPaymentStatus() == PaymentStatus.PAID){
             throw new IllegalStateException("Đơn hàng này đã được thanh toán hoặc không hợp lệ");
         }
 

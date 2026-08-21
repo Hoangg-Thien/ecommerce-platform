@@ -23,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import com.ecommerce.service.payment.MomoPaymentStrategy;
 
 import java.math.BigDecimal;
 
@@ -44,6 +45,9 @@ class OrderServiceTest {
 
     @Mock
     private ProductRepository productRepository;
+
+    @Mock
+    private MomoPaymentStrategy momoPaymentStrategy;
 
     @Spy
     private OrderMapper orderMapper;
@@ -191,5 +195,43 @@ class OrderServiceTest {
 
         assertThrows(com.ecommerce.exception.UnauthorizedAccessException.class, 
                 () -> orderService.getOrderById(100L, "hacker@gmail.com"));
+    }
+
+    @Test
+    void retryPayment_WhenSuccess_ShouldReturnCheckoutResponse() {
+        Order order = new Order();
+        order.setId(10L);
+        order.setStatus(OrderStatus.AWAITING_PAYMENT);
+        User owner = new User();
+        owner.setEmail("user@gmail.com");
+        order.setUser(owner);
+        Payment payment = new Payment();
+        payment.setPaymentStatus(com.ecommerce.enums.PaymentStatus.PENDING);
+        order.setPayment(payment);
+
+        when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+        when(momoPaymentStrategy.generatePaymentUrl(payment)).thenReturn("http://momo.vn/pay");
+
+        com.ecommerce.dto.response.CheckoutResponse response = orderService.retryPayment(10L, "user@gmail.com");
+
+        assertNotNull(response);
+        assertEquals("http://momo.vn/pay", response.getPaymentUrl());
+    }
+
+    @Test
+    void retryPayment_WhenPaymentPaid_ShouldThrowException() {
+        Order order = new Order();
+        order.setId(10L);
+        order.setStatus(OrderStatus.AWAITING_PAYMENT);
+        User owner = new User();
+        owner.setEmail("user@gmail.com");
+        order.setUser(owner);
+        Payment payment = new Payment();
+        payment.setPaymentStatus(com.ecommerce.enums.PaymentStatus.PAID);
+        order.setPayment(payment);
+
+        when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+        assertThrows(IllegalStateException.class, () -> orderService.retryPayment(10L, "user@gmail.com"));
     }
 }
