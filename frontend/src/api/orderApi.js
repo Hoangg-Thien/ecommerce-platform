@@ -13,7 +13,7 @@ const orderApi = {
     },
 
     retryPayment: (orderId) => {
-        return axiosClient.post(`/oders/${orderId}/retry-payment`);
+        return axiosClient.post(`/orders/${orderId}/retry-payment`);
     }
 };
 

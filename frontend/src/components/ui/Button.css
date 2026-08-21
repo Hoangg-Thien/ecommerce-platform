@@ -49,6 +49,16 @@
   border-color: #9ca3af;
 }
 
+.btn-momo {
+  background-color: #a50064;
+  color: white;
+}
+
+.btn-momo:hover:not(:disabled) {
+  background-color: #8a0053;
+  box-shadow: 0 4px 12px rgba(165, 0, 100, 0.3);
+}
+
 .btn-loader {
   display: flex;
   align-items: center;

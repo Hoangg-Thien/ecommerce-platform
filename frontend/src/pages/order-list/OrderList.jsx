@@ -55,7 +55,12 @@ export default function OrderList() {
     try {
       const response = await orderApi.retryPayment(orderId);
       if(response.paymentUrl){
-        window.location.href = response.paymentUrl;
+        const url = response.paymentUrl;
+        if (url.startsWith('/')) {
+          navigate(url);
+        } else {
+          window.location.href = url;
+        }
       }
     } catch (error) {
       alert(error.response?.data?.message || 'Không thể tạo lại thanh toán');
@@ -211,14 +216,14 @@ export default function OrderList() {
            <div className="order-modal-footer">
             {selectedOrder.status === 'AWAITING_PAYMENT' && selectedOrder.paymentMethod === 'MOMO' && (
               <Button 
-                variant="primary" 
+                variant="momo" 
                 onClick={() => handleRetryPayment(selectedOrder.id)}
                 disabled={isRetrying}
                 >
-                {isRetrying ? 'Đang xử lý...' : 'Thanh toán lại'}
+                {isRetrying ? 'Đang xử lý...' : 'Thanh toán lại (MoMo)'}
               </Button>
             )}
-            <Button onClick={() => setSelectedOrder(null)}>Đóng</Button>
+            <Button variant="primary" onClick={() => setSelectedOrder(null)}>Đóng</Button>
           </div>
           </div>
         </div>
