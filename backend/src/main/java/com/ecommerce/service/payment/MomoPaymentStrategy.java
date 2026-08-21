@@ -58,7 +58,7 @@ public class MomoPaymentStrategy implements PaymentStrategy{
             paymentRepository.save(savedPayment);
         }
 
-        // Ko trừ stock, KHÔNG xóa cart — chờ IPN xác nhận
+        // Ko trừ stock, ko xóa cart — chờ IPN xác nhận
         log.info("Created MoMo payment for order {}, waiting for IPN callback", savedOrder.getId());
 
         return CheckoutResponse.builder()
@@ -68,5 +68,16 @@ public class MomoPaymentStrategy implements PaymentStrategy{
         .paymentUrl(paymentUrl) // frontend redict sang url nay de thanh toan
         .paymentResponse(paymentMapper.toPaymentResponse(savedPayment))
         .build();
+    }
+
+    public String generatePaymentUrl(Payment payment){
+        if(mockEnabled){
+            log.info("Mock payment enabled. Redirecting order {} to mock gateway.", payment.getOrder().getId());
+            return "/mock-payment?orderId=" + payment.getOrder().getId();
+        }else {
+            String paymentUrl = momoService.createPaymentUrl(payment);
+            paymentRepository.save(payment);
+            return paymentUrl;
+        }
     }
 }

@@ -33,12 +33,12 @@ application:
         expiration: 604800000 # 7 days
 
 momo:
-  partner-code: ${MOMO_PARTNER_CODE:mock}
-  access-key: ${MOMO_ACCESS_KEY:mock}
-  secret-key: ${MOMO_SECRET_KEY:mock}
+  partner-code: ${MOMO_PARTNER_CODE}
+  access-key: ${MOMO_ACCESS_KEY}
+  secret-key: ${MOMO_SECRET_KEY}
   api-url: ${MOMO_API_URL:https://test-payment.momo.vn/v2/gateway/api/create}
-  redirect-url: ${MOMO_REDIRECT_URL:mock}
-  ipn-url: ${MOMO_IPN_URL:mock}
+  redirect-url: ${MOMO_REDIRECT_URL}
+  ipn-url: ${MOMO_IPN_URL}
 
 payment:
   momo:
