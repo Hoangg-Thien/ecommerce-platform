@@ -18,12 +18,12 @@ const formatPrice = (price) => {
 export default function OrderList() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  
   const [orders, setOrders] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   // Redirect nếu chưa đăng nhập
   useEffect(() => {
@@ -50,6 +50,19 @@ export default function OrderList() {
 
     fetchOrders();
   }, [currentPage, user]);
+
+  const handleRetryPayment = async(orderId) => {
+    try {
+      const response = await orderApi.retryPayment(orderId);
+      if(response.paymentUrl){
+        window.location.href = response.paymentUrl;
+      }
+    } catch (error) {
+      alert(error.response?.data?.message || 'Không thể tạo lại thanh toán');
+    } finally{
+      setIsRetrying(false);
+    }
+  }
 
   if (!user) return null;
 
@@ -195,9 +208,18 @@ export default function OrderList() {
                 </div>
               </div>
             </div>
-            <div className="order-modal-footer">
-              <Button onClick={() => setSelectedOrder(null)}>Đóng</Button>
-            </div>
+           <div className="order-modal-footer">
+            {selectedOrder.status === 'AWAITING_PAYMENT' && selectedOrder.paymentMethod === 'MOMO' && (
+              <Button 
+                variant="primary" 
+                onClick={() => handleRetryPayment(selectedOrder.id)}
+                disabled={isRetrying}
+                >
+                {isRetrying ? 'Đang xử lý...' : 'Thanh toán lại'}
+              </Button>
+            )}
+            <Button onClick={() => setSelectedOrder(null)}>Đóng</Button>
+          </div>
           </div>
         </div>
       )}

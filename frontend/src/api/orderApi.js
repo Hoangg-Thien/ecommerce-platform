@@ -10,6 +10,10 @@ const orderApi = {
     // retrieve a order detail
     getOrderById: (id) => {
         return axiosClient.get(`/orders/${id}`);
+    },
+
+    retryPayment: (orderId) => {
+        return axiosClient.post(`/oders/${orderId}/retry-payment`);
     }
 };
 
