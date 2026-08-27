@@ -68,11 +68,11 @@ Core flow: browse products → add to cart → checkout → an `Order` + `Paymen
 - `retry-payment` endpoint lets a user regenerate a MoMo payment URL for an order still `AWAITING_PAYMENT`.
 
 ### Payment
-- Two methods behind a common `PaymentStrategy` interface: **COD** and **MoMo** (MoMo Sandbox).
-- MoMo integration includes real HMAC-SHA256 signature generation (payment creation) and verification (IPN callback) — not just a mocked response.
-- A `payment.momo.mock-enabled` flag swaps the real MoMo call for a local `/mock-payment` endpoint, useful for demoing the flow without live sandbox credentials.
-- **Late/duplicate IPN handling**: if MoMo's success callback arrives *after* the order was already auto-cancelled by the timeout scheduler, the service detects the conflict and triggers an automatic refund flow (`PaymentRefundService`) instead of silently double-processing or losing the payment.
-- The actual outbound MoMo refund HTTP call is a stub (logs only) — the refund *state machine* (`PENDING → REFUNDING → REFUNDED`) and triggering logic are fully implemented, but no real refund request is sent to MoMo.
+- Two methods behind a common `PaymentStrategy` interface: **COD** and **MoMo**.
+- **MoMo runs in mock mode** (`payment.momo.mock-enabled: true` by default): checkout redirects to a local `/mock-payment` endpoint (`MockPaymentController` / `MockPaymentService`) instead of calling MoMo's real API. No live MoMo sandbox account was used — the project has not been exercised against MoMo's actual servers.
+- The MoMo client code itself (`MomoServiceImpl`) implements the real request/response contract from MoMo's docs — building the payment request payload and computing/verifying the HMAC-SHA256 signature exactly as MoMo's API requires — so the integration is "spec-correct" and would call the real `MOMO_API_URL` if `mock-enabled` were switched off and real credentials supplied. But as shipped and actually run, all payment flows in this project go through the mock endpoint, not MoMo's servers.
+- **Late/duplicate IPN handling** (`MomoIpnService`): if a success callback arrives *after* the order was already auto-cancelled by the timeout scheduler, the service detects the conflict and triggers an automatic refund flow (`PaymentRefundService`) instead of silently double-processing or losing the payment. This logic is exercised by unit tests against the mocked IPN payload — it has not been validated against a real MoMo IPN callback.
+- The outbound MoMo refund HTTP call is a stub (logs only) — the refund *state machine* (`PENDING → REFUNDING → REFUNDED`) and triggering logic are fully implemented, but no real refund request is ever sent to MoMo.
 
 ### Reliability & Concurrency
 - Optimistic locking (`@Version`) on `Product`, `ProductVariant`, `Order`, and `Payment`.
@@ -185,29 +185,17 @@ No coverage percentage is claimed here since no coverage tool (e.g. Jacoco) is c
 
 ## Tech Stack
 
-**Backend**
-- Java 21, Spring Boot 3.5
-- Spring Web, Spring Security, Spring Data JPA / Hibernate
-- PostgreSQL + Flyway migrations
-- JWT via `jjwt` 0.12.7
-- Spring Cache + Caffeine
-- Bucket4j (rate limiting)
-- springdoc-openapi (Swagger UI)
-- Lombok
-
-**Frontend**
-- React 19, React Router 7
-- Vite 8, Axios
-- lucide-react (icons)
-
-**Testing**
-- JUnit 5, Mockito, MockMvc, Spring Security Test
-- H2 (in-memory, PG-compatibility mode), Testcontainers (PostgreSQL)
-
-**Infrastructure**
-- Docker (multi-stage build, non-root runtime user, G1GC + container-aware memory flags)
-- GitHub Actions CI (`mvn test` + `mvn package` on push/PR for backend; `npm run build` for frontend)
-- Render (backend API + frontend hosting)
+| Category | Technologies |
+|---|---|
+| **Backend** | Java 21, Spring Boot 3.5, Spring Web, Spring Security, Spring Data JPA / Hibernate |
+| **Database** | PostgreSQL, Flyway migrations |
+| **Auth** | JWT (`jjwt` 0.12.7) |
+| **Caching / Rate Limiting** | Spring Cache + Caffeine, Bucket4j |
+| **API Docs** | springdoc-openapi (Swagger UI) |
+| **Utilities** | Lombok |
+| **Frontend** | React 19, React Router 7, Vite 8, Axios, lucide-react (icons) |
+| **Testing** | JUnit 5, Mockito, MockMvc, Spring Security Test, H2 (PG-compatibility mode), Testcontainers (PostgreSQL) |
+| **Infrastructure** | Docker (multi-stage build, non-root runtime user, G1GC + container-aware memory flags), GitHub Actions CI (`mvn test`/`mvn package` for backend, `npm run build` for frontend), Render (backend API + frontend hosting) |
 
 ## Deployment
 
@@ -223,14 +211,14 @@ PostgreSQL
 
 - The backend `Dockerfile` is a two-stage build: Maven builds the JAR in a temurin-21 build image, then the JAR is copied into a minimal `eclipse-temurin:21-jre-alpine` runtime image running as a non-root user, with `JAVA_OPTS` tuned for constrained-memory containers (`-XX:MaxRAMPercentage=75.0`, G1GC).
 - `application-prod.yaml` activates on `SPRING_PROFILES_ACTIVE=prod`: HikariCP pool tuning, `ddl-auto: validate` (schema changes only via Flyway), secure/`SameSite=None` refresh cookies, and reverse-proxy-aware IP resolution (`rate-limit.trust-proxy: true`) for correct rate-limit keys behind Render's proxy.
-- `docker-compose.yml` in the repo provisions PostgreSQL only, for local development; it does not define a backend service. `.env.prod.example` documents the production environment variables (Supabase/managed Postgres URL, JWT secret, MoMo credentials) that are configured directly in Render's dashboard rather than committed to the repo.
+- `docker-compose.yml` in the repo provisions PostgreSQL only, for local development; it does not define a backend service. `.env.prod.example` documents the production environment variables (Supabase/managed Postgres URL, JWT secret, MoMo config keys) that are configured directly in Render's dashboard rather than committed to the repo; in this deployment `payment.momo.mock-enabled` is left `true`, so no real MoMo credentials are actually required or used.
 - CI (`backendci.yml`, `frontendci.yml`) runs build/test verification on push and PR; it does not itself publish images or trigger deployment — deployment to Render is configured on Render's side against the repository.
 
 ## Engineering Highlights
 
 - **Idempotent checkout** implemented at the database level (unique-constrained key table inside the transaction), not just an in-memory or cache-based check — safe across app restarts and multiple instances.
 - **Refresh-token rotation with reuse detection**: tokens are hashed at rest, rotated on every refresh, and a replayed/revoked token triggers a full account-wide token revocation — a materially stronger model than "JWT refresh token, no DB check."
-- **Payment reconciliation under race conditions**: the MoMo IPN handler explicitly reasons about the case where a successful payment notification arrives *after* the order was already auto-cancelled by the timeout job, and routes it into a refund flow instead of either double-fulfilling the order or losing the customer's money silently.
+- **Payment reconciliation under race conditions**: the MoMo IPN handler explicitly reasons about the case where a successful payment notification arrives *after* the order was already auto-cancelled by the timeout job, and routes it into a refund flow instead of either double-fulfilling the order or losing the customer's money silently. This is implemented and unit-tested against simulated IPN payloads (the project runs against mocked MoMo, not a live sandbox).
 - **Concurrency correctness is tested, not assumed**: optimistic-locking behavior under simultaneous checkouts is verified with real multi-threaded integration tests against the live HTTP endpoint, not just unit-level mocking.
 - **Per-endpoint-group rate limiting** with different keys (IP for pre-auth endpoints, user identity for authenticated ones) and different budgets per group, implemented directly with Bucket4j + Caffeine rather than a single blanket filter.
 
@@ -274,7 +262,7 @@ ecommerce-platform/
 docker compose up -d
 
 # 2. Configure environment
-cp .env.example .env   # fill in DB_PASSWORD, JWT_SECRET_KEY, MoMo sandbox keys if needed
+cp .env.example .env   # fill in DB_PASSWORD, JWT_SECRET_KEY; MoMo keys are NOT required — mock-enabled=true by default
 
 # 3. Run the backend (from backend/)
 cd backend
