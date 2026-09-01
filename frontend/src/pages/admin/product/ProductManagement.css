@@ -1,0 +1,138 @@
+/* ProductManagement specific styles
+   Tất cả class dùng prefix "adm-prod-" để tránh collision với CSS user-facing */
+
+/* ---- Thumbnail ---- */
+.adm-prod-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-bg);
+  flex-shrink: 0;
+}
+
+.adm-prod-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.adm-prod-thumb__fallback {
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  color: var(--admin-text-muted);
+  background: var(--admin-bg);
+}
+
+/* ---- Product info ---- */
+.adm-prod-name {
+  font-weight: 600;
+  color: var(--admin-text-primary);
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.adm-prod-category-label {
+  font-size: 12px;
+  color: var(--admin-text-secondary);
+}
+
+.adm-prod-price {
+  font-weight: 600;
+  color: var(--admin-primary);
+  font-size: 14px;
+}
+
+.adm-prod-variant-count {
+  display: inline-block;
+  background: var(--admin-bg);
+  border: 1px solid var(--admin-border);
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--admin-text-secondary);
+}
+
+.adm-prod-stock {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--admin-text-primary);
+}
+
+.adm-prod-stock--low {
+  color: var(--admin-error);
+}
+
+/* ---- Filter Bar ---- */
+.product-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.product-filter-bar__search {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+  max-width: 400px;
+  display: flex;
+  align-items: center;
+}
+
+.product-filter-bar__search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--admin-text-secondary);
+  pointer-events: none;
+}
+
+.product-filter-bar__search-input {
+  width: 100%;
+  padding: 9px 36px 9px 38px;
+  border: 1.5px solid var(--admin-border);
+  border-radius: var(--admin-r-md);
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  color: var(--admin-text-primary);
+  background: var(--admin-surface);
+  outline: none;
+  transition: border-color var(--admin-tr), box-shadow var(--admin-tr);
+}
+
+.product-filter-bar__search-input:focus {
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.12);
+}
+
+.product-filter-bar__search-clear {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--admin-text-secondary);
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.product-filter-bar__search-clear:hover {
+  color: var(--admin-error);
+}
+
+.product-filter-bar__filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.product-filter-bar__select {
+  padding: 9px 36px 9px 12px;
+  font-size: 13.5px;
+  min-width: 160px;
+}

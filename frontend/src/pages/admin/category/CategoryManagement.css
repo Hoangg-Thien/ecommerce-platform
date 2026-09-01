@@ -1,0 +1,42 @@
+/* Shared admin page styles */
+
+.admin-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.admin-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-page__title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--admin-text-primary);
+  margin: 0 0 4px 0;
+  letter-spacing: -0.4px;
+}
+
+.admin-page__subtitle {
+  font-size: 13px;
+  color: var(--admin-text-secondary);
+  margin: 0;
+}
+
+/* Category icon cell */
+.category-icon-cell {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--admin-r-sm);
+  background: var(--admin-primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--admin-primary);
+  flex-shrink: 0;
+}
