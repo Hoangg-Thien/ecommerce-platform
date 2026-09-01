@@ -51,6 +51,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/products/**").hasAuthority("ADMIN")
 
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/orders/*/status").hasAuthority("ADMIN")
+
+                // Toàn bộ /api/v1/admin/** chỉ dành cho ADMIN
+                .requestMatchers("/api/v1/admin/**").hasAuthority("ADMIN")
                 
                 // MoMo IPN 
                 .requestMatchers(HttpMethod.POST, "/api/v1/payments/momo/ipn").permitAll()

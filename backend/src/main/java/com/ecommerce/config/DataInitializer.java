@@ -6,10 +6,8 @@ import com.ecommerce.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-@Profile("dev")
 @Configuration
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
@@ -19,15 +17,18 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // tu dong tao tai khoan admin neu chua ton tai
-        if (!userRepository.existsByEmail("admin@gmail.com")) {
-            User admin = new User();
-            admin.setEmail("admin@gmail.com");
-            admin.setPassword(passwordEncoder.encode("admin123"));
-            admin.setRole(Role.ADMIN);
+        seedAdmin("admin@gmail.com", "admin123");
+        seedAdmin("admin@admin.com", "Admin@123");
+    }
 
+    private void seedAdmin(String email, String password) {
+        if (!userRepository.existsByEmail(email)) {
+            User admin = new User();
+            admin.setEmail(email);
+            admin.setPassword(passwordEncoder.encode(password));
+            admin.setRole(Role.ADMIN);
             userRepository.save(admin);
-            System.out.println(">>> Đã tự động tạo tài khoản ADMIN mặc định: admin@gmail.com / admin123");
+            System.out.println(">>> Da tao tai khoan ADMIN: " + email);
         }
     }
 }
