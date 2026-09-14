@@ -5,14 +5,19 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
   const { user } = useAuth();
   const location = useLocation();
 
-  // Chưa đăng nhập -> đá về Login, lưu lại trang đang muốn vào để chuyển về sau khi login
+  // Chưa đăng nhập
   if (!user) {
+    // Nếu đang cố vào trang admin → đá về admin login
+    if (requireAdmin) {
+      return <Navigate to="/admin" state={{ from: location }} replace />;
+    }
+    // Trang thường → đá về user login
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Cần quyền admin nhưng không phải admin -> báo lỗi 403 / đá về trang chủ
+  // Cần quyền admin nhưng không phải admin → đá về trang chủ user
   if (requireAdmin && user.role !== 'ADMIN') {
-    return <Navigate to="/" replace />; // Hoặc chuyển đến một trang báo lỗi 403
+    return <Navigate to="/" replace />;
   }
 
   return children;
