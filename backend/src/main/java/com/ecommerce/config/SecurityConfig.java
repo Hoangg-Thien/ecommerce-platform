@@ -17,6 +17,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import org.springframework.beans.factory.annotation.Value;
 import java.util.Arrays;
 import java.util.List;
 
@@ -27,6 +28,9 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final RateLimitFilter rateLimitFilter;
+
+    @Value("${cors.allowed-origins:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000}")
+    private List<String> allowedOrigins;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -76,8 +80,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Cho phép các domain của frontend (Vite, React và các domain trên Cloud như Render)
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        // Chỉ cho phép các origin đã được whitelist — KHÔNG dùng wildcard khi credentials=true
+        // vì đó là lỗ hổng CSRF/credential-leak kinh điển.
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "X-Requested-With", "Idempotency-Key"));
         configuration.setAllowCredentials(true);

@@ -21,6 +21,10 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+cors:
+  # Danh sách origin được phép gọi API (phân tách bằng dấu phẩy để tương thích @Value)
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000}
+
 application:
   security:
     cookie:
