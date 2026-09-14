@@ -76,6 +76,7 @@ public class CategoryService {
     }
 
     @Transactional
+    @CacheEvict(value = "categories", allEntries = true) // xoa sach toan bo cache
     public void delete(Long id) {
         Category category = getCategory(id);
         categoryRepository.delete(category);

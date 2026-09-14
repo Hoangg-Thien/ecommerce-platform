@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import ConfirmModal from '../ui/ConfirmModal';
 import './AdminLayout.css';
 
 // ---- Menu Definition ----
@@ -56,15 +57,17 @@ function useBreadcrumb() {
 
 export default function AdminLayout({ children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { user, logout } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const crumbs = useBreadcrumb();
 
   const handleLogout = async () => {
+    setShowLogoutConfirm(false);
     await logout();
-    showToast('Đã đăng xuất', 'success');
-    navigate('/login');
+    showToast('Đã đăng xuất thành công', 'success');
+    navigate('/admin');
   };
 
   const closeMobile = () => setMobileOpen(false);
@@ -165,7 +168,7 @@ export default function AdminLayout({ children }) {
         <div className="admin-header__actions">
           <button
             className="admin-header__logout-btn"
-            onClick={handleLogout}
+            onClick={() => setShowLogoutConfirm(true)}
             aria-label="Đăng xuất"
             id="admin-logout-btn"
           >
@@ -179,6 +182,18 @@ export default function AdminLayout({ children }) {
       <main className="admin-main">
         {children}
       </main>
+
+      {/* ====== LOGOUT CONFIRM MODAL ====== */}
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        title="Xác nhận đăng xuất"
+        message="Bạn có chắc chắn muốn đăng xuất không?"
+        confirmText="Đăng xuất"
+        cancelText="Hủy"
+        isDanger={true}
+        onConfirm={handleLogout}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
     </div>
   );
 }

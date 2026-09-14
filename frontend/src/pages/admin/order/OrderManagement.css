@@ -1,0 +1,261 @@
+/* OrderManagement.css */
+
+/* ---- Order number / ID ---- */
+.adm-order-id {
+  font-weight: 700;
+  color: var(--admin-text-primary);
+  font-size: 14px;
+}
+
+.adm-order-date {
+  font-size: 12px;
+  color: var(--admin-text-secondary);
+  margin-top: 2px;
+}
+
+/* ---- Customer info ---- */
+.adm-order-customer-email {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--admin-text-primary);
+}
+
+/* ---- Total price ---- */
+.adm-order-total {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--admin-primary);
+}
+
+/* ---- Payment method badge ---- */
+.adm-order-payment {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--admin-bg);
+  border: 1px solid var(--admin-border);
+  color: var(--admin-text-secondary);
+}
+
+.adm-order-payment--momo {
+  background: #FFE5F1;
+  border-color: #FCA5C5;
+  color: #BE185D;
+}
+
+.adm-order-payment--cod {
+  background: #F0FDF4;
+  border-color: #86EFAC;
+  color: #166534;
+}
+
+/* ---- Inline status dropdown ---- */
+.adm-order-status-select {
+  padding: 5px 28px 5px 10px;
+  border: 1.5px solid var(--admin-border);
+  border-radius: var(--admin-r-sm);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--admin-tr);
+  appearance: none;
+  background-color: var(--admin-surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 7px center;
+}
+
+.adm-order-status-select:focus {
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.1);
+}
+
+.adm-order-status-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---- Order Detail Modal ---- */
+.order-detail-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.order-detail-modal__section-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--admin-text-muted);
+  margin: 0 0 12px 0;
+}
+
+.order-detail-modal__meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.order-detail-modal__meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.order-detail-modal__meta-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.order-detail-modal__meta-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--admin-text-primary);
+}
+
+/* Items list */
+.order-detail-modal__items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.order-detail-modal__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  background: var(--admin-bg);
+  border-radius: var(--admin-r-md);
+  border: 1px solid var(--admin-border);
+}
+
+.order-detail-modal__item-img {
+  width: 54px;
+  height: 54px;
+  border-radius: var(--admin-r-sm);
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+  flex-shrink: 0;
+  background: var(--admin-surface);
+}
+
+.order-detail-modal__item-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.order-detail-modal__item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.order-detail-modal__item-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--admin-text-primary);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.order-detail-modal__item-meta {
+  font-size: 12px;
+  color: var(--admin-text-secondary);
+}
+
+.order-detail-modal__item-subtotal {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--admin-primary);
+  flex-shrink: 0;
+}
+
+/* Total row */
+.order-detail-modal__total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--admin-primary-light);
+  border-radius: var(--admin-r-md);
+  border: 1px solid rgba(255, 106, 0, 0.2);
+}
+
+.order-detail-modal__total-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--admin-text-primary);
+}
+
+.order-detail-modal__total-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--admin-primary);
+}
+
+/* Status change section */
+.order-detail-modal__status-section {
+  background: var(--admin-bg);
+  border-radius: var(--admin-r-md);
+  padding: 16px;
+  border: 1px solid var(--admin-border);
+}
+
+.order-detail-modal__status-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.order-detail-modal__status-select {
+  flex: 1;
+  min-width: 180px;
+  padding: 9px 32px 9px 12px;
+  border: 1.5px solid var(--admin-border);
+  border-radius: var(--admin-r-md);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  color: var(--admin-text-primary);
+  background: var(--admin-surface);
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--admin-tr), box-shadow var(--admin-tr);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.order-detail-modal__status-select:focus {
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.12);
+}
+
+.order-detail-modal__status-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.order-detail-modal__locked-msg {
+  font-size: 12.5px;
+  color: var(--admin-text-secondary);
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
