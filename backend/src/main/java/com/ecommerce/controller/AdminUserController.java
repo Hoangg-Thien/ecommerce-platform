@@ -58,11 +58,6 @@ public class AdminUserController {
         @Valid @RequestBody UpdateUserRoleRequest request,
         @AuthenticationPrincipal UserDetails currentUser
     ) {
-        // Lấy user hiện tại từ token để ngăn admin tự thay đổi role của mình
-        AdminUserResponse target = adminUserService.getUserById(id);
-        if (target.getEmail().equals(currentUser.getUsername())) {
-            return ResponseEntity.badRequest().build();
-        }
-        return ResponseEntity.ok(adminUserService.updateRole(id, request.getRole()));
+        return ResponseEntity.ok(adminUserService.updateRole(id, request.getRole(), currentUser.getUsername()));
     }
 }

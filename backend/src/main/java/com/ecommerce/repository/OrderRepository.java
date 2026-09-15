@@ -2,6 +2,7 @@ package com.ecommerce.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,21 +27,56 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         PaymentMethod paymentMethod,
         LocalDateTime createAt);
 
-    // Admin queries
+    // ---- Admin queries (eager-load để tránh N+1) ----
+
+    /**
+     * Override findAll để đính kèm @EntityGraph — dùng bởi AdminOrderService.getAllOrders()
+     * khi không có filter nào. Nếu không override, Hibernate sẽ lazy-load từng
+     * association riêng lẻ → N+1 với mỗi order trên trang.
+     */
+    @Override
+    @EntityGraph(attributePaths = {"user", "items", "items.product", "payment"})
+    Page<Order> findAll(Pageable pageable);
+
+    /**
+     * Override findById để các call trong updateOrderStatus() và getOrderById()
+     * cũng eager-load đầy đủ — tránh lazy-load thêm khi mapper chạy.
+     */
+    @Override
+    @EntityGraph(attributePaths = {"user", "items", "items.product", "items.product.variants", "payment"})
+    Optional<Order> findById(Long id);
+
+    @EntityGraph(attributePaths = {"user", "items", "items.product", "payment"})
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"user", "items", "items.product", "payment"})
     @Query("SELECT o FROM Order o JOIN o.user u WHERE LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))")
     Page<Order> findByUserEmailContainingIgnoreCase(@Param("email") String email, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"user", "items", "items.product", "payment"})
     @Query("SELECT o FROM Order o JOIN o.user u WHERE o.status = :status AND LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))")
     Page<Order> findByStatusAndUserEmailContainingIgnoreCase(
         @Param("status") OrderStatus status,
         @Param("email") String email,
         Pageable pageable);
 
-    // User stats (fix N+1 in AdminUserService)
     long countByUserId(Long userId);
     long countByUserIdAndStatus(Long userId, OrderStatus status);
+
+    /**
+     * Bẩt tất cả thống kê đơn hàng cho một tập user IDs bằng 1 query GROUP BY duy nhất.
+     * Mỗi phần tử trả về là Object[3]: [userId (Long), totalOrders (Long), completedOrders (Long)].
+     * Dùng bởi AdminUserService.getAllUsers() để tránh N×2 COUNT queries trên mỗi trang.
+     */
+    @Query("""
+        SELECT o.user.id,
+               COUNT(o.id),
+               SUM(CASE WHEN o.status = com.ecommerce.enums.OrderStatus.DONE THEN 1 ELSE 0 END)
+        FROM Order o
+        WHERE o.user.id IN :userIds
+        GROUP BY o.user.id
+        """)
+    List<Object[]> countOrderStatsByUserIds(@Param("userIds") List<Long> userIds);
 
     // ---- Dashboard aggregation ----
 
@@ -67,7 +103,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
            "ORDER BY sold DESC")
     java.util.List<Object[]> findTopSellingProducts(org.springframework.data.domain.Pageable pageable);
 
-    // Đơn gần đây
+    // Đơn gần đây — fetch user ngay để tránh N+1 khi DashboardService gọi o.getUser().getEmail()
+    @EntityGraph(attributePaths = {"user"})
     @Query("SELECT o FROM Order o ORDER BY o.createAt DESC")
     java.util.List<Order> findRecentOrders(org.springframework.data.domain.Pageable pageable);
 }
