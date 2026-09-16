@@ -13,18 +13,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // dang ki interceptor va ap dung cho cac api
+        // Đăng ký idempotency interceptor cho tất cả /api/** endpoints
         if (interceptor != null) {
             registry.addInterceptor(interceptor).addPathPatterns("/api/**");
         }
-    }
-
-    @Override
-    public void addCorsMappings(org.springframework.web.servlet.config.annotation.CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOrigins("http://localhost:5173")
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true);
     }
 }
