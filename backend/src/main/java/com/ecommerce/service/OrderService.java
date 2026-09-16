@@ -12,18 +12,13 @@ import org.springframework.data.domain.Pageable;
 import com.ecommerce.dto.response.CheckoutResponse;
 import com.ecommerce.dto.response.OrderResponse;
 import com.ecommerce.entity.Order;
-import com.ecommerce.entity.OrderItem;
 import com.ecommerce.entity.Payment;
-import com.ecommerce.entity.Product;
-import com.ecommerce.entity.ProductVariant;
 import com.ecommerce.entity.User;
 import com.ecommerce.enums.OrderStatus;
-import com.ecommerce.enums.PaymentMethod;
 import com.ecommerce.enums.PaymentStatus;
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.mapper.OrderMapper;
 import com.ecommerce.repository.OrderRepository;
-import com.ecommerce.repository.ProductRepository;
 import com.ecommerce.repository.UserRepository;
 import com.ecommerce.service.payment.MomoPaymentStrategy;
 
@@ -37,7 +32,6 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
-    private final ProductRepository productRepository;
     private final OrderMapper orderMapper;
     private final MomoPaymentStrategy momoPaymentStrategy;
 
@@ -49,56 +43,6 @@ public class OrderService {
         Page<Order> orders = orderRepository.findByUserId(user.getId(), pageable);
 
         return PageResponse.of(orders.map(orderMapper::tOrderResponse));
-    }
-
-    @Transactional
-    public OrderResponse updateOrderStatus(Long orderId, OrderStatus newStatus){
-        log.info("Admin requesting status update for orderId={}, newStatus={}", orderId, newStatus);
-        
-        // tim order theo id
-        Order order = orderRepository.findById(orderId)
-        .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
-
-        // ko cho doi trang thai neu DONE va CANCELLED
-        if(order.getStatus() == OrderStatus.CANCELLED || order.getStatus() == OrderStatus.DONE){
-            log.warn("Cannot change status for orderId={} because it is already {}", 
-            orderId, order.getStatus());
-            throw new IllegalArgumentException("Cannot change status of an order that is already " + order.getStatus());
-        }
-
-        // Chỉ restock khi stock đã thực sự bị trừ trước đó
-        // Stock bị trừ khi: COD (khi PENDING, CONFIRMED...) hoặc MoMo (khi CONFIRMED trở đi)
-        // Stock CHƯA bị trừ khi: MoMo đang AWAITING_PAYMENT
-        if (newStatus == OrderStatus.CANCELLED) {
-        boolean stockWasDeducted = order.getStatus() != OrderStatus.AWAITING_PAYMENT;
-        if (stockWasDeducted) {
-            for (OrderItem orderItem : order.getItems()) {
-                    Product product = orderItem.getProduct();
-                    ProductVariant variant = product.getVariantBySize(orderItem.getSize())
-                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy size: " + orderItem.getSize()));
-                    if (variant != null) {
-                        variant.setStock(variant.getStock() + orderItem.getQuantity());
-                        productRepository.save(product);
-                        log.info("Restocked {} units for product '{}' (size={}, id={}) due to order cancellation",
-                        orderItem.getQuantity(), product.getName(), variant.getSize(), product.getId());
-                    }
-                }
-            }
-        }
-        // cap nhat va luu
-        order.setStatus(newStatus);
-        
-        // tu dong cap nhat payment status khi giao hang thanh cong
-        if(newStatus == OrderStatus.DONE){
-            if(order.getPayment() != null && order.getPaymentMethod() == PaymentMethod.COD){
-                order.getPayment().setPaymentStatus(PaymentStatus.PAID);
-                log.info("Automatically marked COD Payment as PAID for orderId={}", orderId);
-            }
-        }
-
-        Order updatedOrder = orderRepository.save(order);
-        log.info("Order status updated successfully: orderId={}, status={}", updatedOrder.getId(), updatedOrder.getStatus());
-        return orderMapper.tOrderResponse(updatedOrder);
     }
 
     @Transactional(readOnly = true)

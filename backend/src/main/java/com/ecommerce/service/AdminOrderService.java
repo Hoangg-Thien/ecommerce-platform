@@ -72,15 +72,31 @@ public class AdminOrderService {
         Order order = orderRepository.findById(orderId)
             .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
 
-        if (order.getStatus() == OrderStatus.CANCELLED || order.getStatus() == OrderStatus.DONE) {
+        OrderStatus currentStatus = order.getStatus();
+
+        // Kiểm tra state machine: chỉ cho phép các transition được định nghĩa trong OrderStatus
+        if (!currentStatus.canTransitionTo(newStatus)) {
             throw new IllegalArgumentException(
-                "Không thể đổi trạng thái đơn đã " + order.getStatus()
+                "Không thể chuyển trạng thái từ " + currentStatus + " sang " + newStatus
             );
+        }
+
+        // Guard: đơn MoMo phải được thanh toán trước khi có thể DONE
+        // (tránh bug doanh thu: đánh dấu DONE trong khi payment vẫn PENDING)
+        if (newStatus == OrderStatus.DONE
+                && order.getPaymentMethod() == PaymentMethod.MOMO) {
+            Payment payment = order.getPayment();
+            if (payment == null || payment.getPaymentStatus() != PaymentStatus.PAID) {
+                throw new IllegalArgumentException(
+                    "Không thể hoàn thành đơn MoMo khi chưa thanh toán (payment status: "
+                    + (payment == null ? "null" : payment.getPaymentStatus()) + ")"
+                );
+            }
         }
 
         // Restock khi huỷ (chỉ nếu stock đã bị trừ)
         if (newStatus == OrderStatus.CANCELLED) {
-            boolean stockWasDeducted = order.getStatus() != OrderStatus.AWAITING_PAYMENT;
+            boolean stockWasDeducted = currentStatus != OrderStatus.AWAITING_PAYMENT;
             if (stockWasDeducted) {
                 for (OrderItem item : order.getItems()) {
                     Product product = item.getProduct();

@@ -1,17 +1,20 @@
 package com.ecommerce.unit;
 
-import com.ecommerce.service.OrderService;
-import java.util.*;
+import com.ecommerce.dto.response.CheckoutResponse;
 import com.ecommerce.dto.response.OrderResponse;
 import com.ecommerce.dto.response.PageResponse;
-import com.ecommerce.entity.*;
+import com.ecommerce.entity.Order;
+import com.ecommerce.entity.Payment;
+import com.ecommerce.entity.User;
 import com.ecommerce.enums.OrderStatus;
+import com.ecommerce.enums.PaymentStatus;
 import com.ecommerce.exception.ResourceNotFoundException;
+import com.ecommerce.exception.UnauthorizedAccessException;
 import com.ecommerce.mapper.OrderMapper;
-import com.ecommerce.repository.CartRepository;
 import com.ecommerce.repository.OrderRepository;
-import com.ecommerce.repository.ProductRepository;
 import com.ecommerce.repository.UserRepository;
+import com.ecommerce.service.OrderService;
+import com.ecommerce.service.payment.MomoPaymentStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,9 +26,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import com.ecommerce.service.payment.MomoPaymentStrategy;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -41,12 +46,6 @@ class OrderServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private CartRepository cartRepository;
-
-    @Mock
-    private ProductRepository productRepository;
-
-    @Mock
     private MomoPaymentStrategy momoPaymentStrategy;
 
     @Spy
@@ -56,41 +55,12 @@ class OrderServiceTest {
     private OrderService orderService;
 
     private User user;
-    private Product product;
-    private ProductVariant variant;
-    private Cart cart;
-    private CartItem cartItem;
 
     @BeforeEach
     void setUp() {
         user = new User();
         user.setId(1L);
         user.setEmail("user@gmail.com");
-
-        product = new Product();
-        product.setId(1L);
-        product.setName("Laptop");
-        product.setPrice(BigDecimal.valueOf(1000));
-        
-        variant = new ProductVariant();
-        variant.setId(10L);
-        variant.setProduct(product);
-        variant.setSize("42");
-        variant.setStock(10);
-        product.setVariants(List.of(variant));
-
-        cart = new Cart();
-        cart.setId(1L);
-        cart.setUser(user);
-        cart.setItems(new ArrayList<>());
-
-        cartItem = new CartItem();
-        cartItem.setId(10L);
-        cartItem.setCart(cart);
-        cartItem.setProductVariant(variant);
-        cartItem.setQuantity(2);
-
-        cart.getItems().add(cartItem);
     }
 
     @Test
@@ -100,6 +70,7 @@ class OrderServiceTest {
         order.setUser(user);
         order.setStatus(OrderStatus.PENDING);
         order.setTotalPrice(BigDecimal.valueOf(2000));
+        order.setItems(new ArrayList<>());
 
         Pageable pageable = PageRequest.of(0, 10);
         Page<Order> orderPage = new PageImpl<>(List.of(order), pageable, 1);
@@ -129,58 +100,28 @@ class OrderServiceTest {
     }
 
     @Test
-    void updateOrderStatus_WhenValidTransition_ShouldUpdateStatusSuccessfully() {
+    void getOrderById_WhenUserOwnsOrder_ShouldReturnOrderResponse() {
         Order order = new Order();
         order.setId(100L);
         order.setUser(user);
         order.setStatus(OrderStatus.PENDING);
         order.setTotalPrice(BigDecimal.valueOf(1000));
+        order.setItems(new ArrayList<>());
 
         when(orderRepository.findById(100L)).thenReturn(Optional.of(order));
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        OrderResponse result = orderService.updateOrderStatus(100L, OrderStatus.CONFIRMED);
+        OrderResponse result = orderService.getOrderById(100L, "user@gmail.com");
 
         assertNotNull(result);
-        assertEquals(OrderStatus.CONFIRMED, result.getStatus());
-        verify(orderRepository, times(1)).save(order);
+        assertEquals(100L, result.getId());
+        assertEquals(OrderStatus.PENDING, result.getStatus());
     }
 
     @Test
-    void updateOrderStatus_WhenOrderAlreadyDone_ShouldThrowException() {
-        Order order = new Order();
-        order.setId(100L);
-        order.setStatus(OrderStatus.DONE); 
+    void getOrderById_WhenOrderNotFound_ShouldThrowResourceNotFoundException() {
+        when(orderRepository.findById(999L)).thenReturn(Optional.empty());
 
-        when(orderRepository.findById(100L)).thenReturn(Optional.of(order));
-
-        assertThrows(IllegalArgumentException.class, () -> orderService.updateOrderStatus(100L, OrderStatus.CANCELLED));
-        verify(orderRepository, never()).save(any());
-    }
-
-    @Test
-    void updateOrderStatus_WhenCancelled_ShouldRestockProducts() {
-        Order order = new Order();
-        order.setId(100L);
-        order.setStatus(OrderStatus.PENDING);
-        order.setUser(user); 
-
-        OrderItem item = new OrderItem();
-        item.setProduct(product); 
-        item.setSize("42");
-        item.setQuantity(2);
-        item.setPrice(product.getPrice()); 
-        order.getItems().add(item);
-
-        when(orderRepository.findById(100L)).thenReturn(Optional.of(order));
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        OrderResponse result = orderService.updateOrderStatus(100L, OrderStatus.CANCELLED);
-
-        assertNotNull(result);
-        assertEquals(OrderStatus.CANCELLED, result.getStatus());
-        assertEquals(12, product.getVariants().get(0).getStock());
-        verify(productRepository, times(1)).save(product);
+        assertThrows(ResourceNotFoundException.class, () -> orderService.getOrderById(999L, "user@gmail.com"));
     }
 
     @Test
@@ -188,12 +129,13 @@ class OrderServiceTest {
         Order order = new Order();
         order.setId(100L);
         User owner = new User();
+        owner.setId(2L);
         owner.setEmail("owner@gmail.com");
         order.setUser(owner);
 
         when(orderRepository.findById(100L)).thenReturn(Optional.of(order));
 
-        assertThrows(com.ecommerce.exception.UnauthorizedAccessException.class, 
+        assertThrows(UnauthorizedAccessException.class, 
                 () -> orderService.getOrderById(100L, "hacker@gmail.com"));
     }
 
@@ -202,20 +144,43 @@ class OrderServiceTest {
         Order order = new Order();
         order.setId(10L);
         order.setStatus(OrderStatus.AWAITING_PAYMENT);
-        User owner = new User();
-        owner.setEmail("user@gmail.com");
-        order.setUser(owner);
+        order.setUser(user);
         Payment payment = new Payment();
-        payment.setPaymentStatus(com.ecommerce.enums.PaymentStatus.PENDING);
+        payment.setPaymentStatus(PaymentStatus.PENDING);
         order.setPayment(payment);
 
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
         when(momoPaymentStrategy.generatePaymentUrl(payment)).thenReturn("http://momo.vn/pay");
 
-        com.ecommerce.dto.response.CheckoutResponse response = orderService.retryPayment(10L, "user@gmail.com");
+        CheckoutResponse response = orderService.retryPayment(10L, "user@gmail.com");
 
         assertNotNull(response);
         assertEquals("http://momo.vn/pay", response.getPaymentUrl());
+    }
+
+    @Test
+    void retryPayment_WhenUserDoesNotOwnOrder_ShouldThrowUnauthorizedAccessException() {
+        Order order = new Order();
+        order.setId(10L);
+        User owner = new User();
+        owner.setEmail("owner@gmail.com");
+        order.setUser(owner);
+
+        when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+        assertThrows(UnauthorizedAccessException.class, () -> orderService.retryPayment(10L, "hacker@gmail.com"));
+    }
+
+    @Test
+    void retryPayment_WhenStatusNotAwaitingPayment_ShouldThrowException() {
+        Order order = new Order();
+        order.setId(10L);
+        order.setStatus(OrderStatus.PENDING);
+        order.setUser(user);
+
+        when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+        assertThrows(IllegalStateException.class, () -> orderService.retryPayment(10L, "user@gmail.com"));
     }
 
     @Test
@@ -223,11 +188,9 @@ class OrderServiceTest {
         Order order = new Order();
         order.setId(10L);
         order.setStatus(OrderStatus.AWAITING_PAYMENT);
-        User owner = new User();
-        owner.setEmail("user@gmail.com");
-        order.setUser(owner);
+        order.setUser(user);
         Payment payment = new Payment();
-        payment.setPaymentStatus(com.ecommerce.enums.PaymentStatus.PAID);
+        payment.setPaymentStatus(PaymentStatus.PAID);
         order.setPayment(payment);
 
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));

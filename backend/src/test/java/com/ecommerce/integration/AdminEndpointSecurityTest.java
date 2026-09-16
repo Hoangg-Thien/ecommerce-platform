@@ -32,9 +32,10 @@ class AdminEndpointSecurityTest {
     @Test
     @WithMockUser(username = "user@gmail.com", roles = "USER")
     void patchOrderStatus_WhenUserIsNonAdmin_ShouldReturn403() throws Exception {
-        mockMvc.perform(patch("/api/v1/orders/1/status")
-                .param("status", OrderStatus.CONFIRMED.name())
-                .contentType(MediaType.APPLICATION_JSON))
+        String body = "{\"orderStatus\":\"" + OrderStatus.CONFIRMED.name() + "\"}";
+        mockMvc.perform(patch("/api/v1/admin/orders/1/status")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
                 .andExpect(status().isForbidden());
     }
 
