@@ -174,4 +174,46 @@ class AdminUserServiceTest {
         assertEquals(1, result.getTotalElements());
         // stats mặc định là 0, 0 — không throw exception
     }
+
+    @Test
+    void getAllUsers_WhenFilterByRole_ShouldCallFindByRole() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<User> page = new PageImpl<>(List.of(regularUser), pageable, 1);
+
+        when(userRepository.findByRole(Role.USER, pageable)).thenReturn(page);
+        when(orderRepository.countOrderStatsByUserIds(List.of(2L))).thenReturn(List.of());
+
+        var result = adminUserService.getAllUsers(Role.USER, null, pageable);
+
+        assertNotNull(result);
+        verify(userRepository, times(1)).findByRole(Role.USER, pageable);
+    }
+
+    @Test
+    void getAllUsers_WhenFilterByEmail_ShouldCallFindByEmail() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<User> page = new PageImpl<>(List.of(regularUser), pageable, 1);
+
+        when(userRepository.findByEmailContainingIgnoreCase("user", pageable)).thenReturn(page);
+        when(orderRepository.countOrderStatsByUserIds(List.of(2L))).thenReturn(List.of());
+
+        var result = adminUserService.getAllUsers(null, " user ", pageable);
+
+        assertNotNull(result);
+        verify(userRepository, times(1)).findByEmailContainingIgnoreCase("user", pageable);
+    }
+
+    @Test
+    void getAllUsers_WhenFilterByRoleAndEmail_ShouldCallFindByRoleAndEmail() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<User> page = new PageImpl<>(List.of(regularUser), pageable, 1);
+
+        when(userRepository.findByRoleAndEmailContainingIgnoreCase(Role.USER, "user", pageable)).thenReturn(page);
+        when(orderRepository.countOrderStatsByUserIds(List.of(2L))).thenReturn(List.of());
+
+        var result = adminUserService.getAllUsers(Role.USER, "user", pageable);
+
+        assertNotNull(result);
+        verify(userRepository, times(1)).findByRoleAndEmailContainingIgnoreCase(Role.USER, "user", pageable);
+    }
 }
