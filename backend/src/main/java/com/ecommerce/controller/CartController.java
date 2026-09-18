@@ -1,7 +1,6 @@
 package com.ecommerce.controller;
 
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -28,7 +27,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 @RequestMapping("/api/v1/carts")
 @RequiredArgsConstructor
 public class CartController {
-    private final UserDetailsService userDetailsService;
     private final CartService cartService;
 
     @PostMapping("/add")
