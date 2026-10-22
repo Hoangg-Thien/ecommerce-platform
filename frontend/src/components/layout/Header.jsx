@@ -1,6 +1,6 @@
 import { ShoppingCart, Search, Menu, User } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useEffect, useState, userEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import './Header.css';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
@@ -11,9 +11,31 @@ export default function Header() {
   const { user, logout } = useAuth();
   const { cart } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [keyword, setKeyword] = useState('');
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const q = params.get('q') || '';
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setKeyword(q);
+  }, [location.search]);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    const trimmed = keyword.trim();
+    if (!trimmed) {
+      navigate('/');
+    } else if (trimmed.length === 1) {
+      // đúng 1 ký tự -> không làm gì
+      return;
+    } else {
+      navigate('/?q=' + encodeURIComponent(trimmed));
+    }
+  };
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -70,13 +92,24 @@ export default function Header() {
           </nav>
 
           <div className="header-right">
-
-            {/*
-            <div className="search-box">
-              <Search size={18} className="search-icon" />
-              <input type="text" placeholder="Tìm kiếm..." className="search-input" />
-            </div>
-            */}
+            <form onSubmit={handleSearchSubmit} className="search-box">
+              <button
+                type="submit"
+                aria-label="Tìm kiếm"
+                style={{ background: 'none', border: 'none', padding: 0, display: 'flex', alignItems: 'center', cursor: 'pointer', color: 'inherit' }}
+              >
+                <Search size={18} className="search-icon" />
+              </button>
+              <input
+                type="text"
+                placeholder="Tìm kiếm..."
+                className="search-input"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                maxLength={100}
+                aria-label="Tìm kiếm sản phẩm"
+              />
+            </form>
 
             <Link to="/cart" className="icon-btn cart-btn" aria-label="Giỏ hàng">
               <ShoppingCart size={22} />

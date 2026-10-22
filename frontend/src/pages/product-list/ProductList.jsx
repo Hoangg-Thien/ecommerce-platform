@@ -15,10 +15,12 @@ export default function ProductList() {
   // Các state để fetch API
   const [searchParams, setSearchParams] = useSearchParams();
   const activeCategoryId = searchParams.get('category') || '';
+  const keyword = searchParams.get('q') || '';
   const urlPage = parseInt(searchParams.get('page') || '1', 10);
   const currentPage = urlPage > 0 ? urlPage - 1 : 0;
 
   const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   // 1. Fetch Categories 1 lần khi load trang
@@ -35,8 +37,9 @@ export default function ProductList() {
     fetchCategories();
   }, []);
 
-  // 2. Fetch Products mỗi khi page hoặc category thay đổi
+  // 2. Fetch Products mỗi khi page, category hoặc keyword thay đổi
   useEffect(() => {
+    let ignore = false;
     const fetchProducts = async () => {
       setIsLoading(true);
       try {
@@ -44,22 +47,33 @@ export default function ProductList() {
         const params = {
           page: currentPage,
           size: 8, // Hiển thị 8 sp 1 trang
-          ...(activeCategoryId ? { categoryId: activeCategoryId } : {})
+          ...(activeCategoryId ? { categoryId: activeCategoryId } : {}),
+          ...(keyword ? { q: keyword } : {})
         };
         
         const response = await productApi.getProducts(params);
-        // Spring Boot PageResponse trả về content, totalPages...
-        setProducts(response.content);
-        setTotalPages(response.totalPages);
+        if (!ignore) {
+          // Spring Boot PageResponse trả về content, totalPages, totalElements...
+          setProducts(response.content);
+          setTotalPages(response.totalPages);
+          setTotalElements(response.totalElements || 0);
+        }
       } catch (error) {
-        console.error('Lỗi khi tải sản phẩm', error);
+        if (!ignore) {
+          console.error('Lỗi khi tải sản phẩm', error);
+        }
       } finally {
-        setIsLoading(false);
+        if (!ignore) {
+          setIsLoading(false);
+        }
       }
     };
     
     fetchProducts();
-  }, [activeCategoryId, currentPage]); // Gọi lại API khi 2 dependencies này thay đổi
+    return () => {
+      ignore = true;
+    };
+  }, [activeCategoryId, currentPage, keyword]); // Gọi lại API khi các dependencies này thay đổi
 
   // Handler khi click chọn category khác
   const handleCategorySelect = (categoryId) => {
@@ -70,6 +84,13 @@ export default function ProductList() {
       params.delete('category');
     }
     params.set('page', '1'); // Reset về trang 1
+    setSearchParams(params);
+  };
+
+  const handleClearSearch = () => {
+    const params = new URLSearchParams(searchParams);
+    params.delete('q');
+    params.set('page', '1');
     setSearchParams(params);
   };
 
@@ -98,6 +119,12 @@ export default function ProductList() {
             />
           </div>
 
+          {keyword && (
+            <div className="search-results-header" style={{ marginBottom: '16px', fontSize: '16px', fontWeight: 500, color: 'var(--color-ink-deep)' }}>
+              Kết quả cho “{keyword}” — {totalElements} sản phẩm
+            </div>
+          )}
+
           {isLoading ? (
             <div style={{ textAlign: 'center', padding: '50px' }}>Đang tải sản phẩm...</div>
           ) : (
@@ -110,7 +137,28 @@ export default function ProductList() {
               
               {products.length === 0 && (
                 <div className="empty-state">
-                  Không tìm thấy sản phẩm nào trong danh mục này.
+                  {keyword ? (
+                    <>
+                      <div>Không tìm thấy sản phẩm cho “{keyword}”.</div>
+                      <button
+                        type="button"
+                        onClick={handleClearSearch}
+                        style={{
+                          marginTop: '12px',
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--color-border-soft, #ddd)',
+                          background: '#fff',
+                          cursor: 'pointer',
+                          fontWeight: 500
+                        }}
+                      >
+                        Xóa tìm kiếm
+                      </button>
+                    </>
+                  ) : (
+                    <div>Không tìm thấy sản phẩm nào trong danh mục này.</div>
+                  )}
                 </div>
               )}
 
