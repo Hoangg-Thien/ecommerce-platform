@@ -251,6 +251,8 @@ PostgreSQL
 
 ## Project Structure
 
+The backend source code is organized **by feature module** (`package-by-feature`), grouping controllers, services, repositories, entities, DTOs, mappers, and enums belonging to the same business capability together. Unit and integration tests mirror this exact module layout.
+
 ```
 ecommerce-platform/
 ├── Dockerfile
@@ -261,24 +263,39 @@ ecommerce-platform/
 │   ├── pom.xml
 │   └── src/
 │       ├── main/java/com/ecommerce/
-│       │   ├── annotation/     # @Idempotent
-│       │   ├── config/         # Security, JWT filter, Cache, MoMo, Idempotency interceptor, WebMvc
-│       │   ├── controller/     # REST controllers
-│       │   ├── dto/            # request/ and response/ DTOs
-│       │   ├── entity/         # JPA entities
-│       │   ├── enums/          # OrderStatus, PaymentStatus, PaymentMethod, Role
-│       │   ├── exception/      # Custom exceptions + GlobalExceptionHandler
-│       │   ├── mapper/         # Entity <-> DTO mappers
-│       │   ├── ratelimit/      # Bucket4j filter, bucket registry, IP resolver, config properties
-│       │   ├── repository/     # Spring Data JPA repositories
-│       │   ├── scheduler/      # Payment timeout, refresh-token cleanup, idempotency-key cleanup
-│       │   └── service/        # Business logic (+ service/payment/ strategy classes)
+│       │   ├── EcommerceBackendApplication.java
+│       │   ├── auth/           # Authentication, JWT, tokens, security config & filters
+│       │   ├── user/           # User management, admin user service, roles
+│       │   ├── category/       # Category catalog management
+│       │   ├── product/        # Products, variants, inventory, criteria search (unaccent/trigrams)
+│       │   ├── cart/           # Shopping cart & line items
+│       │   ├── order/          # Order placement, items, cancellation, order admin
+│       │   ├── payment/        # Payment state machine, COD & MoMo strategies, IPN & refund, schedulers
+│       │   ├── checkout/       # Idempotent checkout orchestration
+│       │   ├── dashboard/      # Admin metrics & statistics aggregations
+│       │   ├── common/         # Cross-cutting infrastructure: exceptions, rate limiting, idempotency, cache config
+│       │   └── bootstrap/      # DatabaseSeeder (initial data population)
 │       ├── main/resources/     # application.yaml, application-prod.yaml, db/migration (Flyway)
 │       └── test/java/com/ecommerce/
-│           ├── unit/
-│           └── integration/
+│           ├── EcommerceBackendApplicationTests.java
+│           └── {auth, user, category, product, cart, order, payment, checkout, dashboard, common}/
+│               ├── service/    # Unit tests with Mockito
+│               ├── strategy/   # Payment strategy unit tests
+│               ├── scheduler/  # Scheduler unit tests
+│               ├── search/     # Search text & specification unit tests
+│               └── integration/# SpringBootTest MockMvc & Testcontainers tests
 └── frontend/                   # React 19 + Vite client
 ```
+
+### Module Design Conventions & Coupling
+
+- **Encapsulation & High Cohesion**: Each business capability is self-contained. Adding or modifying a feature touches only files within that module.
+- **Shared Infrastructure (`common`)**: Contains purely cross-cutting utilities (`GlobalExceptionHandler`, `@Idempotent` / `IdempotencyInterceptor`, Bucket4j rate limiting, `CacheConfig`). It has **zero dependencies** on business domain modules.
+- **Data Seeding (`bootstrap`)**: Populates seed data at startup. No module ever imports classes from `bootstrap`.
+- **Known Coupling (Monolith Domain Relationships)**:
+  - `order ↔ payment`: `order` checks payment status and allows payment retries; `payment` (MoMo IPN, timeout scheduler, refund service) updates order statuses and variant stock upon payment events.
+  - `user ↔ order`: `user` exposes user order history; `order` associates placed orders with customer accounts.
+  These bidirectional references reflect natural business relationships within a single monolithic database schema.
 
 ## Local Development
 
