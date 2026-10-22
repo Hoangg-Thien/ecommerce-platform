@@ -14,6 +14,7 @@ The project is built as a backend-engineering showcase rather than a plain CRUD 
 - [Database Design](#database-design)
 - [Authentication Flow](#authentication-flow)
 - [Checkout Flow](#checkout-flow)
+- [Product Search](#product-search)
 - [API Documentation](#api-documentation)
 - [Testing](#testing)
 - [Tech Stack](#tech-stack)
@@ -125,7 +126,7 @@ Key entities and relationships:
 | `RefreshToken` | N—1 `User` | stores SHA-256 **hash** of the token, plus `revoked` flag and expiry |
 | `IdempotencyKey` | standalone | primary key is the client-supplied key string |
 
-Schema is version-controlled with **Flyway** migrations (`V1__init_schema.sql`, `V2__remove_product_id_from_cart_items.sql`); `ddl-auto` is `update` in dev and `validate` in production, so the running schema is always checked against the migration history rather than silently auto-generated in prod.
+Schema is version-controlled with **Flyway** migrations (`V1__init_schema.sql`, `V2__remove_product_id_from_cart_items.sql`, `V3__product_search.sql`); `ddl-auto` is `update` in dev and `validate` in production, so the running schema is always checked against the migration history rather than silently auto-generated in prod.
 
 ## Authentication Flow
 
@@ -157,6 +158,32 @@ POST /api/v1/checkout   (header: Idempotency-Key)
 
 Everything runs inside a single `@Transactional` method in `CheckoutService`; stock checks, order creation, and (for COD) stock deduction happen atomically. Concurrent checkouts against the same limited-stock variant are resolved by optimistic locking — verified with a dedicated `OrderConcurrencyTest` that fires two simultaneous HTTP checkouts at the last unit of stock and asserts exactly one succeeds.
 
+## Product Search
+
+The product search feature provides accent-insensitive, case-insensitive substring search with relevance ranking directly inside PostgreSQL:
+
+- **How it works:**
+  - **Database schema (Flyway V3):** Adds a generated column `search_name` (`GENERATED ALWAYS AS (lower(immutable_unaccent(name))) STORED`) with a GIN trigram index (`gin (search_name gin_trgm_ops)`) and an index on `category_id`.
+  - **Keyword normalization:** `SearchTextUtils.normalize` strips Vietnamese diacritics (`NFD` normalization + `\p{M}+` removal, maps `đ` -> `d`), converts to lowercase, trims and collapses multiple spaces.
+  - **Multi-word AND matching:** Splits keywords into up to 5 tokens, safely escapes LIKE wildcards (`\`, `%`, `_`), and matches all tokens with `AND`.
+  - **3-tier relevance ranking:** Handled in JPA Criteria:
+    1. Exact match (`rank = 3`)
+    2. Prefix match (`rank = 2`)
+    3. Substring match (`rank = 1`)
+    - Same-tier results are sorted by `id ASC`.
+  - **Database pagination:** Uses `@EntityGraph(attributePaths = {"category"})` with `@BatchSize(50)` on variants so pagination executes directly in SQL (`OFFSET ? ROWS FETCH FIRST ? ROWS ONLY`) without memory warnings.
+- **Why PostgreSQL trigrams instead of Elasticsearch or Full-Text Search (`tsvector`):**
+  - Keeps operational complexity low: avoids managing an external cluster, ingestion pipelines, or sync state for a catalog of this scale.
+  - Standard PostgreSQL Full-Text Search (`tsvector`) does not support substring matching or unaccented Vietnamese search as naturally or flexibly as `pg_trgm` + `unaccent`.
+- **Known Limitations:**
+  - No typo tolerance (fuzzy matching on misspellings is omitted to avoid poor precision on short Vietnamese words).
+  - Searches by product name only (descriptions are not indexed).
+  - Maximum 5 tokens per query; keyword length capped at 100 characters (minimum 2 characters after normalization).
+  - Trigram indexes are most effective on tokens with 3+ characters; shorter tokens still match correctly via database scans.
+  - Guaranteed for Vietnamese and basic Latin character sets.
+- **Prerequisites:**
+  - Database user must have privileges to install `pg_trgm` and `unaccent` extensions into schema `public`.
+
 ## API Documentation
 
 Interactive docs are available via springdoc-openapi at `/swagger-ui.html` and `/v3/api-docs` (both public).
@@ -164,7 +191,7 @@ Interactive docs are available via springdoc-openapi at `/swagger-ui.html` and `
 | Group | Endpoints |
 |---|---|
 | **Auth** | `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout` |
-| **Products** | `GET /api/v1/products` (paginated/sortable/filterable), `GET /api/v1/products/{id}`, `POST/PUT/DELETE /api/v1/products/{id}` (ADMIN) |
+| **Products** | `GET /api/v1/products` (supports `q`, `categoryId`, `page`, `size`, `sortBy ∈ {id,name,price,relevance}`, `sortDir`), `GET /api/v1/products/{id}`, `POST/PUT/DELETE /api/v1/products/{id}` (ADMIN) |
 | **Categories** | `GET /api/v1/categories`, `GET /api/v1/categories/{id}`, `POST/PUT/DELETE /api/v1/categories/{id}` (ADMIN) |
 | **Cart** | `GET /api/v1/carts`, `POST /api/v1/carts/add`, `PUT /api/v1/carts/update`, `DELETE /api/v1/carts/{itemId}` |
 | **Checkout** | `POST /api/v1/checkout` (requires `Idempotency-Key` header) |
@@ -174,12 +201,12 @@ Interactive docs are available via springdoc-openapi at `/swagger-ui.html` and `
 
 ## Testing
 
-**144 `@Test` methods across 27 test classes** (verified directly from source, not estimated), split into:
+**213 `@Test` methods across 29 test classes** (verified directly from source), split into:
 
-- **Unit tests** (Mockito) — services, JWT logic, both payment strategies, MoMo signature/IPN logic, refund logic, schedulers.
-- **Integration tests** (`@SpringBootTest` + `MockMvc`) — `AuthControllerTest`, `ProductControllerTest`, `CheckoutControllerTest`, `PaymentControllerTest`, `AdminEndpointSecurityTest`, `OrderTimeoutIntegrationTest`, `RateLimitFilterTest`.
+- **Unit tests** (Mockito) — services, JWT logic, both payment strategies, MoMo signature/IPN logic, refund logic, schedulers, and `SearchTextUtilsTest` (normalization, diacritics removal, LIKE wildcard escaping).
+- **Integration tests** (`@SpringBootTest` + `MockMvc`) — `AuthControllerTest`, `ProductControllerTest` (search param mapping & validation), `ProductSearchIntegrationTest` (full-stack search against real PostgreSQL with Flyway V3 migration covering unaccent, case-insensitivity, ranking, wildcard escaping, category filtering, pagination, and schema verification), `CheckoutControllerTest`, `PaymentControllerTest`, `AdminEndpointSecurityTest`, `OrderTimeoutIntegrationTest`, `RateLimitFilterTest`.
 - **Concurrency tests** — `ProductConcurrencyTest` and `OrderConcurrencyTest`, using `ExecutorService`/`CountDownLatch` to force two threads to race the same stock row and assert single-winner semantics.
-- Tests run against H2 in PostgreSQL-compatibility mode; Testcontainers (PostgreSQL) is a declared test dependency in `pom.xml` for closer-to-production DB testing.
+- Tests run against Testcontainers (PostgreSQL 17.9) for isolated integration testing with Flyway migrations and schema validation.
 
 No coverage percentage is claimed here since no coverage tool (e.g. Jacoco) is configured in `pom.xml`.
 
