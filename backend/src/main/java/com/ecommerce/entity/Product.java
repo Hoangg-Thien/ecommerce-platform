@@ -51,6 +51,11 @@ public class Product {
     @JoinColumn(name = "category_id")
     private Category category;
 
+    @Column(name = "search_name", columnDefinition = "text", insertable = false, updatable = false)
+    @lombok.Getter(lombok.AccessLevel.NONE)
+    @lombok.Setter(lombok.AccessLevel.NONE)
+    private String searchName;
+
     public Optional<ProductVariant> getVariantBySize(String size){
         if(this.variants == null){
             return Optional.empty();

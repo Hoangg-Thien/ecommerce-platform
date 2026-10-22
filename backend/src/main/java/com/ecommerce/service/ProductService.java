@@ -22,6 +22,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ecommerce.repository.spec.ProductSpecifications;
+import org.springframework.data.jpa.domain.Specification;
+
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -35,11 +38,12 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final ProductMapper productMapper;
 
-    public PageResponse<ProductResponse> findAll(Long categoryId, Pageable pageable) {
-        Page<Product> productPage = categoryId != null
-                ? productRepository.findByCategoryId(categoryId, pageable)
-                : productRepository.findAll(pageable);
-        return PageResponse.of(productPage.map(productMapper::toProductResponse));
+    @Transactional(readOnly = true)   // để lazy-load variants không phụ thuộc open-in-view
+    public PageResponse<ProductResponse> findAll(Long categoryId, String keyword, Pageable pageable) {
+        Specification<Product> spec = ProductSpecifications.hasCategory(categoryId)
+                .and(ProductSpecifications.matchesKeyword(keyword));
+        Page<Product> page = productRepository.findAll(spec, pageable);
+        return PageResponse.of(page.map(productMapper::toProductResponse));
     }
 
     @Cacheable(value = "product", key = "#id")
