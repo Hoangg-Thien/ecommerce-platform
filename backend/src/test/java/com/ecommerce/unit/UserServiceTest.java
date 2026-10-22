@@ -1,14 +1,14 @@
 package com.ecommerce.unit;
 
-import com.ecommerce.dto.request.RegisterRequest;
-import com.ecommerce.dto.response.UserResponse;
-import com.ecommerce.entity.User;
-import com.ecommerce.enums.Role;
-import com.ecommerce.exception.EmailAlreadyExistsException;
-import com.ecommerce.mapper.UserMapper;
-import com.ecommerce.repository.UserRepository;
-import com.ecommerce.repository.CartRepository;
-import com.ecommerce.service.UserService;
+import com.ecommerce.auth.dto.request.RegisterRequest;
+import com.ecommerce.user.dto.response.UserResponse;
+import com.ecommerce.user.entity.User;
+import com.ecommerce.user.enums.Role;
+import com.ecommerce.common.exception.EmailAlreadyExistsException;
+import com.ecommerce.user.mapper.UserMapper;
+import com.ecommerce.user.repository.UserRepository;
+import com.ecommerce.cart.repository.CartRepository;
+import com.ecommerce.user.service.UserService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

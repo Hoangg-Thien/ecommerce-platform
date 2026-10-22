@@ -1,5 +1,16 @@
 package com.ecommerce.unit;
 
+import com.ecommerce.cart.entity.Cart;
+import com.ecommerce.cart.entity.CartItem;
+import com.ecommerce.cart.repository.CartRepository;
+import com.ecommerce.common.idempotency.IdempotencyKeyRepository;
+import com.ecommerce.order.entity.Order;
+import com.ecommerce.order.repository.OrderRepository;
+import com.ecommerce.product.entity.Product;
+import com.ecommerce.product.entity.ProductVariant;
+import com.ecommerce.user.entity.User;
+import com.ecommerce.user.repository.UserRepository;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -15,13 +26,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ecommerce.dto.request.CheckoutRequest;
+import com.ecommerce.checkout.dto.request.CheckoutRequest;
 import com.ecommerce.entity.*;
-import com.ecommerce.enums.PaymentMethod;
-import com.ecommerce.exception.ResourceNotFoundException;
+import com.ecommerce.payment.enums.PaymentMethod;
+import com.ecommerce.common.exception.ResourceNotFoundException;
 import com.ecommerce.repository.*;
-import com.ecommerce.service.CheckoutService;
-import com.ecommerce.service.payment.*;
+import com.ecommerce.checkout.service.CheckoutService;
+import com.ecommerce.payment.strategy.*;
 
 @ExtendWith(MockitoExtension.class)
 class CheckoutServiceTest {

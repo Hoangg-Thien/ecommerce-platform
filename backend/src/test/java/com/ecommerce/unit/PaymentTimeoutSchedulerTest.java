@@ -21,12 +21,12 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cglib.core.Local;
 
-import com.ecommerce.entity.Order;
-import com.ecommerce.enums.OrderStatus;
-import com.ecommerce.enums.PaymentMethod;
-import com.ecommerce.repository.OrderRepository;
-import com.ecommerce.scheduler.PaymentTimeoutScheduler;
-import com.ecommerce.service.OrderCancellationService;
+import com.ecommerce.order.entity.Order;
+import com.ecommerce.order.enums.OrderStatus;
+import com.ecommerce.payment.enums.PaymentMethod;
+import com.ecommerce.order.repository.OrderRepository;
+import com.ecommerce.payment.scheduler.PaymentTimeoutScheduler;
+import com.ecommerce.order.service.OrderCancellationService;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentTimeoutSchedulerTest {

@@ -8,8 +8,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ecommerce.enums.PaymentMethod;
-import com.ecommerce.service.payment.*;
+import com.ecommerce.payment.enums.PaymentMethod;
+import com.ecommerce.payment.strategy.*;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentStrategyFactoryTest {

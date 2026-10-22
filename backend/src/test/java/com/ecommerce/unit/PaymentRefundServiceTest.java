@@ -14,12 +14,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ecommerce.entity.Order;
-import com.ecommerce.entity.Payment;
-import com.ecommerce.enums.PaymentStatus;
-import com.ecommerce.repository.PaymentRepository;
-import com.ecommerce.service.MomoService;
-import com.ecommerce.service.PaymentRefundService;
+import com.ecommerce.order.entity.Order;
+import com.ecommerce.payment.entity.Payment;
+import com.ecommerce.payment.enums.PaymentStatus;
+import com.ecommerce.payment.repository.PaymentRepository;
+import com.ecommerce.payment.service.MomoService;
+import com.ecommerce.payment.service.PaymentRefundService;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentRefundServiceTest {

@@ -1,13 +1,13 @@
 package com.ecommerce.integration;
 
-import com.ecommerce.config.JwtAuthenticationFilter;
-import com.ecommerce.ratelimit.RateLimitFilter;
-import com.ecommerce.controller.ProductController;
-import com.ecommerce.dto.response.PageResponse;
-import com.ecommerce.dto.response.ProductResponse;
-import com.ecommerce.repository.IdempotencyKeyRepository;
-import com.ecommerce.service.JwtService;
-import com.ecommerce.service.ProductService;
+import com.ecommerce.auth.config.JwtAuthenticationFilter;
+import com.ecommerce.common.ratelimit.RateLimitFilter;
+import com.ecommerce.product.controller.ProductController;
+import com.ecommerce.common.dto.PageResponse;
+import com.ecommerce.product.dto.response.ProductResponse;
+import com.ecommerce.common.idempotency.IdempotencyKeyRepository;
+import com.ecommerce.auth.service.JwtService;
+import com.ecommerce.product.service.ProductService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

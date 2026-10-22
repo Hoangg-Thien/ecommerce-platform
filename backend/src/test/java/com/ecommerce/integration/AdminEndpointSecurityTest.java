@@ -1,10 +1,12 @@
 package com.ecommerce.integration;
 
-import com.ecommerce.dto.request.ProductRequest;
-import com.ecommerce.entity.User;
-import com.ecommerce.enums.OrderStatus;
-import com.ecommerce.enums.Role;
-import com.ecommerce.repository.UserRepository;
+import com.ecommerce.product.entity.Product;
+
+import com.ecommerce.product.dto.request.ProductRequest;
+import com.ecommerce.user.entity.User;
+import com.ecommerce.order.enums.OrderStatus;
+import com.ecommerce.user.enums.Role;
+import com.ecommerce.user.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

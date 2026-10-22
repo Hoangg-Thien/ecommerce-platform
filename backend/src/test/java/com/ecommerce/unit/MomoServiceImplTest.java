@@ -1,5 +1,9 @@
 package com.ecommerce.unit;
 
+import com.ecommerce.order.entity.Order;
+import com.ecommerce.payment.entity.Payment;
+import com.ecommerce.user.entity.User;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -22,11 +26,11 @@ import org.mockito.quality.Strictness;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
-import com.ecommerce.config.MomoConfig;
-import com.ecommerce.dto.request.MomoIpnRequest;
+import com.ecommerce.payment.config.MomoConfig;
+import com.ecommerce.payment.dto.request.MomoIpnRequest;
 import com.ecommerce.entity.*;
-import com.ecommerce.exception.PaymentException;
-import com.ecommerce.service.MomoServiceImpl;
+import com.ecommerce.common.exception.PaymentException;
+import com.ecommerce.payment.service.MomoServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)

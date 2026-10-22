@@ -1,17 +1,21 @@
 package com.ecommerce.integration;
 
-import com.ecommerce.config.JwtAuthenticationFilter;
-import com.ecommerce.ratelimit.RateLimitFilter;
-import com.ecommerce.controller.PaymentController;
-import com.ecommerce.dto.request.MomoIpnRequest;
-import com.ecommerce.dto.response.PaymentResponse;
-import com.ecommerce.enums.PaymentMethod;
-import com.ecommerce.enums.PaymentStatus;
-import com.ecommerce.mapper.PaymentMapper;
-import com.ecommerce.repository.IdempotencyKeyRepository;
-import com.ecommerce.repository.PaymentRepository;
-import com.ecommerce.service.JwtService;
-import com.ecommerce.service.MomoIpnService;
+import com.ecommerce.order.entity.Order;
+import com.ecommerce.payment.entity.Payment;
+import com.ecommerce.user.entity.User;
+
+import com.ecommerce.auth.config.JwtAuthenticationFilter;
+import com.ecommerce.common.ratelimit.RateLimitFilter;
+import com.ecommerce.payment.controller.PaymentController;
+import com.ecommerce.payment.dto.request.MomoIpnRequest;
+import com.ecommerce.payment.dto.response.PaymentResponse;
+import com.ecommerce.payment.enums.PaymentMethod;
+import com.ecommerce.payment.enums.PaymentStatus;
+import com.ecommerce.payment.mapper.PaymentMapper;
+import com.ecommerce.common.idempotency.IdempotencyKeyRepository;
+import com.ecommerce.payment.repository.PaymentRepository;
+import com.ecommerce.auth.service.JwtService;
+import com.ecommerce.payment.service.MomoIpnService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -99,11 +103,11 @@ class PaymentControllerTest {
                 .transactionId("MOMO_TXN_12345")
                 .build();
 
-        com.ecommerce.entity.User user = new com.ecommerce.entity.User();
+        com.ecommerce.user.entity.User user = new com.ecommerce.user.entity.User();
         user.setEmail("test@example.com");
-        com.ecommerce.entity.Order order = new com.ecommerce.entity.Order();
+        com.ecommerce.order.entity.Order order = new com.ecommerce.order.entity.Order();
         order.setUser(user);
-        com.ecommerce.entity.Payment payment = new com.ecommerce.entity.Payment();
+        com.ecommerce.payment.entity.Payment payment = new com.ecommerce.payment.entity.Payment();
         payment.setOrder(order);
         
         when(paymentRepository.findByOrderId(5L)).thenReturn(Optional.of(payment));
@@ -119,13 +123,13 @@ class PaymentControllerTest {
     }
     @Test
     void getPaymentByOrderId_WhenUserIsNotOwner_ShouldReturn403() throws Exception {
-        com.ecommerce.entity.User userB = new com.ecommerce.entity.User();
+        com.ecommerce.user.entity.User userB = new com.ecommerce.user.entity.User();
         userB.setEmail("userB@example.com"); // Owner of the order is userB
         
-        com.ecommerce.entity.Order order = new com.ecommerce.entity.Order();
+        com.ecommerce.order.entity.Order order = new com.ecommerce.order.entity.Order();
         order.setUser(userB);
         
-        com.ecommerce.entity.Payment payment = new com.ecommerce.entity.Payment();
+        com.ecommerce.payment.entity.Payment payment = new com.ecommerce.payment.entity.Payment();
         payment.setOrder(order);
         
         when(paymentRepository.findByOrderId(5L)).thenReturn(Optional.of(payment));

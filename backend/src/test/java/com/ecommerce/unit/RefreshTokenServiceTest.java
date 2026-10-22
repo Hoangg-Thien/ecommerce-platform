@@ -1,10 +1,10 @@
 package com.ecommerce.unit;
 
-import com.ecommerce.entity.RefreshToken;
-import com.ecommerce.entity.User;
-import com.ecommerce.exception.InvalidTokenException;
-import com.ecommerce.repository.RefreshTokenRepository;
-import com.ecommerce.service.RefreshTokenService;
+import com.ecommerce.auth.entity.RefreshToken;
+import com.ecommerce.user.entity.User;
+import com.ecommerce.common.exception.InvalidTokenException;
+import com.ecommerce.auth.repository.RefreshTokenRepository;
+import com.ecommerce.auth.service.RefreshTokenService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

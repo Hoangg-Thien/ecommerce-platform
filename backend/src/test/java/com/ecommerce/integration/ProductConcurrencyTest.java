@@ -1,11 +1,11 @@
 package com.ecommerce.integration;
 
-import com.ecommerce.entity.Category;
-import com.ecommerce.entity.Product;
-import com.ecommerce.entity.ProductVariant;
-import com.ecommerce.repository.CategoryRepository;
-import com.ecommerce.repository.ProductRepository;
-import com.ecommerce.repository.ProductVariantRepository;
+import com.ecommerce.category.entity.Category;
+import com.ecommerce.product.entity.Product;
+import com.ecommerce.product.entity.ProductVariant;
+import com.ecommerce.category.repository.CategoryRepository;
+import com.ecommerce.product.repository.ProductRepository;
+import com.ecommerce.product.repository.ProductVariantRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

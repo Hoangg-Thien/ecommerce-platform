@@ -1,17 +1,19 @@
 package com.ecommerce.integration;
 
-import com.ecommerce.config.JwtAuthenticationFilter;
-import com.ecommerce.ratelimit.RateLimitFilter;
-import com.ecommerce.controller.CheckoutController;
-import com.ecommerce.dto.request.CheckoutRequest;
-import com.ecommerce.dto.response.CheckoutResponse;
-import com.ecommerce.dto.response.PaymentResponse;
-import com.ecommerce.enums.OrderStatus;
-import com.ecommerce.enums.PaymentMethod;
-import com.ecommerce.enums.PaymentStatus;
-import com.ecommerce.repository.IdempotencyKeyRepository;
-import com.ecommerce.service.CheckoutService;
-import com.ecommerce.service.JwtService;
+import com.ecommerce.user.entity.User;
+
+import com.ecommerce.auth.config.JwtAuthenticationFilter;
+import com.ecommerce.common.ratelimit.RateLimitFilter;
+import com.ecommerce.checkout.controller.CheckoutController;
+import com.ecommerce.checkout.dto.request.CheckoutRequest;
+import com.ecommerce.checkout.dto.response.CheckoutResponse;
+import com.ecommerce.payment.dto.response.PaymentResponse;
+import com.ecommerce.order.enums.OrderStatus;
+import com.ecommerce.payment.enums.PaymentMethod;
+import com.ecommerce.payment.enums.PaymentStatus;
+import com.ecommerce.common.idempotency.IdempotencyKeyRepository;
+import com.ecommerce.checkout.service.CheckoutService;
+import com.ecommerce.auth.service.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,18 +1,20 @@
 package com.ecommerce.integration;
 
-import com.ecommerce.controller.AuthController;
-import com.ecommerce.config.JwtAuthenticationFilter;
-import com.ecommerce.ratelimit.RateLimitFilter;
-import com.ecommerce.dto.request.LoginRequest;
-import com.ecommerce.dto.request.RefreshTokenRequest;
-import com.ecommerce.dto.request.RegisterRequest;
-import com.ecommerce.dto.response.UserResponse;
-import com.ecommerce.entity.User;
-import com.ecommerce.enums.Role;
-import com.ecommerce.exception.EmailAlreadyExistsException;
-import com.ecommerce.repository.IdempotencyKeyRepository;
-import com.ecommerce.service.JwtService;
-import com.ecommerce.service.UserService;
+import com.ecommerce.auth.service.RefreshTokenService;
+
+import com.ecommerce.auth.controller.AuthController;
+import com.ecommerce.auth.config.JwtAuthenticationFilter;
+import com.ecommerce.common.ratelimit.RateLimitFilter;
+import com.ecommerce.auth.dto.request.LoginRequest;
+import com.ecommerce.auth.dto.request.RefreshTokenRequest;
+import com.ecommerce.auth.dto.request.RegisterRequest;
+import com.ecommerce.user.dto.response.UserResponse;
+import com.ecommerce.user.entity.User;
+import com.ecommerce.user.enums.Role;
+import com.ecommerce.common.exception.EmailAlreadyExistsException;
+import com.ecommerce.common.idempotency.IdempotencyKeyRepository;
+import com.ecommerce.auth.service.JwtService;
+import com.ecommerce.user.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +71,7 @@ class AuthControllerTest {
     private IdempotencyKeyRepository idempotencyKeyRepository;
 
     @MockBean
-    private com.ecommerce.service.RefreshTokenService refreshTokenService;
+    private com.ecommerce.auth.service.RefreshTokenService refreshTokenService;
 
     // ==========================================
     // REGISTER TESTS

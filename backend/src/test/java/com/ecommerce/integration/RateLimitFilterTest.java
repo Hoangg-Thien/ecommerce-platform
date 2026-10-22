@@ -1,9 +1,11 @@
 package com.ecommerce.integration;
 
-import com.ecommerce.ratelimit.ClientIpResolver;
-import com.ecommerce.ratelimit.RateLimitBucketRegistry;
-import com.ecommerce.ratelimit.RateLimitFilter;
-import com.ecommerce.ratelimit.RateLimitProperties;
+import com.ecommerce.common.exception.GlobalExceptionHandler;
+
+import com.ecommerce.common.ratelimit.ClientIpResolver;
+import com.ecommerce.common.ratelimit.RateLimitBucketRegistry;
+import com.ecommerce.common.ratelimit.RateLimitFilter;
+import com.ecommerce.common.ratelimit.RateLimitProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

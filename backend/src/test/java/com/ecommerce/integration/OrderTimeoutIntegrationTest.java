@@ -1,5 +1,8 @@
 package com.ecommerce.integration;
 
+import com.ecommerce.product.entity.ProductVariant;
+import com.ecommerce.product.repository.ProductVariantRepository;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.math.BigDecimal;
@@ -13,18 +16,18 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ecommerce.entity.Order;
-import com.ecommerce.entity.Payment;
-import com.ecommerce.entity.Product;
-import com.ecommerce.entity.User;
-import com.ecommerce.enums.OrderStatus;
-import com.ecommerce.enums.PaymentMethod;
-import com.ecommerce.enums.PaymentStatus;
-import com.ecommerce.enums.Role;
-import com.ecommerce.repository.OrderRepository;
-import com.ecommerce.repository.ProductRepository;
-import com.ecommerce.repository.UserRepository;
-import com.ecommerce.scheduler.PaymentTimeoutScheduler;
+import com.ecommerce.order.entity.Order;
+import com.ecommerce.payment.entity.Payment;
+import com.ecommerce.product.entity.Product;
+import com.ecommerce.user.entity.User;
+import com.ecommerce.order.enums.OrderStatus;
+import com.ecommerce.payment.enums.PaymentMethod;
+import com.ecommerce.payment.enums.PaymentStatus;
+import com.ecommerce.user.enums.Role;
+import com.ecommerce.order.repository.OrderRepository;
+import com.ecommerce.product.repository.ProductRepository;
+import com.ecommerce.user.repository.UserRepository;
+import com.ecommerce.payment.scheduler.PaymentTimeoutScheduler;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -40,7 +43,7 @@ class OrderTimeoutIntegrationTest {
     private ProductRepository productRepository;
 
     @Autowired
-    private com.ecommerce.repository.ProductVariantRepository productVariantRepository;
+    private com.ecommerce.product.repository.ProductVariantRepository productVariantRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -67,7 +70,7 @@ class OrderTimeoutIntegrationTest {
         product.setName("Test Product");
         product.setPrice(BigDecimal.valueOf(100));
         
-        com.ecommerce.entity.ProductVariant variant = new com.ecommerce.entity.ProductVariant();
+        com.ecommerce.product.entity.ProductVariant variant = new com.ecommerce.product.entity.ProductVariant();
         variant.setProduct(product);
         variant.setSize("42");
         variant.setStock(100);
@@ -112,7 +115,7 @@ class OrderTimeoutIntegrationTest {
         assertEquals(OrderStatus.CANCELLED, updatedOrder.getStatus());
         assertEquals(PaymentStatus.FAILED, updatedOrder.getPayment().getPaymentStatus());
 
-        com.ecommerce.entity.ProductVariant updatedVariant = productVariantRepository.findById(variant.getId()).orElseThrow();
+        com.ecommerce.product.entity.ProductVariant updatedVariant = productVariantRepository.findById(variant.getId()).orElseThrow();
         assertEquals(100, updatedVariant.getStock(), "Stock should remain unchanged");
     }
 }

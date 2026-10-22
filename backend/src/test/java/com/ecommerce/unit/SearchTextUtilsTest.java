@@ -1,6 +1,6 @@
 package com.ecommerce.unit;
 
-import com.ecommerce.util.SearchTextUtils;
+import com.ecommerce.product.search.SearchTextUtils;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

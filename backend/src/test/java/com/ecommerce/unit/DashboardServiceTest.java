@@ -1,14 +1,14 @@
 package com.ecommerce.unit;
 
-import com.ecommerce.dto.response.DashboardStatsResponse;
-import com.ecommerce.entity.Order;
-import com.ecommerce.entity.User;
-import com.ecommerce.enums.OrderStatus;
-import com.ecommerce.repository.OrderRepository;
-import com.ecommerce.repository.ProductRepository;
-import com.ecommerce.repository.ProductVariantRepository;
-import com.ecommerce.repository.UserRepository;
-import com.ecommerce.service.DashboardService;
+import com.ecommerce.dashboard.dto.response.DashboardStatsResponse;
+import com.ecommerce.order.entity.Order;
+import com.ecommerce.user.entity.User;
+import com.ecommerce.order.enums.OrderStatus;
+import com.ecommerce.order.repository.OrderRepository;
+import com.ecommerce.product.repository.ProductRepository;
+import com.ecommerce.product.repository.ProductVariantRepository;
+import com.ecommerce.user.repository.UserRepository;
+import com.ecommerce.dashboard.service.DashboardService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

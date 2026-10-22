@@ -1,10 +1,25 @@
 package com.ecommerce.integration;
 
-import com.ecommerce.dto.request.CheckoutRequest;
+import com.ecommerce.cart.entity.Cart;
+import com.ecommerce.cart.entity.CartItem;
+import com.ecommerce.cart.repository.CartRepository;
+import com.ecommerce.category.entity.Category;
+import com.ecommerce.category.repository.CategoryRepository;
+import com.ecommerce.order.entity.Order;
+import com.ecommerce.order.repository.OrderRepository;
+import com.ecommerce.payment.repository.PaymentRepository;
+import com.ecommerce.product.entity.Product;
+import com.ecommerce.product.entity.ProductVariant;
+import com.ecommerce.product.repository.ProductRepository;
+import com.ecommerce.product.repository.ProductVariantRepository;
+import com.ecommerce.user.entity.User;
+import com.ecommerce.user.repository.UserRepository;
+
+import com.ecommerce.checkout.dto.request.CheckoutRequest;
 import com.ecommerce.entity.*;
-import com.ecommerce.enums.OrderStatus;
-import com.ecommerce.enums.PaymentMethod;
-import com.ecommerce.enums.Role;
+import com.ecommerce.order.enums.OrderStatus;
+import com.ecommerce.payment.enums.PaymentMethod;
+import com.ecommerce.user.enums.Role;
 import com.ecommerce.repository.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;

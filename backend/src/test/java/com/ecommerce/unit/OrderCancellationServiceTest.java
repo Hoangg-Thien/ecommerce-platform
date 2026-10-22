@@ -16,12 +16,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.ecommerce.entity.Order;
-import com.ecommerce.entity.Payment;
-import com.ecommerce.enums.OrderStatus;
-import com.ecommerce.enums.PaymentStatus;
-import com.ecommerce.repository.OrderRepository;
-import com.ecommerce.service.OrderCancellationService;
+import com.ecommerce.order.entity.Order;
+import com.ecommerce.payment.entity.Payment;
+import com.ecommerce.order.enums.OrderStatus;
+import com.ecommerce.payment.enums.PaymentStatus;
+import com.ecommerce.order.repository.OrderRepository;
+import com.ecommerce.order.service.OrderCancellationService;
 
 @ExtendWith(MockitoExtension.class)
 class OrderCancellationServiceTest {

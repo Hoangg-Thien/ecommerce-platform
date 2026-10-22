@@ -1,15 +1,15 @@
 package com.ecommerce.unit;
 
-import com.ecommerce.service.ProductService;
-import com.ecommerce.dto.response.PageResponse;
-import com.ecommerce.dto.request.ProductRequest;
-import com.ecommerce.dto.response.ProductResponse;
-import com.ecommerce.entity.Category;
-import com.ecommerce.entity.Product;
-import com.ecommerce.exception.ResourceNotFoundException;
-import com.ecommerce.mapper.ProductMapper;
-import com.ecommerce.repository.CategoryRepository;
-import com.ecommerce.repository.ProductRepository;
+import com.ecommerce.product.service.ProductService;
+import com.ecommerce.common.dto.PageResponse;
+import com.ecommerce.product.dto.request.ProductRequest;
+import com.ecommerce.product.dto.response.ProductResponse;
+import com.ecommerce.category.entity.Category;
+import com.ecommerce.product.entity.Product;
+import com.ecommerce.common.exception.ResourceNotFoundException;
+import com.ecommerce.product.mapper.ProductMapper;
+import com.ecommerce.category.repository.CategoryRepository;
+import com.ecommerce.product.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -1,13 +1,13 @@
 package com.ecommerce.unit;
 
-import com.ecommerce.dto.response.AdminUserResponse;
-import com.ecommerce.entity.User;
-import com.ecommerce.enums.OrderStatus;
-import com.ecommerce.enums.Role;
-import com.ecommerce.exception.ResourceNotFoundException;
-import com.ecommerce.repository.OrderRepository;
-import com.ecommerce.repository.UserRepository;
-import com.ecommerce.service.AdminUserService;
+import com.ecommerce.user.dto.response.AdminUserResponse;
+import com.ecommerce.user.entity.User;
+import com.ecommerce.order.enums.OrderStatus;
+import com.ecommerce.user.enums.Role;
+import com.ecommerce.common.exception.ResourceNotFoundException;
+import com.ecommerce.order.repository.OrderRepository;
+import com.ecommerce.user.repository.UserRepository;
+import com.ecommerce.user.service.AdminUserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
