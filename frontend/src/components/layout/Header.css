@@ -220,17 +220,18 @@
   }
 
   .search-box {
-    width: auto;
-    background: transparent;
-    padding: 6px;
+    width: 140px;
+    background-color: var(--color-surface-container);
+    padding: 4px 10px;
   }
 
   .search-input {
-    display: none;
+    display: block;
+    width: 100%;
   }
 
   .search-icon {
-    margin-right: 0;
+    margin-right: 4px;
   }
 
   /* Don't hide account menu on mobile */

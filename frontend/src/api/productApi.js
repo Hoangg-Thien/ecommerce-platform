@@ -1,7 +1,7 @@
 import axiosClient from './axiosClient';
 
 const productApi = {
-    // GET /api/v1/products?page=0&size=10&categoryId=&sortBy=id&sortDir=asc
+    // GET /api/v1/products?page=0&size=10&categoryId=&q=&sortBy=id&sortDir=asc
     getProducts: (params) => {
         return axiosClient.get('/products', { params });
     },

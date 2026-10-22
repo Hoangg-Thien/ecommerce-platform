@@ -124,6 +124,15 @@ export default function ProductManagement() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Debounce search input (~400ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(0);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
   // ---- Fetch categories (once) ----
   useEffect(() => {
     categoryApi.getAllCategories()
@@ -142,17 +151,11 @@ export default function ProductManagement() {
         sortDir: 'desc',
       };
       if (selectedCategory) params.categoryId = selectedCategory;
-      // Note: backend doesn't have name search yet; filter client-side if needed
+      if (search.trim().length >= 2) params.q = search.trim();
+
       const res = await productApi.getProducts(params);
-      let items = res.content ?? [];
 
-      // Client-side name search (until backend supports it)
-      if (search.trim()) {
-        const q = search.toLowerCase();
-        items = items.filter((p) => p.name.toLowerCase().includes(q));
-      }
-
-      setProducts(items);
+      setProducts(res.content ?? []);
       setTotalPages(res.totalPages ?? 0);
       setTotalElements(res.totalElements ?? 0);
     } catch (err) {
