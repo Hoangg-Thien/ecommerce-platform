@@ -1,7 +1,5 @@
 package com.ecommerce.common.exception;
 
-import com.ecommerce.payment.entity.Payment;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
