@@ -1,11 +1,12 @@
-import { ShoppingCart, Search, Menu, User } from 'lucide-react';
+import { ShoppingCart, Search, Menu, User, X, Loader2, ArrowRight } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import './Header.css';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import ConfirmModal from '../ui/ConfirmModal';
 import categoryApi from '../../api/categoryApi';
+import productApi from '../../api/productApi';
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -16,6 +17,11 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const [keyword, setKeyword] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [totalMatches, setTotalMatches] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchWrapperRef = useRef(null);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -24,8 +30,54 @@ export default function Header() {
     setKeyword(q);
   }, [location.search]);
 
+  // Đóng dropdown khi chuyển trang
+  useEffect(() => {
+    setShowDropdown(false);
+  }, [location.pathname, location.search]);
+
+  // Đóng dropdown khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchWrapperRef.current && !searchWrapperRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Debounce tìm kiếm gợi ý khi gõ từ khóa (>= 2 ký tự)
+  useEffect(() => {
+    const trimmed = keyword.trim();
+    if (trimmed.length < 2) {
+      setSuggestions([]);
+      setTotalMatches(0);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const data = await productApi.getProducts({ q: trimmed, size: 5, page: 0 });
+        setSuggestions(data.content || []);
+        setTotalMatches(data.totalElements || 0);
+        setShowDropdown(true);
+      } catch (error) {
+        console.error('Lỗi khi tải gợi ý tìm kiếm', error);
+        setSuggestions([]);
+        setTotalMatches(0);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [keyword]);
+
   const handleSearchSubmit = (e) => {
     e.preventDefault();
+    setShowDropdown(false);
     const trimmed = keyword.trim();
     if (!trimmed) {
       navigate('/');
@@ -34,6 +86,25 @@ export default function Header() {
       return;
     } else {
       navigate('/?q=' + encodeURIComponent(trimmed));
+    }
+  };
+
+  const handleSelectProduct = (productId) => {
+    setShowDropdown(false);
+    navigate(`/product/${productId}`);
+  };
+
+  const handleViewAllResults = () => {
+    setShowDropdown(false);
+    const trimmed = keyword.trim();
+    if (trimmed) {
+      navigate('/?q=' + encodeURIComponent(trimmed));
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      setShowDropdown(false);
     }
   };
 
@@ -92,24 +163,122 @@ export default function Header() {
           </nav>
 
           <div className="header-right">
-            <form onSubmit={handleSearchSubmit} className="search-box">
-              <button
-                type="submit"
-                aria-label="Tìm kiếm"
-                style={{ background: 'none', border: 'none', padding: 0, display: 'flex', alignItems: 'center', cursor: 'pointer', color: 'inherit' }}
-              >
-                <Search size={18} className="search-icon" />
-              </button>
-              <input
-                type="text"
-                placeholder="Tìm kiếm..."
-                className="search-input"
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                maxLength={100}
-                aria-label="Tìm kiếm sản phẩm"
-              />
-            </form>
+            <div className="search-wrapper" ref={searchWrapperRef}>
+              <form onSubmit={handleSearchSubmit} className="search-box">
+                <button
+                  type="submit"
+                  aria-label="Tìm kiếm"
+                  style={{ background: 'none', border: 'none', padding: 0, display: 'flex', alignItems: 'center', cursor: 'pointer', color: 'inherit' }}
+                >
+                  <Search size={18} className="search-icon" />
+                </button>
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm..."
+                  className="search-input"
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                  onFocus={() => {
+                    if (keyword.trim().length >= 2 && (suggestions.length > 0 || totalMatches > 0 || isLoading)) {
+                      setShowDropdown(true);
+                    }
+                  }}
+                  onKeyDown={handleKeyDown}
+                  maxLength={100}
+                  aria-label="Tìm kiếm sản phẩm"
+                />
+                {isLoading && <Loader2 size={15} className="search-spinner" />}
+                {keyword && !isLoading && (
+                  <button
+                    type="button"
+                    className="search-clear-btn"
+                    onClick={() => {
+                      setKeyword('');
+                      setSuggestions([]);
+                      setTotalMatches(0);
+                      setShowDropdown(false);
+                    }}
+                    aria-label="Xóa từ khóa"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </form>
+
+              {showDropdown && keyword.trim().length >= 2 && (
+                <div className="search-dropdown">
+                  {isLoading && suggestions.length === 0 ? (
+                    <div className="search-dropdown-loading">
+                      <Loader2 size={16} className="search-spinner" />
+                      <span>Đang tìm kiếm...</span>
+                    </div>
+                  ) : suggestions.length === 0 ? (
+                    <div className="search-dropdown-empty">
+                      Không tìm thấy sản phẩm phù hợp
+                    </div>
+                  ) : (
+                    <>
+                      <div className="search-dropdown-header">
+                        Sản phẩm gợi ý
+                      </div>
+                      <div className="search-dropdown-list">
+                        {suggestions.map((item) => {
+                          const displayPrice = new Intl.NumberFormat('vi-VN', {
+                            style: 'currency',
+                            currency: 'VND'
+                          }).format(item.price);
+                          const thumb = item.imageUrl || item.image || 'https://placehold.co/48x48?text=XOAI';
+
+                          return (
+                            <div
+                              key={item.id}
+                              className="search-dropdown-item"
+                              onClick={() => handleSelectProduct(item.id)}
+                            >
+                              <img
+                                src={thumb}
+                                alt={item.name}
+                                className="search-dropdown-thumb"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = 'https://placehold.co/48x48?text=XOAI';
+                                }}
+                              />
+                              <div className="search-dropdown-info">
+                                <div className="search-dropdown-name" title={item.name}>
+                                  {item.name}
+                                </div>
+                                <div className="search-dropdown-price">
+                                  {displayPrice}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {totalMatches > 5 ? (
+                        <div
+                          className="search-dropdown-footer"
+                          onClick={handleViewAllResults}
+                        >
+                          <span>Hiển thị thêm <strong>{totalMatches - 5}</strong> sản phẩm</span>
+                          <ArrowRight size={14} />
+                        </div>
+                      ) : (
+                        <div
+                          className="search-dropdown-footer"
+                          onClick={handleViewAllResults}
+                        >
+                          <span>Xem tất cả kết quả cho "<strong>{keyword.trim()}</strong>"</span>
+                          <ArrowRight size={14} />
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
 
             <Link to="/cart" className="icon-btn cart-btn" aria-label="Giỏ hàng">
               <ShoppingCart size={22} />
