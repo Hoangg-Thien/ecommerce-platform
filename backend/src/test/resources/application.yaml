@@ -8,11 +8,15 @@ spring:
     password: test
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+payment:
+  momo:
+    mock-enabled: true
 
 application:
   security:

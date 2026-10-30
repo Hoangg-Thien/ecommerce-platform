@@ -19,6 +19,10 @@ spring:
         format_sql: false
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+payment:
+  momo:
+    mock-enabled: true
+
 logging:
   level:
     root: INFO

@@ -36,6 +36,8 @@ public class CheckoutRequest {
     private String phone;
 
     private String shippingMethod;
+    /** @deprecated Ignored; shipping is calculated from backend configuration. */
+    @Deprecated
     private java.math.BigDecimal shippingFee;
 
     @NotNull(message = "Payment method is required")

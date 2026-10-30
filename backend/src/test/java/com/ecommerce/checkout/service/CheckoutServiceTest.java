@@ -52,6 +52,9 @@ class CheckoutServiceTest {
     @InjectMocks
     private CheckoutService checkoutService;
 
+    @org.mockito.Spy
+    private ShippingFeeService shippingFeeService = new ShippingFeeService(new BigDecimal("30000"));
+
     private User user;
     private Product product;
     private ProductVariant variant;
@@ -143,5 +146,21 @@ class CheckoutServiceTest {
         checkoutService.checkout("user@gmail.com", codRequest, "test-key");
 
         verify(mockStrategy, times(1)).processPayment(any(Order.class), eq(cart));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"-1", "0", "999999"})
+    void checkout_IgnoresClientShippingFee(String clientFee) {
+        codRequest.setShippingFee(new BigDecimal(clientFee));
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+        when(strategyFactory.getPaymentStrategy(PaymentMethod.COD)).thenReturn(mockStrategy);
+
+        checkoutService.checkout(user.getEmail(), codRequest, "shipping-test");
+
+        var captured = org.mockito.ArgumentCaptor.forClass(Order.class);
+        verify(mockStrategy).processPayment(captured.capture(), eq(cart));
+        assertEquals(0, new BigDecimal("30000").compareTo(captured.getValue().getShippingFee()));
+        assertEquals(0, new BigDecimal("32000").compareTo(captured.getValue().getTotalPrice()));
     }
 }

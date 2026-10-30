@@ -37,6 +37,7 @@ public class CheckoutService {
     private final OrderRepository orderRepository;
     private final PaymentStrategyFactory strategyFactory;
     private final IdempotencyKeyRepository idempotencyKeyRepository;
+    private final ShippingFeeService shippingFeeService;
     
     @Transactional
     public CheckoutResponse checkout(String userEmail, CheckoutRequest request, String idempotencyKey){
@@ -78,7 +79,7 @@ public class CheckoutService {
         order.setShippingCity(request.getCity());
         order.setShippingWard(request.getWard());
         order.setShippingMethod(request.getShippingMethod());
-        order.setShippingFee(request.getShippingFee());
+        order.setShippingFee(shippingFeeService.getFlatFee());
 
         BigDecimal totalPrice = BigDecimal.ZERO;
 
@@ -111,9 +112,7 @@ public class CheckoutService {
             totalPrice = totalPrice.add(subTotal);
         }
 
-        if (request.getShippingFee() != null) {
-            totalPrice = totalPrice.add(request.getShippingFee());
-        }
+        totalPrice = totalPrice.add(order.getShippingFee());
 
         order.setTotalPrice(totalPrice);
 
