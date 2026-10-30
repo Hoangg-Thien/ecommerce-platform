@@ -84,7 +84,10 @@ export default function AdminLayout({ children }) {
           <div className="admin-sidebar__logo-icon">
             <Store size={16} strokeWidth={2.2} />
           </div>
-          <span className="admin-sidebar__logo-title">Store Admin</span>
+          <div className="admin-sidebar__logo-info">
+            <span className="admin-sidebar__logo-title">Store Admin</span>
+            <span className="admin-sidebar__logo-sub">v1.0</span>
+          </div>
         </NavLink>
 
         {/* Navigation */}
