@@ -18,6 +18,30 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(com.ecommerce.checkout.service.CheckoutPricingException.class)
+    public ResponseEntity<Map<String,Object>> handleCheckoutPricing(com.ecommerce.checkout.service.CheckoutPricingException ex) {
+        Map<String,Object> body = new HashMap<>(buildError(HttpStatus.valueOf(ex.getStatus()),ex.getMessage()).getBody());
+        body.put("code",ex.getCode());
+        if (ex.getBreakdown()!=null) body.put("breakdown",com.ecommerce.checkout.dto.response.CheckoutPreviewResponse.from(ex.getBreakdown()));
+        return ResponseEntity.status(ex.getStatus()).body(body);
+    }
+
+    @ExceptionHandler(com.ecommerce.promotion.service.VoucherSoldOutException.class)
+    public ResponseEntity<Map<String,Object>> handleSoldOut(RuntimeException ex) {
+        Map<String,Object> body = new HashMap<>(buildError(HttpStatus.CONFLICT,"Mã giảm giá đã hết lượt.").getBody());
+        body.put("code","VOUCHER_SOLD_OUT");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String,Object>> handleUnreadable(Exception ex) {
+        return buildError(HttpStatus.BAD_REQUEST,"Invalid request body");
+    }
+
+    @ExceptionHandler(org.springframework.web.bind.MissingRequestHeaderException.class)
+    public ResponseEntity<Map<String,Object>> handleMissingHeader(Exception ex) {
+        return buildError(HttpStatus.BAD_REQUEST,"Required request header is missing");
+    }
 
     // 404 - resource not found
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -86,6 +110,16 @@ public class GlobalExceptionHandler {
     // 409 - Conflict (Database Constraint Violation)
     @ExceptionHandler(DataIntegrityViolationException.class)
         public ResponseEntity<Map<String, Object>> handleDataIntergrityViolation(RuntimeException ex){
+            Throwable cause = ex;
+            while (cause != null) {
+                if (cause instanceof org.hibernate.exception.ConstraintViolationException violation
+                        && "uq_voucher_usage_active_per_user".equals(violation.getConstraintName())) {
+                    Map<String,Object> body = new HashMap<>(buildError(HttpStatus.CONFLICT,"Bạn đã sử dụng mã giảm giá này.").getBody());
+                    body.put("code","VOUCHER_ALREADY_USED");
+                    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+                }
+                cause = cause.getCause();
+            }
             log.warn("Database constraint violation caught globally: {}", ex.getMessage());
             return buildError(HttpStatus.CONFLICT, "The request was rejected due to duplicate data or a violation of system constraints");
         }

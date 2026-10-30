@@ -20,4 +20,11 @@ public class IdempotencyKey {
     private String id;
 
     private LocalDateTime createdAt;
+
+    private Long orderId;
+
+    public IdempotencyKey(String id, LocalDateTime createdAt) {
+        this.id = id;
+        this.createdAt = createdAt;
+    }
 }

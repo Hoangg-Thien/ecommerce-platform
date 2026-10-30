@@ -52,6 +52,7 @@ class CheckoutControllerTest {
     @WithMockUser(username = "user@gmail.com")
     void checkout_WithCod_ShouldReturn201WithPayment() throws Exception {
         CheckoutRequest request = new CheckoutRequest();
+        request.setExpectedTotal(BigDecimal.valueOf(500000));
         request.setPaymentMethod(PaymentMethod.COD);
         request.setFirstName("Test");
         request.setLastName("User");
@@ -92,6 +93,7 @@ class CheckoutControllerTest {
     @WithMockUser(username = "user@gmail.com")
     void checkout_WithMomo_ShouldReturn201WithPaymentUrl() throws Exception {
         CheckoutRequest request = new CheckoutRequest();
+        request.setExpectedTotal(BigDecimal.valueOf(500000));
         request.setPaymentMethod(PaymentMethod.MOMO);
         request.setFirstName("Test");
         request.setLastName("User");
@@ -122,6 +124,7 @@ class CheckoutControllerTest {
     @Test
     void checkout_WithNullPaymentMethod_ShouldReturn400() throws Exception {
         CheckoutRequest request = new CheckoutRequest();
+        request.setExpectedTotal(BigDecimal.valueOf(500000));
         // paymentMethod = null (không set gì cả)
         request.setPaymentMethod(null);
         request.setFirstName("Test");

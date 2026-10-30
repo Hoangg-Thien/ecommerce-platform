@@ -2,8 +2,8 @@ import { Lock } from 'lucide-react';
 import Button from '../ui/Button';
 import './CheckoutSummary.css';
 
-export default function CheckoutSummary({ cartItems, subtotal, shippingFee, onCompleteOrder, isProcessing, isFormValid = true }) {
-  const total = subtotal + shippingFee;
+export default function CheckoutSummary({ cartItems, subtotal, shippingFee, orderDiscount = 0, total: serverTotal, actionLabel = 'Hoàn tất đặt hàng', onCompleteOrder, isProcessing, isFormValid = true }) {
+  const total = serverTotal ?? subtotal - orderDiscount + shippingFee;
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -39,6 +39,10 @@ export default function CheckoutSummary({ cartItems, subtotal, shippingFee, onCo
       <div className="summary-divider"></div>
       
       <div className="summary-content">
+        {orderDiscount > 0 && <div className="summary-row">
+          <span className="summary-label">Giảm giá đơn hàng:</span>
+          <span className="summary-value">-{formatPrice(orderDiscount)}</span>
+        </div>}
         <div className="summary-row">
           <span className="summary-label">Tạm tính: </span>
           <span className="summary-value">{formatPrice(subtotal)}</span>
@@ -66,7 +70,7 @@ export default function CheckoutSummary({ cartItems, subtotal, shippingFee, onCo
         isLoading={isProcessing}
         className="complete-order-btn"
       >
-        <span>Hoàn tất đặt hàng</span>
+        <span>{actionLabel}</span>
       </Button>
 
       {!isFormValid && (

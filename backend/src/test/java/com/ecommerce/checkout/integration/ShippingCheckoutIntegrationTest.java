@@ -72,6 +72,7 @@ class ShippingCheckoutIntegrationTest {
 
         CheckoutRequest request = new CheckoutRequest();
         request.setPaymentMethod(method);
+        request.setExpectedTotal(new BigDecimal("230000"));
         request.setShippingFee(clientFee);
         // Exercise both legacy representations of whole-cart checkout.
         request.setCartItemIds(method == PaymentMethod.COD ? null : List.of());

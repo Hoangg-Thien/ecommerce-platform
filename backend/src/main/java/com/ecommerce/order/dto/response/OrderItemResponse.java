@@ -19,5 +19,8 @@ public class OrderItemResponse {
     private String size;
     private Integer quantity;
     private BigDecimal price;
+    private BigDecimal originalPrice;
+    private BigDecimal productDiscountPercent;
+    private Long productDiscountProgramId;
     private BigDecimal subTotal;
 }

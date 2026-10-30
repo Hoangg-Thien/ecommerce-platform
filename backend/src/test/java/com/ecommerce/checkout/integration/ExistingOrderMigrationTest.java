@@ -21,10 +21,15 @@ class ExistingOrderMigrationTest {
                 statement.executeUpdate("INSERT INTO orders(id,user_id,total_price,shipping_fee,status) VALUES (1,1,200000,NULL,'DONE'),(2,1,230000,30000,'CANCELLED')");
                 statement.executeUpdate("INSERT INTO products(id,name,price) VALUES (1,'Old product',100000)");
                 statement.executeUpdate("INSERT INTO order_items(order_id,product_id,quantity,price) VALUES (1,1,2,100000)");
+                statement.executeUpdate("INSERT INTO idempotency_keys(id,created_at) VALUES ('legacy',now())");
                 var flyway = Flyway.configure().dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword()).load();
-                assertThat(flyway.migrate().migrationsExecuted).isEqualTo(3);
+                assertThat(flyway.migrate().migrationsExecuted).isEqualTo(4);
                 flyway.validate();
                 assertThat(flyway.migrate().migrationsExecuted).isZero();
+                try (var result = statement.executeQuery("SELECT order_id FROM idempotency_keys WHERE id='legacy'")) {
+                    assertThat(result.next()).isTrue();
+                    assertThat(result.getObject(1)).isNull();
+                }
                 try (var result = statement.executeQuery("SELECT total_price,shipping_fee,status,subtotal_price,discount_amount,voucher_code,order_discount_source,order_discount_percent FROM orders ORDER BY id")) {
                     assertThat(result.next()).isTrue();
                     assertThat(result.getBigDecimal(1)).isEqualByComparingTo("200000");

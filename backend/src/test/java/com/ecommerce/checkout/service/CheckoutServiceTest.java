@@ -55,6 +55,12 @@ class CheckoutServiceTest {
     @org.mockito.Spy
     private ShippingFeeService shippingFeeService = new ShippingFeeService(new BigDecimal("30000"));
 
+    @org.mockito.Spy private java.time.Clock clock = java.time.Clock.systemUTC();
+    @Mock private com.ecommerce.promotion.service.PromotionPricingService pricing;
+    @Mock private com.ecommerce.promotion.service.VoucherUsageService voucherUsage;
+    @Mock private com.ecommerce.promotion.repository.VoucherRepository vouchers;
+    @Mock private com.ecommerce.order.mapper.OrderMapper orderMapper;
+
     private User user;
     private Product product;
     private ProductVariant variant;
@@ -90,6 +96,14 @@ class CheckoutServiceTest {
 
         codRequest = new CheckoutRequest();
         codRequest.setPaymentMethod(PaymentMethod.COD);
+        codRequest.setExpectedTotal(new BigDecimal("32000"));
+        lenient().when(idempotencyKeyRepository.insertIfAbsent(anyString(),any())).thenReturn(1);
+        lenient().when(idempotencyKeyRepository.linkOrder(anyString(),anyLong())).thenReturn(1);
+        lenient().when(pricing.price(anyList(),anyLong(),any(),any())).thenAnswer(invocation ->
+                new com.ecommerce.promotion.pricing.PricingCalculator().calculate(invocation.getArgument(0),
+                        java.util.List.of(),java.util.List.of(),null,invocation.getArgument(3)));
+        lenient().when(mockStrategy.processPayment(any(),any())).thenReturn(
+                com.ecommerce.checkout.dto.response.CheckoutResponse.builder().orderId(1L).build());
     }
 
     @Test
@@ -141,7 +155,6 @@ class CheckoutServiceTest {
         when(userRepository.findByEmail("user@gmail.com")).thenReturn(Optional.of(user));
         when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
         when(strategyFactory.getPaymentStrategy(PaymentMethod.COD)).thenReturn(mockStrategy);
-        when(mockStrategy.processPayment(any(Order.class), any(Cart.class))).thenReturn(null);
 
         checkoutService.checkout("user@gmail.com", codRequest, "test-key");
 

@@ -1,13 +1,15 @@
 package com.ecommerce.checkout.dto.request;
 
-import com.ecommerce.payment.entity.Payment;
-
+import java.math.BigDecimal;
 import java.util.List;
 
 import com.ecommerce.payment.enums.PaymentMethod;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -38,10 +40,18 @@ public class CheckoutRequest {
     private String shippingMethod;
     /** @deprecated Ignored; shipping is calculated from backend configuration. */
     @Deprecated
-    private java.math.BigDecimal shippingFee;
+    private BigDecimal shippingFee;
 
     @NotNull(message = "Payment method is required")
     private PaymentMethod paymentMethod = PaymentMethod.COD; // default COD
 
     private List<Long> cartItemIds;
+
+    private String voucherCode;
+
+    @NotNull
+    @DecimalMin("0")
+    @Digits(integer = 36, fraction = 0)
+    @JsonDeserialize(using = VndAmountDeserializer.class)
+    private BigDecimal expectedTotal;
 }

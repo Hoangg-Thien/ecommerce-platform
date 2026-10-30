@@ -185,7 +185,7 @@ public class OrderConcurrencyTest {
                                     .with(user(userEmail))
                                     .header("Idempotency-Key", java.util.UUID.randomUUID().toString())
                                     .contentType(MediaType.APPLICATION_JSON)
-                                    .content("{\"paymentMethod\": \"COD\", \"firstName\": \"Test\", \"lastName\": \"User\", \"address\": \"123 Street\", \"city\": \"HCM\", \"ward\": \"Ward 1\", \"phone\": \"0123456789\"}"))
+                                    .content("{\"expectedTotal\":31000,\"paymentMethod\": \"COD\", \"firstName\": \"Test\", \"lastName\": \"User\", \"address\": \"123 Street\", \"city\": \"HCM\", \"ward\": \"Ward 1\", \"phone\": \"0123456789\"}"))
                             .andReturn();
 
                     responseStatuses.add(result.getResponse().getStatus());
@@ -244,6 +244,7 @@ public class OrderConcurrencyTest {
         String[] users = {USER1_EMAIL, USER2_EMAIL};
 
         CheckoutRequest checkoutRequest = new CheckoutRequest();
+        checkoutRequest.setExpectedTotal(BigDecimal.valueOf(31000));
         checkoutRequest.setPaymentMethod(PaymentMethod.COD);
         checkoutRequest.setFirstName("Test");
         checkoutRequest.setLastName("User");
@@ -308,7 +309,7 @@ public class OrderConcurrencyTest {
                 .with(user(USER1_EMAIL))
                 .header("Idempotency-Key", idempotencyKey)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"paymentMethod\": \"COD\", \"firstName\": \"Test\", \"lastName\": \"User\", \"address\": \"123 Street\", \"city\": \"HCM\", \"ward\": \"Ward 1\", \"phone\": \"0123456789\"}"))
+                .content("{\"expectedTotal\":31000,\"paymentMethod\": \"COD\", \"firstName\": \"Test\", \"lastName\": \"User\", \"address\": \"123 Street\", \"city\": \"HCM\", \"ward\": \"Ward 1\", \"phone\": \"0123456789\"}"))
                 .andExpect(status().isBadRequest()); 
         
         // 3. Fix the product stock back to 1
@@ -322,7 +323,7 @@ public class OrderConcurrencyTest {
                 .with(user(USER1_EMAIL))
                 .header("Idempotency-Key", idempotencyKey)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"paymentMethod\": \"COD\", \"firstName\": \"Test\", \"lastName\": \"User\", \"address\": \"123 Street\", \"city\": \"HCM\", \"ward\": \"Ward 1\", \"phone\": \"0123456789\"}"))
+                .content("{\"expectedTotal\":31000,\"paymentMethod\": \"COD\", \"firstName\": \"Test\", \"lastName\": \"User\", \"address\": \"123 Street\", \"city\": \"HCM\", \"ward\": \"Ward 1\", \"phone\": \"0123456789\"}"))
                 .andExpect(status().isCreated());
     }
 
@@ -351,7 +352,7 @@ public class OrderConcurrencyTest {
                                     .with(user(USER1_EMAIL))
                                     .header("Idempotency-Key", idempotencyKey) // Dùng CHUNG 1 key
                                     .contentType(MediaType.APPLICATION_JSON)
-                                    .content("{\"paymentMethod\": \"COD\", \"firstName\": \"Test\", \"lastName\": \"User\", \"address\": \"123 Street\", \"city\": \"HCM\", \"ward\": \"Ward 1\", \"phone\": \"0123456789\"}"))
+                                    .content("{\"expectedTotal\":31000,\"paymentMethod\": \"COD\", \"firstName\": \"Test\", \"lastName\": \"User\", \"address\": \"123 Street\", \"city\": \"HCM\", \"ward\": \"Ward 1\", \"phone\": \"0123456789\"}"))
                             .andReturn();
 
                     responseStatuses.add(result.getResponse().getStatus());
