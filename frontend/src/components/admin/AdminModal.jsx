@@ -34,7 +34,7 @@ export default function AdminModal({
         <div className="admin-modal__header">
           <h2 className="admin-modal__title" id="admin-modal-title">{title}</h2>
           <button className="admin-modal__close" onClick={onClose} aria-label="Đóng">
-            <X size={16} />
+            <X size={15} />
           </button>
         </div>
 

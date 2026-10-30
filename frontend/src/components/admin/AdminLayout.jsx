@@ -82,8 +82,9 @@ export default function AdminLayout({ children }) {
         {/* Logo */}
         <NavLink to="/admin/dashboard" className="admin-sidebar__logo" onClick={closeMobile}>
           <div className="admin-sidebar__logo-icon">
-            <Store size={22} color="#fff" strokeWidth={2.4} />
+            <Store size={16} strokeWidth={2.2} />
           </div>
+          <span className="admin-sidebar__logo-title">Store Admin</span>
         </NavLink>
 
         {/* Navigation */}
@@ -96,7 +97,7 @@ export default function AdminLayout({ children }) {
                 if (item.disabled) {
                   return (
                     <div key={item.to} className="admin-sidebar__item" style={{ opacity: 0.45, cursor: 'not-allowed' }} title={item.label}>
-                      <Icon className="admin-sidebar__item-icon" size={18} />
+                      <Icon className="admin-sidebar__item-icon" size={16} />
                       <span>{item.label}</span>
                       {item.badge && <span className="admin-sidebar__item-badge">{item.badge}</span>}
                     </div>
@@ -112,7 +113,7 @@ export default function AdminLayout({ children }) {
                     }
                     onClick={closeMobile}
                   >
-                    <Icon className="admin-sidebar__item-icon" size={18} />
+                    <Icon className="admin-sidebar__item-icon" size={16} />
                     <span>{item.label}</span>
                   </NavLink>
                 );
@@ -149,14 +150,14 @@ export default function AdminLayout({ children }) {
           style={{ display: 'none' }}
           id="admin-hamburger"
         >
-          {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+          {mobileOpen ? <X size={16} /> : <Menu size={16} />}
         </button>
 
         {/* Breadcrumb */}
         <nav className="admin-header__breadcrumb" aria-label="Breadcrumb">
           {crumbs.map((c, i) => (
             <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              {i > 0 && <ChevronRight size={14} className="admin-header__breadcrumb-sep" />}
+              {i > 0 && <ChevronRight size={13} className="admin-header__breadcrumb-sep" />}
               <span className={`admin-header__breadcrumb-item${i === crumbs.length - 1 ? ' current' : ''}`}>
                 {c.label}
               </span>
@@ -172,7 +173,7 @@ export default function AdminLayout({ children }) {
             aria-label="Đăng xuất"
             id="admin-logout-btn"
           >
-            <LogOut size={15} />
+            <LogOut size={14} />
             <span>Đăng xuất</span>
           </button>
         </div>

@@ -1,41 +1,52 @@
-/* AdminTable.css */
+/* =============================================
+   AdminTable.css — Work tool dense data table
+   ============================================= */
+
 .admin-table-wrapper {
   background: var(--admin-surface);
-  border-radius: var(--admin-r-lg);
+  border-radius: var(--admin-r-md);
   border: 1px solid var(--admin-border);
-  box-shadow: var(--admin-shadow-sm);
-  overflow: hidden;
+  box-shadow: var(--admin-shadow-xs);
+  overflow-x: auto;
 }
 
 .admin-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13.5px;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
 }
 
 .admin-table thead {
-  background: #FAFAFA;
+  background: var(--admin-surface-subtle);
   border-bottom: 1px solid var(--admin-border);
 }
 
 .admin-table thead th {
-  padding: 12px 16px;
+  padding: 8px 12px;
   text-align: left;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--admin-text-secondary);
+  letter-spacing: 0.05em;
+  color: var(--admin-text-muted);
   white-space: nowrap;
 }
 
-.admin-table thead th.col-actions {
+/* Alignment helpers */
+.admin-table thead th.col-actions,
+.admin-table thead th.col-right,
+.admin-table thead th.col-number,
+.admin-table thead th.col-currency,
+.admin-table thead th.text-right {
   text-align: right;
 }
 
 .admin-table tbody tr {
   border-bottom: 1px solid var(--admin-border);
   transition: background var(--admin-tr);
+  height: 42px; /* Dày thông tin 40-44px */
 }
 
 .admin-table tbody tr:last-child {
@@ -43,99 +54,106 @@
 }
 
 .admin-table tbody tr:hover {
-  background: #FAFBFF;
+  background: var(--admin-surface-hover);
 }
 
 .admin-table tbody td {
-  padding: 13px 16px;
+  padding: 8px 12px;
   color: var(--admin-text-primary);
   vertical-align: middle;
 }
 
-.admin-table tbody td.col-actions {
+.admin-table tbody td.col-actions,
+.admin-table tbody td.col-right,
+.admin-table tbody td.col-number,
+.admin-table tbody td.col-currency,
+.admin-table tbody td.text-right {
   text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
-/* ---- Skeleton Loading ---- */
+/* Skeleton Loading */
 .admin-table__skeleton-row td {
-  padding: 14px 16px;
+  padding: 10px 12px;
 }
 
 .admin-table__skeleton-cell {
-  height: 14px;
-  border-radius: 6px;
-  background: linear-gradient(90deg, #F0F0F0 25%, #E8E8E8 50%, #F0F0F0 75%);
+  height: 12px;
+  border-radius: var(--admin-r-xs);
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
   background-size: 200% 100%;
-  animation: skeleton-pulse 1.4s ease infinite;
+  animation: admin-skeleton-pulse 1.4s ease infinite;
 }
 
-@keyframes skeleton-pulse {
+@keyframes admin-skeleton-pulse {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
 
-/* ---- Empty State ---- */
+/* Empty State */
 .admin-table__empty {
   text-align: center;
-  padding: 60px 24px;
+  padding: 48px 16px;
   color: var(--admin-text-secondary);
 }
 
 .admin-table__empty-icon {
-  width: 56px;
-  height: 56px;
-  background: var(--admin-bg);
-  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  background: var(--admin-surface-subtle);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-r-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 16px;
+  margin: 0 auto 12px;
   color: var(--admin-text-muted);
 }
 
 .admin-table__empty-title {
-  font-size: 15px;
+  font-size: 13.5px;
   font-weight: 600;
   color: var(--admin-text-primary);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .admin-table__empty-desc {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--admin-text-secondary);
 }
 
-/* ---- Action Buttons ---- */
+/* Table Action Buttons */
 .admin-table__action-group {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 4px;
 }
 
 .admin-table__action-btn {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: var(--admin-r-sm);
   border: 1px solid var(--admin-border);
   background: var(--admin-surface);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: var(--admin-text-secondary);
-  transition: all var(--admin-tr);
+  transition: background var(--admin-tr), border-color var(--admin-tr), color var(--admin-tr);
   flex-shrink: 0;
+  padding: 0;
 }
 
 .admin-table__action-btn:hover {
-  background: var(--admin-primary-light);
-  border-color: var(--admin-primary);
-  color: var(--admin-primary);
+  background: var(--admin-surface-hover);
+  border-color: var(--admin-border-strong);
+  color: var(--admin-text-primary);
 }
 
 .admin-table__action-btn.danger:hover {
-  background: #FEF2F2;
-  border-color: var(--admin-error);
+  background: var(--admin-error-subtle);
+  border-color: var(--admin-error-border);
   color: var(--admin-error);
 }
