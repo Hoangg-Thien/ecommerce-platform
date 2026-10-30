@@ -83,6 +83,9 @@ class ShippingCheckoutIntegrationTest {
         var payment = payments.findByOrderId(order.getId()).orElseThrow();
         assertThat(order.getShippingFee()).isEqualByComparingTo("30000");
         assertThat(order.getTotalPrice()).isEqualByComparingTo("230000");
+        assertThat(order.getSubtotalPrice()).isEqualByComparingTo("200000");
+        assertThat(order.getDiscountAmount()).isEqualByComparingTo("0");
+        assertThat(order.getItems().getFirst().getOriginalPrice()).isEqualByComparingTo("100000");
         assertThat(payment.getAmount()).isEqualByComparingTo(order.getTotalPrice());
         assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
         assertThat(order.getItems()).hasSize(1);

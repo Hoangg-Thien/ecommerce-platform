@@ -42,4 +42,20 @@ public class OrderItem {
     @NotNull(message = "Price is required")
     @Column(nullable = false)
     private BigDecimal price;
+
+    @Column(nullable = false, precision = 38, scale = 2)
+    private BigDecimal originalPrice;
+
+    @Column(precision = 5, scale = 2)
+    private BigDecimal productDiscountPercent;
+
+    @Column(name = "product_discount_program_id")
+    private Long productDiscountProgramId;
+
+    @PrePersist
+    private void initializeLegacySnapshot() {
+        if (originalPrice == null) {
+            originalPrice = price;
+        }
+    }
 }
