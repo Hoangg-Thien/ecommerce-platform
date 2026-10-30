@@ -306,4 +306,29 @@ class PromotionRepositoryIntegrationTest {
         assertThat(saved.getOrderDiscountPercent()).isEqualByComparingTo("10");
         assertThat(saved.getOrderDiscountSource()).isEqualTo(OrderDiscountSource.ORDER_DISCOUNT);
     }
+
+    @Test
+    void pricingServiceReadsRealRulesWithoutChangingUsageOrOrder() {
+        var pricing = new com.ecommerce.promotion.service.PromotionPricingService(productDiscounts, orderDiscounts,
+                vouchers, usages, Clock.fixed(START, java.time.ZoneOffset.UTC));
+        var lines = List.of(new com.ecommerce.promotion.pricing.PricingCalculator.Item(100L, 100L,
+                new BigDecimal("200000"), 2));
+        var result = tx.execute(status -> pricing.price(lines, 100L, " sale10 ", new BigDecimal("30000")));
+        assertThat(result.subtotal()).isEqualByComparingTo("320000");
+        assertThat(result.orderDiscount().amount()).isEqualByComparingTo("32000");
+        assertThat(result.total()).isEqualByComparingTo("318000");
+        assertThat(result.voucher().applied()).isTrue();
+        assertThat(vouchers.findById(100L).orElseThrow().getUsedQuantity()).isZero();
+        assertThat(usages.count()).isZero();
+        assertThat(orders.count()).isEqualTo(3);
+        jdbc.update("UPDATE promotion_programs SET status='INACTIVE'");
+        var inactive = tx.execute(status -> pricing.price(lines, 100L, null, BigDecimal.ZERO));
+        assertThat(inactive.total()).isEqualByComparingTo("400000");
+        var endedPricing = new com.ecommerce.promotion.service.PromotionPricingService(productDiscounts, orderDiscounts,
+                vouchers, usages, Clock.fixed(END, java.time.ZoneOffset.UTC));
+        jdbc.update("UPDATE promotion_programs SET status='ACTIVE'");
+        var ended = tx.execute(status -> endedPricing.price(lines, 100L, "SALE10", BigDecimal.ZERO));
+        assertThat(ended.total()).isEqualByComparingTo("400000");
+        assertThat(ended.voucher().reason()).isEqualTo(com.ecommerce.promotion.pricing.PricingCalculator.VoucherReason.EXPIRED);
+    }
 }
