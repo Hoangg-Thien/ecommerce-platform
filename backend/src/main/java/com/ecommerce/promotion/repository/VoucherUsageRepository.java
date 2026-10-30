@@ -13,6 +13,18 @@ import com.ecommerce.promotion.enums.VoucherUsageStatus;
 
 public interface VoucherUsageRepository extends JpaRepository<VoucherUsage, Long> {
     Optional<VoucherUsage> findByOrderId(Long orderId);
+
+    @Query("SELECT u.voucher.id FROM VoucherUsage u WHERE u.order.id = :orderId")
+    Optional<Long> findVoucherIdByOrderId(@Param("orderId") Long orderId);
+
+    @Modifying(flushAutomatically = true)
+    @Transactional(propagation = Propagation.MANDATORY)
+    @Query(value = """
+        UPDATE voucher_usages SET status = 'RELEASED', released_at = :releasedAt
+        WHERE order_id = :orderId AND status = 'APPLIED'
+          AND EXISTS (SELECT 1 FROM orders WHERE id = :orderId AND status = 'CANCELLED')
+        """, nativeQuery = true)
+    int releaseIfOrderCancelled(@Param("orderId") Long orderId, @Param("releasedAt") Instant releasedAt);
     boolean existsByVoucherId(Long voucherId);
     boolean existsByVoucherIdAndUserIdAndStatus(Long voucherId, Long userId, VoucherUsageStatus status);
 

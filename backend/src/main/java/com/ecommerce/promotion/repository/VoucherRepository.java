@@ -17,6 +17,10 @@ public interface VoucherRepository extends JpaRepository<Voucher, Long> {
 
     List<Voucher> findByProgramId(Long programId);
 
+    @Transactional(propagation = Propagation.MANDATORY)
+    @Query(value = "SELECT id FROM vouchers WHERE id = :id FOR UPDATE", nativeQuery = true)
+    Optional<Long> lockId(@Param("id") Long id);
+
     // These primitives must participate in the checkout/cancellation transaction.
     // Bulk SQL does not refresh managed vouchers; callers must not reuse cached counters.
     @Modifying(flushAutomatically = true)
