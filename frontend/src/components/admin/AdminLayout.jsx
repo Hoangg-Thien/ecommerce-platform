@@ -86,7 +86,6 @@ export default function AdminLayout({ children }) {
           </div>
           <div className="admin-sidebar__logo-info">
             <span className="admin-sidebar__logo-title">Store Admin</span>
-            <span className="admin-sidebar__logo-sub">v1.0</span>
           </div>
         </NavLink>
 

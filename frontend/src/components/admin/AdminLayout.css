@@ -1,5 +1,5 @@
 /* =============================================
-   AdminLayout.css — Work tool shell (Linear / Stripe / Gentelella style)
+   AdminLayout.css — Work tool shell (Pitch Black Sidebar + Clean White Main)
    ============================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -49,18 +49,18 @@
   --admin-info-subtle: #f0f9ff;
   --admin-info-border: #bae6fd;
 
-  /* Sidebar Tokens (Dark Slate Theme per reference design) */
+  /* Sidebar Tokens (Dark Charcoal Gray - "Đen xám" Theme) */
   --admin-sidebar-w: 240px;
   --admin-sidebar-collapsed-w: 64px;
-  --admin-sidebar-bg: #0f172a;
+  --admin-sidebar-bg: #16171a;
   --admin-sidebar-border: rgba(255, 255, 255, 0.08);
-  --admin-sidebar-text: #94a3b8;
+  --admin-sidebar-text: #9ca3af;
   --admin-sidebar-text-hover: #ffffff;
   --admin-sidebar-text-active: #ffffff;
   --admin-sidebar-bg-active: rgba(255, 255, 255, 0.08);
   --admin-sidebar-hover: rgba(255, 255, 255, 0.05);
   --admin-sidebar-accent: #3b82f6;
-  --admin-sidebar-label: #64748b;
+  --admin-sidebar-label: #6b7280;
 
   /* Header */
   --admin-header-h: 52px;
@@ -93,7 +93,7 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* ========== SIDEBAR (DARK THEME) ========== */
+/* ========== SIDEBAR (DARK CHARCOAL GRAY) ========== */
 .admin-sidebar {
   position: fixed;
   top: 0;
@@ -109,6 +109,15 @@
   overflow: hidden;
 }
 
+/* Prevent any underline on links or text anywhere in the sidebar */
+.admin-sidebar,
+.admin-sidebar *,
+.admin-sidebar *:hover,
+.admin-sidebar *:focus,
+.admin-sidebar *:active {
+  text-decoration: none !important;
+}
+
 /* Logo Header */
 .admin-sidebar__logo {
   display: flex;
@@ -117,7 +126,7 @@
   padding: 0 16px;
   height: var(--admin-header-h);
   border-bottom: 1px solid var(--admin-sidebar-border);
-  text-decoration: none;
+  text-decoration: none !important;
   flex-shrink: 0;
   background: transparent;
   transition: background var(--admin-tr);
@@ -198,7 +207,7 @@
   margin: 2px 8px;
   border-radius: var(--admin-r-sm);
   color: var(--admin-sidebar-text);
-  text-decoration: none;
+  text-decoration: none !important;
   font-size: 13.5px;
   font-weight: 500;
   white-space: nowrap;
@@ -220,10 +229,11 @@
   transition: color var(--admin-tr);
 }
 
-/* Nav Item Hover (Clean dark hover) */
+/* Nav Item Hover (Clean dark hover without underline) */
 .admin-sidebar__item:hover:not(.active) {
   background: var(--admin-sidebar-hover);
   color: var(--admin-sidebar-text-hover);
+  text-decoration: none !important;
 }
 
 .admin-sidebar__item:hover:not(.active) .admin-sidebar__item-icon {
@@ -236,6 +246,7 @@
   color: var(--admin-sidebar-text-active);
   font-weight: 600;
   box-shadow: inset 3px 0 0 var(--admin-sidebar-accent);
+  text-decoration: none !important;
 }
 
 .admin-sidebar__item.active .admin-sidebar__item-icon {
@@ -265,7 +276,7 @@
   padding: 10px 12px;
   border-top: 1px solid var(--admin-sidebar-border);
   flex-shrink: 0;
-  background: rgba(0, 0, 0, 0.2);
+  background: #101114;
 }
 
 .admin-sidebar__user {
@@ -305,7 +316,7 @@
 .admin-sidebar__user-name {
   font-size: 12.5px;
   font-weight: 500;
-  color: #f8fafc;
+  color: #f4f4f5;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -401,12 +412,14 @@
   cursor: pointer;
   transition: background var(--admin-tr), border-color var(--admin-tr), color var(--admin-tr);
   font-family: inherit;
+  text-decoration: none !important;
 }
 
 .admin-header__logout-btn:hover {
   background: var(--admin-error-subtle);
   border-color: var(--admin-error-border);
   color: var(--admin-error);
+  text-decoration: none !important;
 }
 
 /* ========== MAIN CONTENT ========== */
