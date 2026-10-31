@@ -3,6 +3,9 @@ package com.ecommerce.product.service;
 import com.ecommerce.product.dto.request.ProductRequest;
 import com.ecommerce.product.dto.request.VariantRequest;
 import com.ecommerce.product.dto.response.ProductResponse;
+import com.ecommerce.product.dto.response.VariantResponse;
+import com.ecommerce.promotion.service.ProductSalePricingService;
+import com.ecommerce.promotion.repository.ProductDiscountRepository;
 import com.ecommerce.category.entity.Category;
 import com.ecommerce.product.entity.Product;
 import com.ecommerce.product.entity.ProductVariant;
@@ -16,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import com.ecommerce.common.dto.PageResponse;
 
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,9 @@ import org.springframework.data.jpa.domain.Specification;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.List;
+import java.math.BigDecimal;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -37,20 +42,22 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ProductMapper productMapper;
+    private final ProductBaseCache baseCache;
+    private final ProductSalePricingService salePricing;
+    private final ProductDiscountRepository productDiscounts;
 
     @Transactional(readOnly = true)   // để lazy-load variants không phụ thuộc open-in-view
     public PageResponse<ProductResponse> findAll(Long categoryId, String keyword, Pageable pageable) {
         Specification<Product> spec = ProductSpecifications.hasCategory(categoryId)
                 .and(ProductSpecifications.matchesKeyword(keyword));
         Page<Product> page = productRepository.findAll(spec, pageable);
-        return PageResponse.of(page.map(productMapper::toProductResponse));
+        var response = PageResponse.of(page.map(productMapper::toProductResponse));
+        response.setContent(withSalePrices(response.getContent()));
+        return response;
     }
 
-    @Cacheable(value = "product", key = "#id")
     public ProductResponse findById(Long id) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", id));
-        return productMapper.toProductResponse(product);
+        return withSalePrices(List.of(baseCache.findById(id))).get(0);
     }
 
     @Transactional
@@ -59,7 +66,7 @@ public class ProductService {
         mapRequestToProduct(request, product);
         Product saved = productRepository.save(product);
         log.info("Product created successfully: id={}, name='{}', price={}", saved.getId(), saved.getName(), saved.getPrice());
-        return productMapper.toProductResponse(saved);
+        return withSalePrices(List.of(productMapper.toProductResponse(saved))).get(0);
     }
 
     @Transactional
@@ -69,7 +76,7 @@ public class ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product", id));
         mapRequestToProduct(request, saved);
         log.info("Product updated successfully: id={}, name='{}'", saved.getId(), saved.getName());
-        return productMapper.toProductResponse(productRepository.save(saved));
+        return withSalePrices(List.of(productMapper.toProductResponse(productRepository.save(saved)))).get(0);
     }
 
     @Transactional
@@ -77,8 +84,24 @@ public class ProductService {
     public void delete(Long id) {
         Product deleted = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", id));
+        productDiscounts.deleteByProductId(id);
         productRepository.delete(deleted);
         log.info("Product deleted successfully: id={}, name='{}'", id, deleted.getName());
+    }
+
+    private List<ProductResponse> withSalePrices(List<ProductResponse> products) {
+        var prices = products.stream().collect(Collectors.toMap(ProductResponse::getId, ProductResponse::getPrice));
+        var sales = salePricing.price(prices);
+        return products.stream().map(base -> {
+            var sale = sales.get(base.getId());
+            // Copy nested mutable DTOs too: callers must never modify cached catalog values.
+            var variants = base.getVariants() == null ? null : base.getVariants().stream()
+                    .map(v -> new VariantResponse(v.getId(), v.getSize(), v.getStock())).toList();
+            return base.toBuilder().variants(variants)
+                    .salePrice(sale == null ? base.getPrice() : sale.unitPrice())
+                    .discountPercent(sale == null ? BigDecimal.ZERO : sale.percent())
+                    .saleEndsAt(sale == null ? null : sale.endsAt()).build();
+        }).toList();
     }
 
     private void mapRequestToProduct(ProductRequest request, Product product) {

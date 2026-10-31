@@ -3,12 +3,19 @@ package com.ecommerce.promotion.repository;
 import com.ecommerce.promotion.entity.ProductDiscount;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.time.Instant;
 import java.util.Collection;
 
 public interface ProductDiscountRepository extends JpaRepository<ProductDiscount, Long> {
+    @Modifying
+    @Transactional(propagation = Propagation.MANDATORY)
+    @Query("DELETE FROM ProductDiscount d WHERE d.product.id = :productId")
+    void deleteByProductId(@Param("productId") Long productId);
     List<ProductDiscount> findByProgramId(Long programId);
 
     @Query("""

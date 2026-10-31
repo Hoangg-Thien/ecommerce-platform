@@ -6,6 +6,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ecommerce.cart.dto.request.AddToCartRequest;
 import com.ecommerce.cart.dto.request.UpdateCartItemRequest;
 import com.ecommerce.cart.dto.response.CartResponse;
+import com.ecommerce.cart.dto.response.CartItemResponse;
+import com.ecommerce.promotion.service.ProductSalePricingService;
 import com.ecommerce.cart.entity.Cart;
 import com.ecommerce.cart.entity.CartItem;
 import com.ecommerce.product.entity.ProductVariant;
@@ -19,6 +21,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
+import java.math.BigDecimal;
 
 @Slf4j
 @Service
@@ -29,6 +34,7 @@ public class CartService {
     private final ProductVariantRepository productVariantRepository;
     private final UserRepository userRepository;
     private final CartMapper cartMapper;
+    private final ProductSalePricingService salePricing;
 
     @Transactional
     public CartResponse addToCart(String userEmail, AddToCartRequest request){
@@ -85,7 +91,7 @@ public class CartService {
             log.info("Added new item (variantId={}) to cart of user '{}'", variant.getId(), userEmail);
         }
         Cart savedCart = cartRepository.save(cart);
-        return cartMapper.toCartResponse(savedCart);
+        return pricedResponse(savedCart);
     }
 
     @Transactional
@@ -102,7 +108,7 @@ public class CartService {
             newCart.setUser(user);
             return cartRepository.save(newCart);
         });
-        return cartMapper.toCartResponse(cart);
+        return pricedResponse(cart);
     }
 
     @Transactional
@@ -128,7 +134,7 @@ public class CartService {
         log.info("Successfully removed cart item id={} for user '{}'", itemId, userEmail);
         
         Cart savedCart = cartRepository.save(cart);
-        return cartMapper.toCartResponse(savedCart);
+        return pricedResponse(savedCart);
     }
 
     @Transactional
@@ -161,6 +167,24 @@ public class CartService {
 
         cartItem.setQuantity(request.getQuantity());
         Cart savedCart = cartRepository.save(cart);
-        return cartMapper.toCartResponse(savedCart);
+        return pricedResponse(savedCart);
+    }
+
+    private CartResponse pricedResponse(Cart cart) {
+        var response = cartMapper.toCartResponse(cart);
+        Map<Long, BigDecimal> prices = new HashMap<>();
+        response.getItems().forEach(item -> prices.put(item.getProductId(),item.getProductPrice()));
+        var sales = salePricing.price(prices);
+        response.setOriginalTotalPrice(response.getTotalPrice());
+        for (var item : response.getItems()) {
+            var sale = sales.get(item.getProductId());
+            item.setOriginalSubTotal(item.getSubTotal());
+            item.setUnitPrice(sale == null ? item.getProductPrice() : sale.unitPrice());
+            item.setProductDiscountPercent(sale == null ? BigDecimal.ZERO : sale.percent());
+            item.setSubTotal(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+        }
+        response.setTotalPrice(response.getItems().stream().map(CartItemResponse::getSubTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+        return response;
     }
 }
