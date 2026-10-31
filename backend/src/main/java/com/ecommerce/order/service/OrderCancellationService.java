@@ -10,6 +10,7 @@ import com.ecommerce.order.enums.OrderStatus;
 import com.ecommerce.payment.enums.PaymentStatus;
 import com.ecommerce.common.exception.ResourceNotFoundException;
 import com.ecommerce.order.repository.OrderRepository;
+import com.ecommerce.promotion.service.VoucherUsageService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 public class OrderCancellationService {
 
     private final OrderRepository orderRepository;
+    private final VoucherUsageService voucherUsageService;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void cancelExpiredOrder(Long orderId) {
@@ -46,6 +48,7 @@ public class OrderCancellationService {
         order.setStatus(OrderStatus.CANCELLED);
 
         orderRepository.save(order);
+        voucherUsageService.releaseByOrderId(order.getId());
 
         log.info("Expired MoMo order {} cancelled.", orderId);
     }

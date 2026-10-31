@@ -20,7 +20,8 @@ public class PaymentRefundService {
     private final PaymentRepository paymentRepository;
     private final MomoService momoService;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    // The refund is a log-only simulation. Its state must roll back with the caller.
+    @Transactional(propagation = Propagation.REQUIRED)
     public void processRefund(Long paymentId){
 
         // lay payment tu database

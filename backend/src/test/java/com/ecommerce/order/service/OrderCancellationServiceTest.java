@@ -28,6 +28,7 @@ class OrderCancellationServiceTest {
 
     @Mock
     private OrderRepository orderRepository;
+    @Mock private com.ecommerce.promotion.service.VoucherUsageService voucherUsageService;
 
     @InjectMocks
     private OrderCancellationService orderCancellationService;

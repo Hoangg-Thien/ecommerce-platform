@@ -50,6 +50,7 @@ class MomoIpnServiceTest {
     @Mock private CartItemRepository cartItemRepository;
     @Mock private MomoService momoService;
     @Mock private PaymentRefundService paymentRefundService;
+    @Mock private com.ecommerce.promotion.service.VoucherUsageService voucherUsageService;
 
     private PaymentFulfillmentService paymentFulfillmentService;
     private MomoIpnService momoIpnService;
@@ -67,7 +68,7 @@ class MomoIpnServiceTest {
     @BeforeEach
     void setUp() {
         paymentFulfillmentService = new PaymentFulfillmentService(
-            paymentRepository, orderRepository, cartRepository, cartItemRepository, productRepository, paymentRefundService
+            paymentRepository, orderRepository, cartRepository, cartItemRepository, productRepository, paymentRefundService, voucherUsageService
         );
         momoIpnService = new MomoIpnService(
             paymentRepository, momoService, paymentRefundService, paymentFulfillmentService

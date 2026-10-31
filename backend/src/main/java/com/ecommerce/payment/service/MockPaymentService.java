@@ -5,6 +5,7 @@ import com.ecommerce.user.entity.User;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ecommerce.payment.dto.request.MockPaymentRequest;
 import com.ecommerce.payment.dto.response.PaymentResponse;
@@ -28,6 +29,7 @@ public class MockPaymentService {
     private final PaymentFulfillmentService paymentFulfillmentService;
     private final PaymentMapper paymentMapper;
 
+    @Transactional
     public PaymentResponse simulatePayment(Long orderId, MockPaymentRequest request, String username) {
         
         Payment payment = paymentRepository.findByOrderId(orderId)

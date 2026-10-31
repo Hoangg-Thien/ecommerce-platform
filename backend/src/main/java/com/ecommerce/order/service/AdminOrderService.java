@@ -14,6 +14,7 @@ import com.ecommerce.common.exception.ResourceNotFoundException;
 import com.ecommerce.order.mapper.OrderMapper;
 import com.ecommerce.order.repository.OrderRepository;
 import com.ecommerce.product.repository.ProductRepository;
+import com.ecommerce.promotion.service.VoucherUsageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,7 @@ public class AdminOrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final OrderMapper orderMapper;
+    private final VoucherUsageService voucherUsageService;
 
     /**
      * Lấy tất cả đơn hàng — hỗ trợ filter theo status và email khách hàng.
@@ -96,6 +98,10 @@ public class AdminOrderService {
 
         // Restock khi huỷ (chỉ nếu stock đã bị trừ)
         if (newStatus == OrderStatus.CANCELLED) {
+            Payment payment = order.getPayment();
+            if (payment != null && payment.getPaymentStatus() == PaymentStatus.PENDING) {
+                payment.setPaymentStatus(PaymentStatus.FAILED);
+            }
             boolean stockWasDeducted = currentStatus != OrderStatus.AWAITING_PAYMENT;
             if (stockWasDeducted) {
                 for (OrderItem item : order.getItems()) {
@@ -122,6 +128,7 @@ public class AdminOrderService {
         }
 
         Order saved = orderRepository.save(order);
+        if (newStatus == OrderStatus.CANCELLED) voucherUsageService.releaseByOrderId(orderId);
         log.info("Order {} status updated to {}", orderId, newStatus);
         return orderMapper.toAdminOrderResponse(saved);
     }

@@ -20,6 +20,7 @@ import com.ecommerce.cart.repository.CartItemRepository;
 import com.ecommerce.order.repository.OrderRepository;
 import com.ecommerce.payment.repository.PaymentRepository;
 import com.ecommerce.product.repository.ProductRepository;
+import com.ecommerce.promotion.service.VoucherUsageService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,10 +36,16 @@ public class PaymentFulfillmentService {
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
     private final PaymentRefundService paymentRefundService;
+    private final VoucherUsageService voucherUsageService;
 
     @Transactional
     public void processSuccess(Payment payment, String transactionId) {
         Order order = payment.getOrder();
+
+        // Reject late/duplicate callbacks before stock, refund or payment mutations.
+        if (order.getStatus() == OrderStatus.CANCELLED) return;
+        if (payment.getPaymentStatus() != PaymentStatus.PENDING
+                || order.getStatus() == OrderStatus.DONE) return;
 
         // VALIDATE STOCK TRƯỚC TIÊN
         for (OrderItem orderItem : order.getItems()) {
@@ -57,6 +64,7 @@ public class PaymentFulfillmentService {
                 payment.setPaymentStatus(PaymentStatus.FAILED);
                 order.setStatus(OrderStatus.CANCELLED);
                 orderRepository.save(order);
+                voucherUsageService.releaseByOrderId(order.getId());
 
                 // Kích hoạt tự động hoàn tiền lại cho khách
                 log.info("Triggering automatic refund for Order {} due to OUT OF STOCK", order.getId());
@@ -72,11 +80,6 @@ public class PaymentFulfillmentService {
         paymentRepository.save(payment);
 
         // Cập nhật Order thành công
-        if (order.getStatus() == OrderStatus.CANCELLED) {
-            log.error("Fatal: Trying to set CONFIRMED on CANCELLED order {}.", order.getId());
-            return; // cancel roi ko duoc confirmed
-        }
-
         order.setStatus(OrderStatus.CONFIRMED);
         orderRepository.save(order);
 
@@ -111,6 +114,9 @@ public class PaymentFulfillmentService {
     @Transactional
     public void processFailure(Payment payment, String reason) {
         Order order = payment.getOrder();
+        if (order.getStatus() == OrderStatus.CANCELLED
+                || order.getStatus() == OrderStatus.DONE
+                || payment.getPaymentStatus() != PaymentStatus.PENDING) return;
 
         // Set fail
         payment.setPaymentStatus(PaymentStatus.FAILED);
@@ -118,6 +124,7 @@ public class PaymentFulfillmentService {
 
         order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
+        voucherUsageService.releaseByOrderId(order.getId());
 
         log.info("Payment FAILED for order {}. Reason: {}", order.getId(), reason);
     }
