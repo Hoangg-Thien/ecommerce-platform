@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag } from 'lucide-react';
 import MainLayout from '../../components/layout/MainLayout';
@@ -13,7 +13,7 @@ import './Cart.css';
 
 export default function Cart() {
   const { user } = useAuth();
-  const { cart, removeCartItem, addToCart, updateQuantity, isLoading } = useCart();
+  const { cart, removeCartItem, updateQuantity, isLoading } = useCart();
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -49,7 +49,7 @@ export default function Cart() {
     );
   }
 
-  const handleUpdateQuantity = async (id, newQuantity, oldQuantity) => {
+  const handleUpdateQuantity = async (id, newQuantity) => {
     if (newQuantity < 1) return;
 
     // Tìm item trong cart
@@ -99,7 +99,7 @@ export default function Cart() {
 
   const itemsToCheckout = selectedItem.length > 0 ? cartItems.filter(item => selectedItem.includes(item.id)) : cartItems;
   const subtotal = itemsToCheckout.reduce((total, item) => 
-    total + (item.productPrice * item.quantity),0);
+    total + Number(item.subTotal),0);
 
   const formattedCartItems = cartItems.map(item => ({
     id: item.id,
@@ -107,6 +107,9 @@ export default function Cart() {
     variantId: item.variantId,
     name: item.productName,
     price: item.productPrice,
+    salePrice: item.unitPrice,
+    discountPercent: item.productDiscountPercent,
+    saleEndsAt: item.saleEndsAt,
     image: item.imageUrl,
     quantity: item.quantity,
     variant: item.size || ''
@@ -144,7 +147,7 @@ export default function Cart() {
                 <div className="cart-summary-section">
                   <OrderSummary
                     subtotal={subtotal}
-                    shippingFee={30000}
+                    hasItems={itemsToCheckout.length > 0}
                     onCheckout={handleCheckout}
                     isCheckingOut={isCheckingOut}
                   />

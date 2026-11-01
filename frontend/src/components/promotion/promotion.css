@@ -1,0 +1,12 @@
+.promotion-price { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: .5rem; }
+.promotion-price del { color: var(--color-text-secondary, #666); font-size: .875em; font-weight: normal; }
+.promotion-percent { color: #9c2525; font-size: .8em; }
+.promotion-price small { flex-basis: 100%; font-size: .75rem; font-weight: normal; color: #555; }
+.promotion-breakdown { display: grid; gap: .75rem; margin: 1rem 0; }
+.promotion-breakdown > div { display: flex; justify-content: space-between; gap: 1rem; }
+.promotion-breakdown dt, .promotion-breakdown dd { margin: 0; }
+.promotion-voucher { border: 1px solid var(--color-border-soft, #ddd); padding: 1rem; margin-bottom: 1rem; border-radius: .5rem; }
+.promotion-voucher label { display: block; margin-bottom: .5rem; }
+.promotion-voucher form { display: flex; gap: .5rem; flex-wrap: wrap; }
+.promotion-voucher input { min-width: 0; flex: 1; padding: .5rem; }
+.promotion-voucher button { padding: .5rem .75rem; }

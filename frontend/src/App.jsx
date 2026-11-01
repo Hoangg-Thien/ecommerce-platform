@@ -22,6 +22,7 @@ import ProductForm from './pages/admin/product/ProductForm';
 import OrderManagement from './pages/admin/order/OrderManagement';
 import UserManagement from './pages/admin/user/UserManagement';
 import Dashboard from './pages/admin/dashboard/Dashboard';
+import PromotionManagement from './pages/admin/promotion/PromotionManagement';
 
 function App() {
   return (
@@ -120,6 +121,7 @@ function App() {
               />
 
               {/* Catch-all */}
+              <Route path="/admin/promotions" element={<ProtectedRoute requireAdmin><AdminLayout><PromotionManagement /></AdminLayout></ProtectedRoute>} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>

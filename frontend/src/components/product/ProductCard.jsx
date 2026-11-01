@@ -1,3 +1,4 @@
+import SalePrice from '../promotion/SalePrice';
 import { useState } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -9,19 +10,13 @@ import { useToast } from '../../context/ToastContext';
 import './ProductCard.css';
 
 export default function ProductCard({ product }) {
-  const { id, name, price, image, imageUrl, badge } = product;
+  const { id, name, image, imageUrl, badge } = product;
   const { user } = useAuth();
   const { addToCart } = useCart();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-
-  // Format currency
-  const formattedPrice = new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND'
-  }).format(price);
 
   const displayImage = imageUrl || image;
 
@@ -55,7 +50,7 @@ export default function ProductCard({ product }) {
         <Link to={`/product/${id}`} className="product-name-link">
           <h3 className="product-name" title={name}>{name}</h3>
         </Link>
-        <p className="product-price">{formattedPrice}</p>
+        <p className="product-price"><SalePrice {...product} /></p>
         
         <Button 
           variant="secondary" 

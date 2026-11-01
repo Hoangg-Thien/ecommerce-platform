@@ -181,6 +181,7 @@ public class CartService {
             item.setOriginalSubTotal(item.getSubTotal());
             item.setUnitPrice(sale == null ? item.getProductPrice() : sale.unitPrice());
             item.setProductDiscountPercent(sale == null ? BigDecimal.ZERO : sale.percent());
+            item.setSaleEndsAt(sale == null ? null : sale.endsAt());
             item.setSubTotal(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
         }
         response.setTotalPrice(response.getItems().stream().map(CartItemResponse::getSubTotal)

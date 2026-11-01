@@ -21,6 +21,7 @@ public class CartItemResponse {
     private BigDecimal productPrice;
     private BigDecimal unitPrice;
     private BigDecimal productDiscountPercent;
+    private java.time.Instant saleEndsAt;
     private BigDecimal originalSubTotal;
     private Integer quantity;
     private BigDecimal subTotal; // unitPrice * quantity after product discount

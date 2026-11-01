@@ -1,3 +1,5 @@
+import OrderPricing from '../../../components/promotion/OrderPricing';
+import SalePrice from '../../../components/promotion/SalePrice';
 import { useState, useEffect, useCallback } from 'react';
 import { Eye, Search, X, Lock } from 'lucide-react';
 import AdminTable from '../../../components/admin/AdminTable';
@@ -393,7 +395,7 @@ function OrderDetailContent({ order, pendingStatus, setPendingStatus, isUpdating
               <div className="order-detail-modal__item-info">
                 <div className="order-detail-modal__item-name">{item.productName}</div>
                 <div className="order-detail-modal__item-meta">
-                  Size {item.size} · SL: {item.quantity} · {formatPrice(item.price)}/đôi
+                  Size {item.size} · SL: {item.quantity} · <SalePrice price={item.originalPrice ?? item.price} salePrice={item.price} discountPercent={item.productDiscountPercent} />/đôi
                 </div>
               </div>
               <div className="order-detail-modal__item-subtotal">
@@ -405,6 +407,7 @@ function OrderDetailContent({ order, pendingStatus, setPendingStatus, isUpdating
       </div>
 
       {/* Tổng tiền */}
+      <OrderPricing order={order} />
       <div className="order-detail-modal__total-row">
         <span className="order-detail-modal__total-label">Tổng cộng</span>
         <span className="order-detail-modal__total-value">{formatPrice(order.totalPrice)}</span>

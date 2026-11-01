@@ -36,6 +36,7 @@ const NAV_ITEMS = [
     section: 'Vận hành',
     items: [
       { label: 'Đơn hàng', icon: ShoppingCart, to: '/admin/orders' },
+      { label: 'Khuyến mãi', icon: Tag, to: '/admin/promotions' },
       { label: 'Khách hàng', icon: Users, to: '/admin/users' },
     ],
   },
@@ -51,6 +52,7 @@ function useBreadcrumb() {
   else if (pathname.includes('/products')) crumbs.push({ label: 'Sản phẩm' });
   else if (pathname.includes('/categories')) crumbs.push({ label: 'Danh mục' });
   else if (pathname.includes('/orders')) crumbs.push({ label: 'Đơn hàng' });
+  else if (pathname.includes('/promotions')) crumbs.push({ label: 'Khuyến mãi' });
   else if (pathname.includes('/users')) crumbs.push({ label: 'Khách hàng' });
   return crumbs;
 }

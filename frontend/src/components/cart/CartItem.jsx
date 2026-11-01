@@ -1,12 +1,10 @@
+import SalePrice from '../promotion/SalePrice';
 import { Trash2, Plus, Minus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import './CartItem.css';
 
 export default function CartItem({ item, onUpdateQuantity, onRemove, isSelected, onSelect}) {
-  const formattedPrice = new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND'
-  }).format(item.price);
+
 
   return (
     <div className="cart-item">
@@ -14,6 +12,7 @@ export default function CartItem({ item, onUpdateQuantity, onRemove, isSelected,
       <div className="cart-item-checkbox-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
         <input 
           type="checkbox" 
+          aria-label={`Chọn ${item.name}`}
           checked={isSelected}
           onChange={(e) => onSelect(item.id, e.target.checked)}
           style={{ width: '20px', height: '20px', cursor: 'pointer' }}
@@ -64,7 +63,7 @@ export default function CartItem({ item, onUpdateQuantity, onRemove, isSelected,
             </button>
           </div>
           
-          <div className="cart-item-price">{formattedPrice}</div>
+          <div className="cart-item-price"><SalePrice {...item} /></div>
         </div>
       </div>
     </div>

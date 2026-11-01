@@ -75,6 +75,10 @@ class ProductCartSaleIntegrationTest {
         assertThat(item.path("unitPrice").decimalValue()).isEqualByComparingTo("84999");
         assertThat(item.path("subTotal").decimalValue()).isEqualByComparingTo("169998");
         assertThat(item.path("originalSubTotal").decimalValue()).isEqualByComparingTo("199998");
+        assertThat(item.path("saleEndsAt").asText()).isEqualTo("2030-01-02T00:00:00Z");
+        var plainItem = java.util.stream.StreamSupport.stream(cart.path("items").spliterator(),false)
+                .filter(line -> line.path("productId").asLong() == 2L).findFirst().orElseThrow();
+        assertThat(plainItem.path("saleEndsAt").isNull()).isTrue();
         verify(discounts,times(1)).findActiveForProducts(anyCollection(),eq(start));
     }
 
@@ -116,10 +120,17 @@ class ProductCartSaleIntegrationTest {
         jdbc.update("INSERT INTO product_discounts(id,promotion_program_id,product_id,discount_percent) VALUES (2,2,1,25)");
         assertThat(products.findById(1L).getSalePrice()).isEqualByComparingTo("74999");
         assertThat(products.findById(1L).getSaleEndsAt()).isEqualTo(start.plusSeconds(172800));
+        assertThat(carts.getCart("sale@test.local").getItems().stream().filter(i -> i.getProductId().equals(1L)))
+                .allSatisfy(i -> assertThat(i.getSaleEndsAt()).isEqualTo(start.plusSeconds(172800)));
         jdbc.update("UPDATE product_discounts SET discount_percent=25 WHERE id=1");
         assertThat(products.findById(1L).getSaleEndsAt()).isEqualTo(start.plusSeconds(86400));
+        assertThat(carts.getCart("sale@test.local").getItems().stream().filter(i -> i.getProductId().equals(1L)))
+                .allSatisfy(i -> assertThat(i.getSaleEndsAt()).isEqualTo(start.plusSeconds(86400)));
         doReturn(start.minusSeconds(1)).when(clock).instant();
         assertThat(products.findById(1L).getSalePrice()).isEqualByComparingTo("99999");
+        assertThat(carts.getCart("sale@test.local").getItems()).allSatisfy(i -> assertThat(i.getSaleEndsAt()).isNull());
+        doReturn(start.plusSeconds(172800)).when(clock).instant();
+        assertThat(carts.getCart("sale@test.local").getItems()).allSatisfy(i -> assertThat(i.getSaleEndsAt()).isNull());
     }
 
     @Test void cartMutationsUseLiveProductPricesOnlyAndEmptyCartSkipsQuery() {
@@ -135,6 +146,7 @@ class ProductCartSaleIntegrationTest {
         jdbc.update("UPDATE promotion_programs SET status='INACTIVE'");
         var plain = carts.getCart("sale@test.local");
         assertThat(plain.getTotalPrice()).isEqualByComparingTo(plain.getOriginalTotalPrice());
+        assertThat(plain.getItems()).allSatisfy(i -> assertThat(i.getSaleEndsAt()).isNull());
         jdbc.update("DELETE FROM cart_items");
         clearInvocations(discounts);
         var empty = carts.getCart("sale@test.local");

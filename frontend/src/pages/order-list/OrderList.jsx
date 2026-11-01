@@ -1,3 +1,5 @@
+import OrderPricing from '../../components/promotion/OrderPricing';
+import SalePrice from '../../components/promotion/SalePrice';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
@@ -197,7 +199,7 @@ export default function OrderList() {
                     <div className="order-modal-item-details">
                       <div className="order-modal-item-name">{item.productName}</div>
                       <div className="order-modal-item-price-qty">
-                        <div>Đơn giá: {formatPrice(item.price)}</div>
+                        <div>Đơn giá: <SalePrice price={item.originalPrice ?? item.price} salePrice={item.price} discountPercent={item.productDiscountPercent} /></div>
                         <div>Size: {item.size}</div>
                         <div>Số lượng: {item.quantity}</div>
                       </div>
@@ -206,6 +208,7 @@ export default function OrderList() {
                 ))}
               </div>
 
+              <OrderPricing order={selectedOrder} />
               <div className="order-modal-summary">
                 <div className="order-modal-summary-row total">
                   <span>Tổng cộng:</span>

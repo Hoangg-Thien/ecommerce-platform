@@ -1,0 +1,25 @@
+.promotion-admin { color: var(--admin-text-primary); max-width: 80rem; }
+.admin-main:has(> .promotion-admin) { min-width: 0; }
+.promotion-admin h1 { font-size: 1.75rem; margin: 0 0 .75rem; }
+.promotion-admin h2, .promotion-admin h3 { margin: 1rem 0; }
+.promotion-admin p { margin: .75rem 0; }
+.promotion-admin fieldset { min-width: 0; border: 0; padding: 0; }
+.promotion-admin button { padding: .5rem .75rem; margin: .25rem; border: 1px solid var(--admin-border); border-radius: .375rem; background: var(--admin-surface); color: var(--admin-text-primary); cursor: pointer; }
+.promotion-admin button:disabled { opacity: .5; cursor: not-allowed; }
+.promotion-admin button:focus-visible, .promotion-admin input:focus-visible { outline: 2px solid var(--admin-primary); outline-offset: 2px; }
+.promotion-admin article, .promotion-admin .promotion-form { background: var(--admin-surface); padding: 1rem; margin-top: 1rem; border: 1px solid var(--admin-border); border-radius: .5rem; }
+.promotion-admin .promotion-form { display: grid; gap: 1rem; max-width: 44rem; }
+.promotion-form label { display: grid; gap: .5rem; }
+.promotion-form input, .promotion-form textarea { padding: .625rem; border: 1px solid var(--admin-border); border-radius: .375rem; width: 100%; box-sizing: border-box; }
+.promotion-admin .promotion-choice { display: flex; align-items: center; margin: .75rem 0; }
+.promotion-choice input { width: auto; }
+.promotion-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.promotion-table { overflow-x: auto; margin: 1rem 0; }
+.promotion-table table { width: 100%; border-collapse: collapse; background: var(--admin-surface); }
+.promotion-table caption { text-align: left; padding: .5rem 0; }
+.promotion-table th, .promotion-table td { text-align: left; padding: .75rem; border-bottom: 1px solid var(--admin-border); }
+.promotion-rule-group { border-top: 1px solid var(--admin-border); margin-top: 1rem; padding-top: .5rem; }
+.promotion-rule-group ul { padding: 0; list-style: none; }
+.promotion-rule-group li { padding: .75rem 0; border-bottom: 1px solid var(--admin-border); overflow-wrap: anywhere; }
+.promotion-notice { padding: 1rem; border: 1px solid var(--admin-border); background: var(--admin-surface); overflow-wrap: anywhere; }
+@media (max-width: 480px) { .promotion-table th, .promotion-table td { padding: .5rem; } }

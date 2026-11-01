@@ -1,3 +1,5 @@
+import { voucherBlocksCheckout } from '../../utils/promotion';
+import '../../components/promotion/promotion.css';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
@@ -28,10 +30,13 @@ export default function Checkout() {
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const [message, setMessage] = useState('');
   const [previewState, setPreviewState] = useState(null);
+  const [voucherInput, setVoucherInput] = useState('');
+  const [voucherCode, setVoucherCode] = useState('');
+  const [previewAttempt, setPreviewAttempt] = useState(0);
   const inFlight = useRef(false);
   const selectionKey = JSON.stringify(location.state?.selectedItems || []);
   const cartKey = JSON.stringify(cart?.items || []);
-  const previewKey = selectionKey + cartKey;
+  const previewKey = selectionKey + cartKey + voucherCode + previewAttempt;
   const quote = previewState?.key === previewKey ? previewState.quote : null;
 
   useEffect(() => {
@@ -41,20 +46,18 @@ export default function Checkout() {
   useEffect(() => {
     if (!cartKey || cartKey === '[]' || recoveryRequired || isSuccess) return;
     const controller = new AbortController();
-    const key = selectionKey + cartKey;
-    checkoutApi.preview({ cartItemIds: JSON.parse(selectionKey) }, controller.signal)
+    const key = selectionKey + cartKey + voucherCode + previewAttempt;
+    checkoutApi.preview({ cartItemIds: JSON.parse(selectionKey), voucherCode }, controller.signal)
       .then(result => { if (!controller.signal.aborted) setPreviewState({ key, quote: result }); })
-      .catch(error => { if (!controller.signal.aborted) setMessage(error.response?.data?.message || 'Không thể tính giá. Vui lòng tải lại trang.'); });
+      .catch(error => { if (!controller.signal.aborted) setPreviewState({ key, error: error.response?.data?.message || 'Không thể tính giá. Vui lòng thử lại.' }); });
     return () => controller.abort();
-  }, [selectionKey, cartKey, recoveryRequired, isSuccess]);
+  }, [selectionKey, cartKey, voucherCode, previewAttempt, recoveryRequired, isSuccess]);
 
-  const finish = (id, method, status, paymentUrl) => {
+  const finish = (id, method, status) => {
     sessionStorage.removeItem(pendingStorage);
     setIsSuccess(true);
     fetchCart();
-    if (paymentUrl?.startsWith('/')) navigate(paymentUrl);
-    else if (paymentUrl) window.location.href = paymentUrl;
-    else if (method === 'MOMO' && status === 'AWAITING_PAYMENT') navigate('/mock-payment?orderId=' + id);
+    if (method === 'MOMO' && status === 'AWAITING_PAYMENT') navigate('/mock-payment?orderId=' + id);
     else navigate('/payment-result?orderId=' + id);
   };
 
@@ -65,6 +68,7 @@ export default function Checkout() {
     } catch (error) {
       if (error.response?.status === 404 && Date.now() - attempt.createdAt < 24 * 60 * 60 * 1000) {
         // A concurrent request may still be committing. Retry only on another click, with the same key.
+        setPreviewState(null);
         setRecoveryRequired(false);
         setNeedsConfirmation(true);
         setMessage('Chưa tìm thấy kết quả. Kiểm tra giá rồi bấm xác nhận lại; hệ thống giữ nguyên mã yêu cầu.');
@@ -76,7 +80,7 @@ export default function Checkout() {
 
   const handlePlaceOrder = async () => {
     if (inFlight.current) return;
-    if (!recoveryRequired && (!quote || !isFormValid)) return;
+    if (!recoveryRequired && (!quote || !isFormValid || voucherBlocksCheckout(quote.voucher))) return;
     inFlight.current = true;
     setIsProcessing(true);
     setMessage('');
@@ -86,9 +90,9 @@ export default function Checkout() {
       sessionStorage.setItem(pendingStorage, JSON.stringify(attempt));
       const response = await checkoutApi.checkout({
         ...formData, shippingMethod: 'standard', paymentMethod: method,
-        cartItemIds: JSON.parse(selectionKey), expectedTotal: quote.total
+        cartItemIds: JSON.parse(selectionKey), voucherCode, expectedTotal: quote.total
       }, attempt.key);
-      finish(response.orderId, method, response.orderStatus, response.paymentUrl);
+      finish(response.orderId, method, response.orderStatus);
     } catch (error) {
       const data = error.response?.data;
       if (!error.response || error.response.status >= 500 ||
@@ -101,10 +105,10 @@ export default function Checkout() {
           setPreviewState(null);
           setNeedsConfirmation(true);
           try {
-            const updated = data.breakdown || await checkoutApi.preview({ cartItemIds: JSON.parse(selectionKey) });
+            const updated = data.breakdown || await checkoutApi.preview({ cartItemIds: JSON.parse(selectionKey), voucherCode });
             setPreviewState({ key: previewKey, quote: updated });
           } catch {
-            setMessage('Không thể lấy giá mới. Vui lòng tải lại trang trước khi đặt hàng.');
+            setPreviewState({ key: previewKey, error: 'Không thể lấy giá mới. Vui lòng thử lại.' });
             return;
           }
         }
@@ -134,16 +138,27 @@ export default function Checkout() {
           <button onClick={() => navigate('/orders')}>Đơn hàng của tôi</button>
         </div> : <div className="checkout-layout">
           <div className="checkout-form-side">
-            <CheckoutForm formData={formData}
+            <fieldset disabled={isProcessing} className="checkout-fields"><CheckoutForm formData={formData}
               onChange={event => setFormData(previous => ({ ...previous, [event.target.name]: event.target.value }))}
-              shippingFee={quote?.shippingFee} paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod} />
+              shippingFee={quote?.shippingFee} paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod} /></fieldset>
           </div>
           <div className="checkout-summary-side">
-            {quote ? <CheckoutSummary cartItems={cartItems} subtotal={quote.subtotal}
+            <section className="promotion-voucher" aria-label="Mã giảm giá">
+              <label htmlFor="voucher-code">Mã giảm giá</label>
+              <form onSubmit={event => { event.preventDefault(); setVoucherCode(voucherInput.trim().toUpperCase()); setPreviewAttempt(n => n + 1); setMessage(''); }}>
+                <input id="voucher-code" value={voucherInput} maxLength={50} disabled={isProcessing}
+                  onChange={event => setVoucherInput(event.target.value)} placeholder="Nhập mã ưu đãi" />
+                <button disabled={isProcessing || !voucherInput.trim()}>Áp dụng</button>
+                {voucherCode && <button type="button" disabled={isProcessing} onClick={() => { setVoucherCode(''); setVoucherInput(''); setMessage(''); }}>Bỏ mã</button>}
+              </form>
+              {quote?.voucher && <p role="status">{quote.voucher.applied ? 'Đã áp dụng mã ' + quote.voucher.code : quote.voucher.message}</p>}
+              {voucherBlocksCheckout(quote?.voucher) && <p>Hãy bỏ mã hoặc nhập mã hợp lệ để tiếp tục.</p>}
+            </section>
+            {quote ? <CheckoutSummary cartItems={cartItems} subtotal={quote.subtotal} originalSubtotal={quote.originalSubtotal} productDiscountTotal={quote.productDiscountTotal} discountSource={quote.orderDiscount.source} voucherCode={quote.orderDiscount.code}
               shippingFee={quote.shippingFee} orderDiscount={quote.orderDiscount.amount} total={quote.total}
               actionLabel={needsConfirmation ? 'Xác nhận lại và đặt hàng' : 'Hoàn tất đặt hàng'}
-              onCompleteOrder={handlePlaceOrder} isProcessing={isProcessing} isFormValid={isFormValid} />
-              : <p role="status">Đang lấy giá từ hệ thống…</p>}
+              onCompleteOrder={handlePlaceOrder} isProcessing={isProcessing} isFormValid={isFormValid} canSubmit={!voucherBlocksCheckout(quote.voucher)} />
+              : previewState?.key === previewKey && previewState.error ? <div role="alert">{previewState.error} <button onClick={() => setPreviewAttempt(n => n + 1)}>Thử lại giá</button></div> : <p role="status">Đang lấy giá từ hệ thống…</p>}
           </div>
         </div>}
       </div></div>
