@@ -12,6 +12,8 @@ import java.time.Instant;
 import java.util.Collection;
 
 public interface ProductDiscountRepository extends JpaRepository<ProductDiscount, Long> {
+    @Query(value="SELECT EXISTS (SELECT 1 FROM order_items WHERE product_discount_program_id=:programId AND product_id=:productId)",nativeQuery=true)
+    boolean hasOrderHistory(@Param("programId") Long programId,@Param("productId") Long productId);
     @Modifying
     @Transactional(propagation = Propagation.MANDATORY)
     @Query("DELETE FROM ProductDiscount d WHERE d.product.id = :productId")

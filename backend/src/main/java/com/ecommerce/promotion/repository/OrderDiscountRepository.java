@@ -8,6 +8,8 @@ import java.util.List;
 import java.time.Instant;
 
 public interface OrderDiscountRepository extends JpaRepository<OrderDiscount, Long> {
+    @Query(value="SELECT EXISTS (SELECT 1 FROM orders WHERE order_discount_id=:id)",nativeQuery=true)
+    boolean hasOrderHistory(@Param("id") Long id);
     List<OrderDiscount> findByProgramId(Long programId);
 
     @Query("""
