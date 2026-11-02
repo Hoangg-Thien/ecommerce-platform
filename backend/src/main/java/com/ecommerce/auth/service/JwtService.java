@@ -46,7 +46,7 @@ public class JwtService {
 
     // 7 days
     public String generateRefreshToken(UserDetails userDetails){
-        return buildToken(new HashMap<>(), userDetails, refreshExpiration);
+        return buildToken(Map.of("jti", java.util.UUID.randomUUID().toString()), userDetails, refreshExpiration);
     }
 
     private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {

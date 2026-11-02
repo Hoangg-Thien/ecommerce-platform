@@ -59,6 +59,22 @@ public class JwtServiceTest {
     }
 
     @Test
+    void rapidRefreshIssuanceHasUniqueIdsWithoutChangingAccessTokenClaims() {
+        var ids = new java.util.HashSet<String>();
+        for (int i = 0; i < 100; i++) {
+            String token = jwtService.generateRefreshToken(userDetails);
+            String id = jwtService.extractClaim(token, io.jsonwebtoken.Claims::getId);
+            org.junit.jupiter.api.Assertions.assertNotNull(id);
+            java.util.UUID.fromString(id);
+            assertTrue(ids.add(id), "Every refresh issuance must be unique");
+            assertTrue(jwtService.isTokenValid(token, userDetails));
+            long lifetime = jwtService.extractClaim(token, c -> c.getExpiration().getTime() - c.getIssuedAt().getTime());
+            assertEquals(7L * 24 * 60 * 60 * 1000, lifetime);
+        }
+        org.junit.jupiter.api.Assertions.assertNull(jwtService.extractClaim(jwtService.generateToken(userDetails), io.jsonwebtoken.Claims::getId));
+    }
+
+    @Test
     void isTokenValid_WhenUserDoesNotMatch_ShouldReturnFalse() {
         String token = jwtService.generateToken(userDetails);
         UserDetails otherUser = new User(
