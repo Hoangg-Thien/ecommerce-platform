@@ -1,4 +1,4 @@
-# Promotion V1 — Phase 9 acceptance
+# Promotion V1 — Acceptance
 
 Verified on 2026-11-02, Windows, Node 24.15.0, Chrome and Docker/PostgreSQL Testcontainers. Scope: portfolio demo with COD and MoMo mock. No real gateway/refund verification is claimed.
 
