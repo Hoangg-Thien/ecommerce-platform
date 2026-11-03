@@ -1,12 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Package, Tag as TagIcon } from 'lucide-react';
 import productApi from '../../../api/productApi';
 import categoryApi from '../../../api/categoryApi';
 import { useToast } from '../../../context/ToastContext';
-import '../../../components/admin/AdminModal.css';
 import './ProductForm.css';
-import '../category/CategoryManagement.css';
 
 // Valid shoe sizes per backend pattern (39–46)
 const VALID_SIZES = ['39', '40', '41', '42', '43', '44', '45', '46'];
@@ -32,7 +30,7 @@ export default function ProductForm() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [formErrors, setFormErrors] = useState({});
   const [variants, setVariants] = useState([newVariantRow()]);
-  const [variantErrors, setVariantErrors] = useState({}); // { rowId: { field: msg } }
+  const [variantErrors, setVariantErrors] = useState({});
   const [categories, setCategories] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(isEdit);
@@ -193,28 +191,28 @@ export default function ProductForm() {
   return (
     <div className="admin-page product-form-page">
       {/* Page Header */}
-      <div className="admin-page__header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div className="admin-page-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
             className="admin-btn admin-btn--secondary admin-btn--sm"
             onClick={() => navigate('/admin/products')}
             aria-label="Quay lại"
           >
-            <ArrowLeft size={15} />
+            <ArrowLeft size={14} />
           </button>
           <div>
-            <h1 className="admin-page__title">
+            <h1 className="admin-page-title">
               {isEdit ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}
             </h1>
-            <p className="admin-page__subtitle">
-              {isEdit ? `ID: ${id}` : 'Điền thông tin và thêm biến thể'}
+            <p className="admin-page-desc">
+              {isEdit ? `ID: #${id}` : 'Điền thông tin và cấu hình các biến thể'}
             </p>
           </div>
         </div>
       </div>
 
       {/* Form Card */}
-      <div className="product-form-card">
+      <div className="admin-card product-form-card">
         {/* Tabs */}
         <div className="product-form-tabs" role="tablist">
           <button
@@ -223,10 +221,12 @@ export default function ProductForm() {
             className={`product-form-tab ${activeTab === 'info' ? 'active' : ''}`}
             onClick={() => setActiveTab('info')}
           >
-            <Package size={15} />
-            Thông tin chung
+            <Package size={14} />
+            <span>Thông tin chung</span>
             {Object.keys(formErrors).length > 0 && (
-              <span className="product-form-tab__badge">{Object.keys(formErrors).length}</span>
+              <span className="product-form-tab__badge product-form-tab__badge--error">
+                {Object.keys(formErrors).length}
+              </span>
             )}
           </button>
           <button
@@ -235,13 +235,13 @@ export default function ProductForm() {
             className={`product-form-tab ${activeTab === 'variants' ? 'active' : ''}`}
             onClick={() => setActiveTab('variants')}
           >
-            <TagIcon size={15} />
-            Biến thể (Size & Kho)
-            <span className="product-form-tab__badge" style={{ background: 'var(--admin-text-secondary)' }}>
+            <TagIcon size={14} />
+            <span>Biến thể (Size & Tồn kho)</span>
+            <span className="product-form-tab__badge">
               {variants.length}
             </span>
             {variantErrorCount > 0 && (
-              <span className="product-form-tab__badge" style={{ background: 'var(--admin-error)' }}>
+              <span className="product-form-tab__badge product-form-tab__badge--error">
                 {variantErrorCount}
               </span>
             )}
@@ -270,7 +270,7 @@ export default function ProductForm() {
             <div className="product-form-grid-2">
               <div className="admin-field">
                 <label className="admin-label" htmlFor="pf-price">
-                  Giá (VND) <span className="required">*</span>
+                  Giá bán (VND) <span className="required">*</span>
                 </label>
                 <input
                   id="pf-price"
@@ -315,11 +315,11 @@ export default function ProductForm() {
                 onChange={(e) => handleFieldChange('imageUrl', e.target.value)}
               />
               {form.imageUrl && (
-                <div style={{ marginTop: 10 }}>
+                <div style={{ marginTop: 8 }}>
                   <img
                     src={form.imageUrl}
                     alt="Preview"
-                    style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--admin-border)' }}
+                    style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 'var(--admin-r-sm)', border: '1px solid var(--admin-border)' }}
                     onError={(e) => { e.target.style.display = 'none'; }}
                   />
                 </div>
@@ -343,10 +343,9 @@ export default function ProductForm() {
         {/* ======== TAB 2: Biến thể ======== */}
         {activeTab === 'variants' && (
           <div className="product-form-body">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <p style={{ margin: 0, fontSize: 13, color: 'var(--admin-text-secondary)' }}>
-                Mỗi biến thể là một size cụ thể với số lượng tồn kho riêng.
-                Size hợp lệ: {VALID_SIZES.join(', ')}.
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <p style={{ margin: 0, fontSize: 12.5, color: 'var(--admin-text-secondary)' }}>
+                Mỗi biến thể là một size cụ thể với số lượng tồn kho riêng ({VALID_SIZES.join(', ')}).
               </p>
               <button
                 id="btn-add-variant"
@@ -354,8 +353,8 @@ export default function ProductForm() {
                 onClick={addVariant}
                 type="button"
               >
-                <Plus size={14} />
-                Thêm biến thể
+                <Plus size={13} />
+                <span>Thêm size</span>
               </button>
             </div>
 
@@ -363,7 +362,7 @@ export default function ProductForm() {
               <div className="variant-empty">
                 <p>Chưa có biến thể nào.</p>
                 <button className="admin-btn admin-btn--primary admin-btn--sm" onClick={addVariant} type="button">
-                  <Plus size={14} /> Thêm biến thể đầu tiên
+                  <Plus size={13} /> Thêm biến thể đầu tiên
                 </button>
               </div>
             ) : (
@@ -373,7 +372,7 @@ export default function ProductForm() {
                     <tr>
                       <th style={{ width: '35%' }}>Size</th>
                       <th style={{ width: '45%' }}>Tồn kho</th>
-                      <th style={{ width: '20%' }}>Xoá</th>
+                      <th style={{ width: '20%' }}>Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -385,24 +384,24 @@ export default function ProductForm() {
                           {/* Size */}
                           <td>
                             <select
-                              className={`variant-select ${rowErr.size ? 'error' : ''}`}
+                              className={`admin-select variant-select ${rowErr.size ? 'error' : ''}`}
                               value={row.size}
                               onChange={(e) => updateVariant(row._id, 'size', e.target.value)}
                               aria-label="Chọn size"
                             >
-                              <option value="">-- Size --</option>
+                              <option value="">-- Chọn size --</option>
                               {VALID_SIZES.map((s) => (
                                 <option key={s} value={s} disabled={taken.includes(s)}>
-                                  {s} {taken.includes(s) ? '(đã dùng)' : ''}
+                                  Size {s} {taken.includes(s) ? '(đã chọn)' : ''}
                                 </option>
                               ))}
                             </select>
-                            {rowErr.size && <div className="variant-error-text">{rowErr.size}</div>}
+                            {rowErr.size && <div className="admin-error-text">{rowErr.size}</div>}
                           </td>
                           {/* Stock */}
                           <td>
                             <input
-                              className={`variant-input ${rowErr.stock ? 'error' : ''}`}
+                              className={`admin-input variant-input ${rowErr.stock ? 'error' : ''}`}
                               type="number"
                               min="0"
                               placeholder="Số lượng"
@@ -410,19 +409,21 @@ export default function ProductForm() {
                               onChange={(e) => updateVariant(row._id, 'stock', e.target.value)}
                               aria-label="Tồn kho"
                             />
-                            {rowErr.stock && <div className="variant-error-text">{rowErr.stock}</div>}
+                            {rowErr.stock && <div className="admin-error-text">{rowErr.stock}</div>}
                           </td>
                           {/* Remove */}
                           <td>
-                            <button
-                              className="admin-table__action-btn danger"
-                              onClick={() => removeVariant(row._id)}
-                              type="button"
-                              aria-label="Xoá biến thể"
-                              title="Xoá"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            <div className="admin-table__action-group">
+                              <button
+                                className="admin-table__action-btn danger"
+                                onClick={() => removeVariant(row._id)}
+                                type="button"
+                                aria-label="Xoá biến thể"
+                                title="Xoá"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -440,6 +441,7 @@ export default function ProductForm() {
             className="admin-btn admin-btn--secondary"
             onClick={() => navigate('/admin/products')}
             disabled={isSubmitting}
+            type="button"
           >
             Huỷ
           </button>
@@ -448,6 +450,7 @@ export default function ProductForm() {
             className="admin-btn admin-btn--primary"
             onClick={handleSubmit}
             disabled={isSubmitting}
+            type="button"
           >
             {isSubmitting ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Thêm sản phẩm'}
           </button>

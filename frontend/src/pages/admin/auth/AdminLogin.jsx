@@ -46,15 +46,11 @@ export default function AdminLogin() {
     try {
       await login({ email: form.email.trim(), password: form.password });
 
-      // login() cập nhật user trong AuthContext → useEffect phía trên sẽ redirect
-      // nhưng ta cũng kiểm tra role trực tiếp từ localStorage cho chắc
       const stored = localStorage.getItem('user');
       const userData = stored ? JSON.parse(stored) : null;
 
       if (userData?.role !== 'ADMIN') {
-        // Đăng nhập thành công nhưng không phải ADMIN
         setApiError('Tài khoản của bạn không có quyền truy cập trang quản trị.');
-        // Logout để tránh state lộn xộn
         setIsLoading(false);
         return;
       }
@@ -82,11 +78,12 @@ export default function AdminLogin() {
   return (
     <div className="admin-login-page">
       <div className="admin-login__container">
-
-        {/* Main Card */}
         <div className="admin-login__card">
           <div className="admin-login__header">
-            <h2 className="admin-login__heading">Đăng nhập Admin</h2>
+            <div className="admin-login__logo-icon">
+              <Store size={18} strokeWidth={2.2} />
+            </div>
+            <h1 className="admin-login__heading">Đăng nhập Admin</h1>
             <p className="admin-login__subheading">
               Đăng nhập để truy cập hệ thống quản trị
             </p>
@@ -95,7 +92,7 @@ export default function AdminLogin() {
           {/* API Error */}
           {apiError && (
             <div className="admin-login__error" role="alert">
-              <AlertCircle size={16} style={{ flexShrink: 0, marginTop: 1 }} />
+              <AlertCircle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
               <span>{apiError}</span>
             </div>
           )}
@@ -145,7 +142,7 @@ export default function AdminLogin() {
                   onClick={() => setShowPassword((v) => !v)}
                   aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
               {errors.password && (
@@ -165,12 +162,12 @@ export default function AdminLogin() {
           </form>
 
           {/* Footer */}
-          <p className="admin-login__footer-text">
-            Bạn là khách hàng?{' '}
+          <div className="admin-login__footer">
+            <span className="admin-login__footer-text">Bạn là khách hàng?</span>{' '}
             <Link to="/" className="admin-login__footer-link">
               Về trang mua sắm
             </Link>
-          </p>
+          </div>
         </div>
       </div>
     </div>

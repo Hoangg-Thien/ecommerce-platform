@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Pencil, Trash2, Tag } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import AdminTable from '../../../components/admin/AdminTable';
 import AdminModal from '../../../components/admin/AdminModal';
 import ConfirmModal from '../../../components/ui/ConfirmModal';
-import '../../../components/admin/AdminModal.css';
 import categoryApi from '../../../api/categoryApi';
 import { useToast } from '../../../context/ToastContext';
 import './CategoryManagement.css';
@@ -16,35 +15,31 @@ const buildColumns = (onEdit, onDelete) => [
   {
     key: 'id',
     label: '#',
+    className: 'col-number',
     skeletonWidth: '30px',
-    render: (row) => <span style={{ color: 'var(--admin-text-muted)', fontWeight: 500 }}>#{row.id}</span>,
+    render: (row) => <span className="category-id-text">#{row.id}</span>,
   },
   {
     key: 'name',
     label: 'Tên danh mục',
-    skeletonWidth: '60%',
+    skeletonWidth: '50%',
     render: (row) => (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div className="category-icon-cell">
-          <Tag size={14} />
-        </div>
-        <span style={{ fontWeight: 600, color: 'var(--admin-text-primary)' }}>{row.name}</span>
-      </div>
+      <span className="category-name-text">{row.name}</span>
     ),
   },
   {
     key: 'description',
     label: 'Mô tả',
-    skeletonWidth: '80%',
+    skeletonWidth: '70%',
     render: (row) => (
-      <span style={{ color: 'var(--admin-text-secondary)' }}>{row.description || '—'}</span>
+      <span className="category-desc-text">{row.description || '—'}</span>
     ),
   },
   {
     key: 'actions',
-    label: 'Thao tác',
+    label: '',
     className: 'col-actions',
-    skeletonWidth: '60px',
+    skeletonWidth: '50px',
     render: (row) => (
       <div className="admin-table__action-group">
         <button
@@ -53,7 +48,7 @@ const buildColumns = (onEdit, onDelete) => [
           aria-label={`Sửa ${row.name}`}
           title="Chỉnh sửa"
         >
-          <Pencil size={15} />
+          <Pencil size={13} />
         </button>
         <button
           className="admin-table__action-btn danger"
@@ -61,7 +56,7 @@ const buildColumns = (onEdit, onDelete) => [
           aria-label={`Xoá ${row.name}`}
           title="Xoá"
         >
-          <Trash2 size={15} />
+          <Trash2 size={13} />
         </button>
       </div>
     ),
@@ -92,7 +87,7 @@ export default function CategoryManagement() {
     try {
       const data = await categoryApi.getAllCategories();
       setCategories(Array.isArray(data) ? data : []);
-    } catch (err) {
+    } catch {
       showToast('Không thể tải danh mục', 'error');
     } finally {
       setIsLoading(false);
@@ -177,24 +172,27 @@ export default function CategoryManagement() {
     }
   };
 
-  // ---- Columns ----
   const columns = buildColumns(openEdit, (row) => setDeleteTarget(row));
 
   return (
     <div className="admin-page">
       {/* Page Header */}
-      <div className="admin-page__header">
+      <div className="admin-page-header">
         <div>
-          <h1 className="admin-page__title">Danh mục</h1>
-          <p className="admin-page__subtitle">{categories.length} danh mục</p>
+          <h1 className="admin-page-title">Danh mục</h1>
+          <p className="admin-page-desc">
+            {categories.length > 0
+              ? `${categories.length} danh mục sản phẩm`
+              : 'Chưa có danh mục nào'}
+          </p>
         </div>
         <button
           id="btn-add-category"
           className="admin-btn admin-btn--primary"
           onClick={openCreate}
         >
-          <Plus size={16} />
-          Thêm danh mục
+          <Plus size={14} />
+          <span>Thêm danh mục</span>
         </button>
       </div>
 
