@@ -44,8 +44,8 @@ class PaymentTimeoutSchedulerTest {
     private Clock clock = Clock.fixed(Instant.parse("2024-01-01T12:15:00Z"), ZoneId.of("UTC"));
 
     @Test
-    @DisplayName("cancelExpiredMomoPayments - Should call cancellationService for each order and continue on error")
-    void cancelExpiredMomoPayments_CallsServicePerOrder() {
+    @DisplayName("cancelExpiredVnpayPayments - Should call cancellationService for each order and continue on error")
+    void cancelExpiredVnpayPayments_CallsServicePerOrder() {
         // Arrange
         Order order1 = new Order();
         order1.setId(1L);
@@ -54,21 +54,18 @@ class PaymentTimeoutSchedulerTest {
         Order order3 = new Order();
         order3.setId(3L);
 
-        List<Order> expiredOrders = Arrays.asList(order1, order2, order3);
+        List<Long> expiredOrders = List.of(1L, 2L, 3L);
 
         LocalDateTime expectedCutoff = LocalDateTime.now(clock).minusMinutes(15);
 
-        when(orderRepository.findByStatusAndPaymentMethodAndCreateAtBefore(
-                eq(OrderStatus.AWAITING_PAYMENT),
-                eq(PaymentMethod.MOMO),
-                eq(expectedCutoff)))
+        when(orderRepository.findExpiredOnlineOrderIds(eq(clock.instant())))
                 .thenReturn(expiredOrders);
 
         // Simulate an exception for order2 to ensure loop continues for order3
         org.mockito.Mockito.lenient().doThrow(new RuntimeException("Test Exception")).when(orderCancellationService).cancelExpiredOrder(2L);
 
         // Act
-        scheduler.cancelExpiredMomoPayments();
+        scheduler.cancelExpiredOnlinePayments();
 
         // Assert
         verify(orderCancellationService).cancelExpiredOrder(1L);

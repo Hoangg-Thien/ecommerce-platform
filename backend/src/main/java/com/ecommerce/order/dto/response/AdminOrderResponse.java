@@ -35,6 +35,15 @@ public class AdminOrderResponse {
     private BigDecimal shippingFee;
     private PaymentMethod paymentMethod;
     private PaymentStatus paymentStatus;
+    private com.ecommerce.payment.enums.RefundStatus refundStatus;
+    private String reason;
+    private java.time.Instant expiresAt;
+    private java.time.Instant paidAt;
+    private String providerTxnRef;
+    private String providerTransactionNo;
+    private String providerEnvironment;
+    private String responseCode;
+    private String transactionStatus;
     private List<OrderItemResponse> items;
     private LocalDateTime createdAt;
 }

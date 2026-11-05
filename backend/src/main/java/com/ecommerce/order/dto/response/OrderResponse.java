@@ -29,6 +29,11 @@ public class OrderResponse {
     private String voucherCode;
     private BigDecimal shippingFee;
     private PaymentMethod paymentMethod;
+    private com.ecommerce.payment.enums.PaymentStatus paymentStatus;
+    private com.ecommerce.payment.enums.RefundStatus refundStatus;
+    private String reason;
+    private java.time.Instant expiresAt;
+    private java.time.Instant paidAt;
     private List<OrderItemResponse> items;
     private LocalDateTime createdAt;
 }

@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 public enum OrderStatus {
-    AWAITING_PAYMENT, // [momo] chờ thanh toán
+    AWAITING_PAYMENT, // [online] chờ thanh toán
     PENDING,          // [cod] chờ xác nhận
     CONFIRMED,        // đã xác nhận
     SHIPPING,         // đang giao
