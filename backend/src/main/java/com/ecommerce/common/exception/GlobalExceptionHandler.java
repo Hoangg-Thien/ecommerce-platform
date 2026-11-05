@@ -18,11 +18,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @org.springframework.beans.factory.annotation.Value("${payment.vnpay.enabled:false}")
+    private boolean vnpayEnabled;
     @ExceptionHandler(com.ecommerce.checkout.service.CheckoutPricingException.class)
     public ResponseEntity<Map<String,Object>> handleCheckoutPricing(com.ecommerce.checkout.service.CheckoutPricingException ex) {
         Map<String,Object> body = new HashMap<>(buildError(HttpStatus.valueOf(ex.getStatus()),ex.getMessage()).getBody());
         body.put("code",ex.getCode());
-        if (ex.getBreakdown()!=null) body.put("breakdown",com.ecommerce.checkout.dto.response.CheckoutPreviewResponse.from(ex.getBreakdown()));
+        if (ex.getBreakdown()!=null) body.put("breakdown",com.ecommerce.checkout.dto.response.CheckoutPreviewResponse.from(ex.getBreakdown(), vnpayEnabled));
         return ResponseEntity.status(ex.getStatus()).body(body);
     }
 
@@ -94,7 +96,7 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.PAYMENT_REQUIRED, ex.getMessage());
     }
 
-    // 400 Bad Request — Invalid MoMo signature (fake callback)
+    // 400 Bad Request — Invalid payment signature (fake callback)
     @ExceptionHandler(SecurityException.class)
     public ResponseEntity<Map<String, Object>> handleSecurityError(SecurityException ex) {
         log.warn("Security violation: {}", ex.getMessage());

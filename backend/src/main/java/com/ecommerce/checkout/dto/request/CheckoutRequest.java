@@ -43,6 +43,8 @@ public class CheckoutRequest {
     private BigDecimal shippingFee;
 
     @NotNull(message = "Payment method is required")
+    @io.swagger.v3.oas.annotations.media.Schema(implementation = String.class,
+            allowableValues = {"COD", "VNPAY"}, description = "MOMO is historical-only and is rejected for checkout")
     private PaymentMethod paymentMethod = PaymentMethod.COD; // default COD
 
     private List<Long> cartItemIds;

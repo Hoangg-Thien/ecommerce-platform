@@ -22,7 +22,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.ecommerce.promotion.repository.VoucherRepository;
 import com.ecommerce.promotion.service.VoucherUsageService;
 
-@SpringBootTest(properties={"spring.datasource.url=jdbc:tc:postgresql:17.9:///admin_promotions","rate-limit.enabled=false"})
+@SpringBootTest(properties={"spring.datasource.url=jdbc:tc:postgresql:17.9:///admin_promotions","rate-limit.enabled=false", "payment.vnpay.enabled=true", "payment.vnpay.tmn-code=TESTCODE", "payment.vnpay.hash-secret=test-only-key", "payment.vnpay.return-url=https://merchant.test/api/v1/payments/vnpay/return"})
 @AutoConfigureMockMvc
 class AdminPromotionIntegrationTest {
     @Autowired MockMvc mvc;
@@ -149,7 +149,7 @@ class AdminPromotionIntegrationTest {
         jdbc.update("INSERT INTO cart_items(cart_id,product_variant_id,quantity) VALUES (1,1,1)");
         String checkout="""
                 {"firstName":"Test","lastName":"Buyer","address":"Street","city":"City","ward":"Ward","phone":"0123456789",
-                "paymentMethod":"MOMO","expectedTotal":182000}
+                "paymentMethod":"VNPAY","expectedTotal":182000}
                 """;
         mvc.perform(post("/api/v1/checkout").with(user("buyer@test.local")).header("Idempotency-Key","old")
                 .contentType(MediaType.APPLICATION_JSON).content(checkout)).andExpect(status().isCreated());
@@ -174,7 +174,7 @@ class AdminPromotionIntegrationTest {
         jdbc.update("INSERT INTO cart_items(cart_id,product_variant_id,quantity) VALUES (1,1,1),(2,1,1)");
         String checkout = """
                 {"firstName":"Test","lastName":"Buyer","address":"Street","city":"City","ward":"Ward","phone":"0123456789",
-                "paymentMethod":"MOMO","voucherCode":"SALE10","expectedTotal":210000}
+                "paymentMethod":"VNPAY","voucherCode":"SALE10","expectedTotal":210000}
                 """;
         mvc.perform(post("/api/v1/checkout").with(user("buyer@test.local")).header("Idempotency-Key","voucher-old")
                 .contentType(MediaType.APPLICATION_JSON).content(checkout)).andExpect(status().isCreated());

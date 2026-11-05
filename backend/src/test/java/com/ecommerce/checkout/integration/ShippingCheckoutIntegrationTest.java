@@ -10,7 +10,6 @@ import com.ecommerce.order.repository.OrderRepository;
 import com.ecommerce.payment.enums.PaymentMethod;
 import com.ecommerce.payment.enums.PaymentStatus;
 import com.ecommerce.payment.repository.PaymentRepository;
-import com.ecommerce.payment.service.MomoService;
 import com.ecommerce.product.entity.Product;
 import com.ecommerce.product.entity.ProductVariant;
 import com.ecommerce.product.repository.ProductRepository;
@@ -32,7 +31,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 
-@SpringBootTest
+@SpringBootTest(properties={"payment.vnpay.enabled=true", "payment.vnpay.tmn-code=TESTCODE", "payment.vnpay.hash-secret=test-only-key", "payment.vnpay.return-url=https://merchant.test/api/v1/payments/vnpay/return"})
 @Transactional
 class ShippingCheckoutIntegrationTest {
     @Autowired CheckoutService checkoutService;
@@ -42,10 +41,15 @@ class ShippingCheckoutIntegrationTest {
     @Autowired OrderRepository orders;
     @Autowired PaymentRepository payments;
     @Autowired EntityManager entityManager;
-    @MockitoBean MomoService momoService;
+
+    @org.junit.jupiter.api.BeforeEach void bindRequest() {
+        var request = new org.springframework.mock.web.MockHttpServletRequest(); request.setRemoteAddr("127.0.0.1");
+        org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(new org.springframework.web.context.request.ServletRequestAttributes(request));
+    }
+    @org.junit.jupiter.api.AfterEach void clearRequest() { org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes(); }
 
     @ParameterizedTest
-    @CsvSource({"COD,-1", "COD,0", "COD,999999", "MOMO,-1", "MOMO,0", "MOMO,999999"})
+    @CsvSource({"COD,-1", "COD,0", "COD,999999", "VNPAY,-1", "VNPAY,0", "VNPAY,999999"})
     void usesServerShippingAndPreservesStockCartBehavior(PaymentMethod method, BigDecimal clientFee) {
         User user = new User();
         user.setEmail(UUID.randomUUID() + "@test.local");
@@ -96,8 +100,7 @@ class ShippingCheckoutIntegrationTest {
                 .isEqualTo(method == PaymentMethod.COD ? 3 : 5);
         assertThat(carts.findByUserId(user.getId()).orElseThrow().getItems())
                 .hasSize(method == PaymentMethod.COD ? 0 : 1);
-        assertThat(response.getPaymentUrl()).isEqualTo(method == PaymentMethod.COD
-                ? null : "/mock-payment?orderId=" + order.getId());
-        verifyNoInteractions(momoService);
+        if (method == PaymentMethod.COD) assertThat(response.getPaymentUrl()).isNull();
+        else assertThat(response.getPaymentUrl()).startsWith(com.ecommerce.payment.config.VnpayConfig.SANDBOX_PAY_URL + "?");
     }
 }

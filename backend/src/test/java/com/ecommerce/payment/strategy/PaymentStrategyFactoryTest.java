@@ -15,7 +15,7 @@ import com.ecommerce.payment.strategy.*;
 class PaymentStrategyFactoryTest {
 
     @Mock private CodPaymentStrategy codPaymentStrategy;
-    @Mock private MomoPaymentStrategy momoPaymentStrategy;
+    @Mock private VnpayPaymentStrategy vnpayPaymentStrategy;
 
     @InjectMocks
     private PaymentStrategyFactory factory;
@@ -28,9 +28,11 @@ class PaymentStrategyFactoryTest {
     }
 
     @Test
-    void getPaymentStrategy_WithMomo_ShouldReturnMomoStrategy() {
-        PaymentStrategy strategy = factory.getPaymentStrategy(PaymentMethod.MOMO);
-
-        assertThat(strategy).isInstanceOf(MomoPaymentStrategy.class);
+    void getPaymentStrategy_WithMomo_ShouldRejectHistoricalMethod() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> factory.getPaymentStrategy(PaymentMethod.MOMO))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+    @Test void vnpayIsTheOnlyOnlineStrategy() {
+        assertThat(factory.getPaymentStrategy(PaymentMethod.VNPAY)).isSameAs(vnpayPaymentStrategy);
     }
 }

@@ -46,8 +46,7 @@ class CheckoutServiceTest {
     @Mock
     private PaymentStrategyFactory strategyFactory;
     @Mock private PaymentStrategy mockStrategy;
-
-    @Mock private MomoPaymentStrategy momoPaymentStrategy;
+    @Mock private com.ecommerce.payment.config.VnpayConfig vnpayConfig;
 
     @InjectMocks
     private CheckoutService checkoutService;

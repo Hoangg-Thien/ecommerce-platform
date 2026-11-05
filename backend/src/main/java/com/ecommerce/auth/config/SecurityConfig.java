@@ -57,11 +57,9 @@ public class SecurityConfig {
                 // Toàn bộ /api/v1/admin/** chỉ dành cho ADMIN
                 .requestMatchers("/api/v1/admin/**").hasAuthority("ADMIN")
                 
-                // MoMo IPN 
-                .requestMatchers(HttpMethod.POST, "/api/v1/payments/momo/ipn").permitAll()
-
-                // MoMo Return
-                .requestMatchers(HttpMethod.GET, "/api/v1/payments/momo/return").permitAll()
+                // Retired gateway endpoints must never be reactivated by an old flag/profile.
+                .requestMatchers("/api/v1/payments/momo/**", "/api/v1/mock-payments/**").denyAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/payments/vnpay/ipn", "/api/v1/payments/vnpay/return").permitAll()
 
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
 

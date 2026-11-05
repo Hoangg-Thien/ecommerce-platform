@@ -42,6 +42,7 @@ class CheckoutControllerTest {
     @Autowired private ObjectMapper objectMapper;
 
     @MockBean private CheckoutService checkoutService;
+    @MockBean private com.ecommerce.payment.config.VnpayConfig vnpayConfig;
     @MockBean private JwtService jwtService;
     @MockBean private UserDetailsService userDetailsService;
     @MockBean private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -91,10 +92,10 @@ class CheckoutControllerTest {
 
     @Test
     @WithMockUser(username = "user@gmail.com")
-    void checkout_WithMomo_ShouldReturn201WithPaymentUrl() throws Exception {
+    void checkout_WithVnpay_ShouldReturn201WithPaymentUrl() throws Exception {
         CheckoutRequest request = new CheckoutRequest();
         request.setExpectedTotal(BigDecimal.valueOf(500000));
-        request.setPaymentMethod(PaymentMethod.MOMO);
+        request.setPaymentMethod(PaymentMethod.VNPAY);
         request.setFirstName("Test");
         request.setLastName("User");
         request.setAddress("123 Street");
@@ -106,7 +107,7 @@ class CheckoutControllerTest {
                 .orderId(2L)
                 .orderStatus(OrderStatus.AWAITING_PAYMENT)
                 .totalPrice(BigDecimal.valueOf(200000))
-                .paymentUrl("https://test-payment.momo.vn/pay/abc123")
+                .paymentUrl("https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?fixture=1")
                 .build();
 
         when(checkoutService.checkout(any(), any(CheckoutRequest.class), anyString()))
@@ -118,7 +119,7 @@ class CheckoutControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.orderId").value(2))
                 .andExpect(jsonPath("$.orderStatus").value("AWAITING_PAYMENT"))
-                .andExpect(jsonPath("$.paymentUrl").value("https://test-payment.momo.vn/pay/abc123"));
+                .andExpect(jsonPath("$.paymentUrl").value("https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?fixture=1"));
     }
 
     @Test

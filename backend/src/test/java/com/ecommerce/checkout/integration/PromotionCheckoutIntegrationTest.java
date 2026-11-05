@@ -1,6 +1,5 @@
 package com.ecommerce.checkout.integration;
 
-import com.ecommerce.payment.service.MomoService;
 import com.ecommerce.promotion.service.VoucherUsageService;
 import com.ecommerce.promotion.entity.Voucher;
 import com.ecommerce.promotion.repository.VoucherRepository;
@@ -26,13 +25,12 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.ArgumentMatchers.*;
 
-@SpringBootTest(properties={"spring.datasource.url=jdbc:tc:postgresql:17.9:///promotion_checkout","rate-limit.enabled=false"})
+@SpringBootTest(properties={"spring.datasource.url=jdbc:tc:postgresql:17.9:///promotion_checkout","rate-limit.enabled=false","payment.vnpay.enabled=true", "payment.vnpay.tmn-code=TESTCODE", "payment.vnpay.hash-secret=test-only-key", "payment.vnpay.return-url=https://merchant.test/api/v1/payments/vnpay/return"})
 @AutoConfigureMockMvc
 class PromotionCheckoutIntegrationTest {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
     @Autowired JdbcTemplate jdbc;
-    @MockitoBean MomoService momo;
     @MockitoSpyBean VoucherUsageService usageService;
     @Autowired VoucherRepository vouchers;
     @Autowired jakarta.persistence.EntityManager entityManager;
@@ -80,7 +78,7 @@ class PromotionCheckoutIntegrationTest {
                 .andExpect(status().is4xxClientError());
         noCheckoutWrites();
     }
-    @ParameterizedTest @ValueSource(strings={"COD","MOMO"})
+    @ParameterizedTest @ValueSource(strings={"COD","VNPAY"})
     void checkoutPersistsSnapshotsAndReservesAfterOrderId(String method) throws Exception {
         checkout(request(method,320000),"success").andExpect(status().isCreated())
                 .andExpect(jsonPath("$.totalPrice").value(320000))
@@ -95,7 +93,6 @@ class PromotionCheckoutIntegrationTest {
         assertThat(jdbc.queryForObject("SELECT price FROM order_items",BigDecimal.class)).isEqualByComparingTo("160000");
         assertThat(count("cart_items")).isEqualTo(method.equals("COD")?2:3);
         assertThat(jdbc.queryForObject("SELECT stock FROM product_variants WHERE id=1",Integer.class)).isEqualTo(method.equals("COD")?8:10);
-        verifyNoInteractions(momo);
     }
     @Test void priceChangedRollsBackKeyAndAllowsSameKeyRetry() throws Exception {
         checkout(request("COD",1),"retry").andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("PRICE_CHANGED"))
@@ -108,7 +105,7 @@ class PromotionCheckoutIntegrationTest {
         checkout(request("COD",320000),"edited").andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("PRICE_CHANGED"));
         noCheckoutWrites();
     }
-    @ParameterizedTest @ValueSource(strings={"COD","MOMO"})
+    @ParameterizedTest @ValueSource(strings={"COD","VNPAY"})
     void soldOutAfterStrategyRollsBackOrderPaymentStockCartAndKey(String method) throws Exception {
         doAnswer(invocation -> {
             entityManager.flush();
@@ -128,7 +125,7 @@ class PromotionCheckoutIntegrationTest {
                 .header("Idempotency-Key","sold-out")).andExpect(status().isNotFound());
     }
     @Test void lostResponseLookupIsOwnerOnlyAndDuplicateDoesNotCreateAnotherOrder() throws Exception {
-        checkout(request("MOMO",320000),"lost").andExpect(status().isCreated());
+        checkout(request("VNPAY",320000),"lost").andExpect(status().isCreated());
         mvc.perform(get("/api/v1/checkout/result").with(user("buyer@test.local")).header("Idempotency-Key","lost"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.totalPrice").value(320000)).andExpect(jsonPath("$.id").isNumber());
         mvc.perform(get("/api/v1/checkout/result").with(user("other@test.local")).header("Idempotency-Key","lost")).andExpect(status().isNotFound());
@@ -138,7 +135,7 @@ class PromotionCheckoutIntegrationTest {
         mvc.perform(get("/api/v1/checkout/result").with(user("buyer@test.local")).header("Idempotency-Key","legacy-unlinked"))
                 .andExpect(status().isNotFound());
         mvc.perform(get("/api/v1/checkout/result").header("Idempotency-Key","lost")).andExpect(status().is4xxClientError());
-        checkout(request("MOMO",320000),"lost").andExpect(status().isBadRequest());
+        checkout(request("VNPAY",320000),"lost").andExpect(status().isBadRequest());
         assertThat(count("orders")).isEqualTo(1); assertThat(count("voucher_usages")).isEqualTo(1);
     }
     @ParameterizedTest @ValueSource(strings={"null","[]"})
@@ -188,7 +185,7 @@ class PromotionCheckoutIntegrationTest {
     @Test void equalTotalAcceptsCurrentBreakdownAndSnapshotSurvivesAdminEdits() throws Exception {
         jdbc.update("UPDATE product_discounts SET discount_percent=15");
         jdbc.update("UPDATE vouchers SET discount_percent=20,maximum_discount=50000");
-        checkout(request("MOMO",320000),"snapshot").andExpect(status().isCreated());
+        checkout(request("VNPAY",320000),"snapshot").andExpect(status().isCreated());
         jdbc.update("UPDATE product_discounts SET discount_percent=50");
         jdbc.update("UPDATE vouchers SET discount_percent=90,code='NEWCODE'");
         mvc.perform(get("/api/v1/checkout/result").with(user("buyer@test.local")).header("Idempotency-Key","snapshot"))
@@ -210,9 +207,9 @@ class PromotionCheckoutIntegrationTest {
         }).when((VoucherUsageService) org.springframework.test.util.AopTestUtils.getUltimateTargetObject(usageService))
                 .reserve(any(Voucher.class),anyLong(),anyLong(),any(BigDecimal.class));
         try (var executor = Executors.newFixedThreadPool(2)) {
-            var first = executor.submit(() -> checkout(request("MOMO",320000),"race-a").andReturn().getResponse());
+            var first = executor.submit(() -> checkout(request("VNPAY",320000),"race-a").andReturn().getResponse());
             var second = executor.submit(() -> {
-                var r = request("MOMO",320000);
+                var r = request("VNPAY",320000);
                 r.put("cartItemIds",List.of(sameUser ? 1 : 3));
                 return mvc.perform(post("/api/v1/checkout").with(user(sameUser ? "buyer@test.local" : "other@test.local"))
                         .header("Idempotency-Key","race-b").contentType(MediaType.APPLICATION_JSON)

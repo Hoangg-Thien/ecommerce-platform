@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  * <ul>
  *   <li>Runs before JWT filter so auth endpoints are protected before any token parsing.</li>
  *   <li>OPTIONS (CORS preflight) requests are always skipped — rate limiting them would break CORS.</li>
- *   <li>MoMo IPN endpoint is bypassed — it is a server-to-server callback with no fixed IP.</li>
+ *   <li>VNPay IPN endpoint is bypassed — it is a server-to-server callback with no fixed IP.</li>
  *   <li>Authenticated endpoints use userId (email) as the key to avoid NAT IP collisions.</li>
  *   <li>Auth endpoints (login/register/refresh) use IP because the user is not yet authenticated.</li>
  *   <li>Response format matches GlobalExceptionHandler.buildError() — same JSON structure.</li>
@@ -65,8 +65,6 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private static final String AUTH_REFRESH  = "/api/v1/auth/refresh";
     private static final String AUTH_LOGOUT   = "/api/v1/auth/logout";
 
-    private static final String MOMO_IPN     = "/api/v1/payments/momo/ipn";
-    private static final String MOMO_RETURN  = "/api/v1/payments/momo/return";
 
     // -------------------------------------------------------------------------
     // Filter logic
@@ -92,7 +90,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
-        // 3. Skip bypass endpoints (MoMo server-to-server callbacks, Swagger)
+        // 3. Skip bypass endpoints (VNPay server-to-server callbacks, Swagger)
         if (isBypassEndpoint(path)) {
             filterChain.doFilter(request, response);
             return;
@@ -166,12 +164,6 @@ public class RateLimitFilter extends OncePerRequestFilter {
             return new RateLimitContext(key, properties.getOrderRead(), "ORDER_READ");
         }
 
-        // --- Mock payment (userId-based — DEV tool, ConditionalOnProperty) ---
-        if (path.startsWith("/api/v1/mock-payments")) {
-            String key = resolveUserKey("mock-payment", ip);
-            return new RateLimitContext(key, properties.getMockPayment(), "MOCK_PAYMENT");
-        }
-
         // --- Authenticated cart mutations (userId-based) ---
         if (path.startsWith("/api/v1/carts")) {
             String key = resolveUserKey("sensitive", ip);
@@ -202,14 +194,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
     /**
      * Returns true for endpoints that should never be rate-limited.
      *
-     * <p>MoMo IPN: server-to-server callback from MoMo's servers.
-     * MoMo's IP range is not fixed and blocking it would break payment processing.
-     * Security is provided by HMAC signature verification inside MomoIpnService.
+     * <p>VNPay IPN: server-to-server callback from VNPay's servers.
+     * VNPay's IP range is not fixed and blocking it would break payment processing.
+     * Security is provided by HMAC signature verification inside VnpayIpnService.
      */
     private boolean isBypassEndpoint(String path) {
-        return path.equals(MOMO_IPN)
-        || path.equals(MOMO_RETURN)
-        || path.startsWith("/swagger-ui")
+        return path.equals("/api/v1/payments/vnpay/ipn")
+          || path.equals("/api/v1/payments/vnpay/return")        || path.startsWith("/swagger-ui")
         || path.startsWith("/v3/api-docs");
     }
 

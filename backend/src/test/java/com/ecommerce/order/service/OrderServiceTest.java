@@ -14,7 +14,6 @@ import com.ecommerce.order.mapper.OrderMapper;
 import com.ecommerce.order.repository.OrderRepository;
 import com.ecommerce.user.repository.UserRepository;
 import com.ecommerce.order.service.OrderService;
-import com.ecommerce.payment.strategy.MomoPaymentStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,8 +44,6 @@ class OrderServiceTest {
     @Mock
     private UserRepository userRepository;
 
-    @Mock
-    private MomoPaymentStrategy momoPaymentStrategy;
 
     @Spy
     private OrderMapper orderMapper;
@@ -140,7 +137,7 @@ class OrderServiceTest {
     }
 
     @Test
-    void retryPayment_WhenSuccess_ShouldReturnCheckoutResponse() {
+    void retryPayment_LegacyMethodIsReadOnly() {
         Order order = new Order();
         order.setId(10L);
         order.setStatus(OrderStatus.AWAITING_PAYMENT);
@@ -150,12 +147,8 @@ class OrderServiceTest {
         order.setPayment(payment);
 
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
-        when(momoPaymentStrategy.generatePaymentUrl(payment)).thenReturn("http://momo.vn/pay");
-
-        CheckoutResponse response = orderService.retryPayment(10L, "user@gmail.com");
-
-        assertNotNull(response);
-        assertEquals("http://momo.vn/pay", response.getPaymentUrl());
+        assertThrows(IllegalStateException.class, () -> orderService.retryPayment(10L, "user@gmail.com"));
+        assertEquals(PaymentStatus.PENDING, payment.getPaymentStatus());
     }
 
     @Test

@@ -47,8 +47,6 @@ public class RateLimitProperties {
     /** Limits for authenticated order/payment read endpoints. */
     private GroupLimit orderRead = new GroupLimit(60, 60, 60);
 
-    /** Limits for mock payment endpoint (DEV only, @ConditionalOnProperty). */
-    private GroupLimit mockPayment = new GroupLimit(10, 10, 60);
 
     // -----------------------------------------------------------------------
     // Nested config classes

@@ -23,6 +23,35 @@ import com.ecommerce.payment.enums.PaymentMethod;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select o from Order o where o.id = :id")
+    Optional<Order> lockRootById(@Param("id") Long id);
+
+    @Query("select o.paymentMethod from Order o where o.id = :id")
+    Optional<PaymentMethod> findPaymentMethodById(@Param("id") Long id);
+
+    @Query("""
+        select o.id from Order o join o.payment p
+        where o.status = com.ecommerce.order.enums.OrderStatus.AWAITING_PAYMENT
+          and p.paymentStatus = com.ecommerce.payment.enums.PaymentStatus.PENDING and p.paidAt is null
+          and o.paymentMethod = com.ecommerce.payment.enums.PaymentMethod.VNPAY and p.expiresAt <= :now
+        order by o.id
+        """)
+    List<Long> findExpiredOnlineOrderIds(@Param("now") java.time.Instant now);
+
+    @EntityGraph(attributePaths = {"user", "items", "items.product", "payment"})
+    @Query("""
+        select o from Order o left join o.payment p
+        where (:status is null or o.status = :status)
+          and lower(o.user.email) like lower(concat('%',:email,'%'))
+          and (:method is null or o.paymentMethod = :method)
+          and (:paymentStatus is null or p.paymentStatus = :paymentStatus)
+          and (:refundStatus is null or p.refundStatus = :refundStatus)
+        """)
+    Page<Order> findAdminPaymentReview(@Param("status") OrderStatus status, @Param("email") String email,
+            @Param("method") PaymentMethod method,
+            @Param("paymentStatus") com.ecommerce.payment.enums.PaymentStatus paymentStatus,
+            @Param("refundStatus") com.ecommerce.payment.enums.RefundStatus refundStatus, Pageable pageable);
 
     Page<Order> findByUserId(Long userId, Pageable pageable);
 

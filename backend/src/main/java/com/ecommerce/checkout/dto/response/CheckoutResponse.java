@@ -20,5 +20,6 @@ public class CheckoutResponse {
     private OrderStatus orderStatus;
     private BigDecimal totalPrice;
     private PaymentResponse paymentResponse; // information payment just created
-    private String paymentUrl; // null if is COD, just MOMO
+    @lombok.ToString.Exclude
+    private String paymentUrl; // null for COD
 }

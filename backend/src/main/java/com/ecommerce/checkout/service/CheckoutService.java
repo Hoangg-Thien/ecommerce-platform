@@ -41,6 +41,7 @@ public class CheckoutService {
     private final VoucherRepository vouchers;
     private final OrderMapper orderMapper;
     private final Clock clock;
+    private final com.ecommerce.payment.config.VnpayConfig vnpayConfig;
 
     @Transactional(readOnly = true)
     public Result preview(String email, CheckoutPreviewRequest request) {
@@ -80,8 +81,15 @@ public class CheckoutService {
             throw new CheckoutPricingException("PRICE_CHANGED",409,"Giá đã thay đổi. Vui lòng xác nhận lại.",quote);
         }
         if (request.getPaymentMethod() == null) throw new IllegalArgumentException("Payment method is required");
-        if (request.getPaymentMethod() == PaymentMethod.MOMO && quote.total().signum() == 0) {
-            throw new CheckoutPricingException("ZERO_TOTAL_MOMO",400,"Đơn 0 đồng chỉ hỗ trợ COD.",quote);
+        if (request.getPaymentMethod() == PaymentMethod.VNPAY) {
+            if (!vnpayConfig.isEnabled()) throw new IllegalArgumentException("VNPay Sandbox is disabled");
+            if (quote.total().compareTo(com.ecommerce.payment.service.VnpayService.MINIMUM) < 0)
+                throw new CheckoutPricingException("VNPAY_AMOUNT_BELOW_MINIMUM",400,"VNPay yêu cầu tổng tiền tối thiểu 5.000đ.",quote);
+        }
+        if (request.getPaymentMethod() == PaymentMethod.MOMO)
+            throw new IllegalArgumentException("MOMO is retired; choose COD or VNPay Sandbox");
+        if (request.getPaymentMethod() != PaymentMethod.COD && quote.total().signum() == 0) {
+            throw new CheckoutPricingException("ZERO_TOTAL_" + request.getPaymentMethod().name(),400,"Đơn 0 đồng chỉ hỗ trợ COD.",quote);
         }
 
         Order order = new Order();

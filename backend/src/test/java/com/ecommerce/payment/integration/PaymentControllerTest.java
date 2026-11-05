@@ -6,7 +6,6 @@ import com.ecommerce.payment.entity.Payment;
 import com.ecommerce.auth.config.JwtAuthenticationFilter;
 import com.ecommerce.common.ratelimit.RateLimitFilter;
 import com.ecommerce.payment.controller.PaymentController;
-import com.ecommerce.payment.dto.request.MomoIpnRequest;
 import com.ecommerce.payment.dto.response.PaymentResponse;
 import com.ecommerce.payment.enums.PaymentMethod;
 import com.ecommerce.payment.enums.PaymentStatus;
@@ -14,7 +13,6 @@ import com.ecommerce.payment.mapper.PaymentMapper;
 import com.ecommerce.common.idempotency.IdempotencyKeyRepository;
 import com.ecommerce.payment.repository.PaymentRepository;
 import com.ecommerce.auth.service.JwtService;
-import com.ecommerce.payment.service.MomoIpnService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -47,7 +45,6 @@ class PaymentControllerTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
 
-    @MockBean private MomoIpnService momoIpnService;
     @MockBean private PaymentRepository paymentRepository;
     @MockBean private PaymentMapper paymentMapper;
     @MockBean private JwtService jwtService;
@@ -64,31 +61,6 @@ class PaymentControllerTest {
     @MockBean private JwtAuthenticationFilter jwtAuthenticationFilter;
     @MockBean private RateLimitFilter rateLimitFilter;
     @MockBean private IdempotencyKeyRepository idempotencyKeyRepository;
-
-    // ===== IPN endpoint =====
-
-    @Test
-    void handleMomoIpn_WhenSignatureValid_ShouldReturn200() throws Exception {
-        MomoIpnRequest ipn = buildIpnRequest(0);
-        doNothing().when(momoIpnService).handleIpn(any(MomoIpnRequest.class));
-
-        mockMvc.perform(post("/api/v1/payments/momo/ipn")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(ipn)))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void handleMomoIpn_WhenSignatureInvalid_ShouldReturn400() throws Exception {
-        MomoIpnRequest ipn = buildIpnRequest(0);
-        doThrow(new SecurityException("Invalid MoMo signature"))
-                .when(momoIpnService).handleIpn(any(MomoIpnRequest.class));
-
-        mockMvc.perform(post("/api/v1/payments/momo/ipn")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(ipn)))
-                .andExpect(status().isBadRequest());
-    }
 
     // ===== GET payment status =====
 
@@ -148,24 +120,4 @@ class PaymentControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    // ===== Helper =====
-
-    private MomoIpnRequest buildIpnRequest(int resultCode) {
-        MomoIpnRequest req = new MomoIpnRequest();
-        req.setOrderId("ORDER_1_123456");
-        req.setResultCode(resultCode);
-        req.setTransId("987654321");
-
-        req.setAmount(BigDecimal.valueOf(100000));
-        req.setMessage("Successful.");
-        req.setExtraData("");
-        req.setOrderInfo("Thanh toan don hang #1");
-        req.setOrderType("momo_wallet");
-        req.setPartnerCode("MOMO_TEST");
-        req.setPayType("qr");
-        req.setRequestId("req-001");
-        req.setResponseTime(1722955200000L);
-        req.setSignature("any-signature");
-        return req;
-    }
 }

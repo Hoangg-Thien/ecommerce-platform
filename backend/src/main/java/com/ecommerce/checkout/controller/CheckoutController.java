@@ -27,12 +27,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CheckoutController {
     private final CheckoutService checkoutService;
+    private final com.ecommerce.payment.config.VnpayConfig vnpayConfig;
 
     @PostMapping("/preview")
     public CheckoutPreviewResponse preview(
             @AuthenticationPrincipal UserDetails user,
             @RequestBody CheckoutPreviewRequest request) {
-        return CheckoutPreviewResponse.from(checkoutService.preview(user.getUsername(), request));
+        return CheckoutPreviewResponse.from(checkoutService.preview(user.getUsername(), request), vnpayConfig.isEnabled());
     }
 
     @GetMapping("/result")

@@ -6,13 +6,20 @@ import java.util.List;
 
 public record CheckoutPreviewResponse(List<PricedItem> items, BigDecimal originalSubtotal,
         BigDecimal productDiscountTotal, BigDecimal subtotal, Discount orderDiscount,
-        BigDecimal shippingFee, BigDecimal total, VoucherInfo voucher) {
+        BigDecimal shippingFee, BigDecimal total, VoucherInfo voucher, PaymentEligibility vnpay) {
     public record VoucherInfo(String code, boolean applied, VoucherReason reason, String message) {}
+    public record PaymentEligibility(boolean enabled, boolean available, String reason) {}
     public static CheckoutPreviewResponse from(Result r) {
+        return from(r, false);
+    }
+    public static CheckoutPreviewResponse from(Result r, boolean vnpayEnabled) {
         var v = r.voucher();
         return new CheckoutPreviewResponse(r.items(), r.originalSubtotal(), r.productDiscountTotal(),
                 r.subtotal(), r.orderDiscount(), r.shippingFee(), r.total(),
-                v == null ? null : new VoucherInfo(v.code(), v.applied(), v.reason(), message(v.reason())));
+                v == null ? null : new VoucherInfo(v.code(), v.applied(), v.reason(), message(v.reason())),
+                new PaymentEligibility(vnpayEnabled, vnpayEnabled && r.total().compareTo(com.ecommerce.payment.service.VnpayService.MINIMUM) >= 0,
+                        !vnpayEnabled ? "VNPay Sandbox chưa được bật." : r.total().compareTo(com.ecommerce.payment.service.VnpayService.MINIMUM) < 0
+                                ? "VNPay yêu cầu tổng tiền tối thiểu 5.000đ. Vui lòng chọn COD." : null));
     }
     private static String message(VoucherReason reason) {
         if (reason == null) return null;
