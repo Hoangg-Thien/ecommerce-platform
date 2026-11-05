@@ -3,7 +3,7 @@ import Input from '../ui/Input';
 import RadioBox from '../ui/RadioBox';
 import './CheckoutForm.css';
 
-export default function CheckoutForm({ formData, onChange, shippingFee, paymentMethod, setPaymentMethod }) {
+export default function CheckoutForm({ formData, onChange, shippingFee, paymentMethod, setPaymentMethod, vnpay, paymentOptionsReady = true }) {
   
   return (
     <div className="checkout-form-container">
@@ -121,16 +121,17 @@ export default function CheckoutForm({ formData, onChange, shippingFee, paymentM
         </div>
         
         <div className="section-content">
-          {/* Đã bỏ Credit / Debit Card theo yêu cầu */}
-          <RadioBox
-            id="payment-momo"
+          {paymentOptionsReady && <RadioBox
+            id="payment-vnpay"
             name="paymentMethod"
-            value="momo"
-            checked={paymentMethod === 'momo'}
+            value="vnpay"
+            checked={paymentMethod === 'vnpay'}
+            disabled={!vnpay?.enabled || !vnpay.available}
             onChange={(e) => setPaymentMethod(e.target.value)}
-            label="Ví điện tử MoMo"
+            label="VNPay Sandbox"
+            description={vnpay?.reason || (!vnpay?.enabled ? 'VNPay hiện chưa khả dụng. Vui lòng chọn COD.' : null)}
             icon={<Wallet size={20} />}
-          />
+          />}
           
           <RadioBox
             id="payment-cod"

@@ -8,6 +8,7 @@ import CheckoutSummary from '../../components/checkout/CheckoutSummary';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import checkoutApi from '../../api/checkoutApi';
+import orderApi from '../../api/orderApi';
 import { generateIdempotencyKey } from '../../utils/generateIdempotencyKey';
 import './Checkout.css';
 
@@ -38,6 +39,8 @@ export default function Checkout() {
   const cartKey = JSON.stringify(cart?.items || []);
   const previewKey = selectionKey + cartKey + voucherCode + previewAttempt;
   const quote = previewState?.key === previewKey ? previewState.quote : null;
+  const knownVnpay = quote?.vnpay ?? previewState?.quote?.vnpay;
+  const vnpayEligibility = knownVnpay && { ...knownVnpay, available: Boolean(quote?.vnpay?.available) };
 
   useEffect(() => {
     if (!isSuccess && !recoveryRequired && !isCartLoading && cart?.items?.length === 0) navigate('/cart');
@@ -53,18 +56,23 @@ export default function Checkout() {
     return () => controller.abort();
   }, [selectionKey, cartKey, voucherCode, previewAttempt, recoveryRequired, isSuccess]);
 
-  const finish = (id, method, status) => {
+  const finish = (id, method, status, paymentUrl) => {
     sessionStorage.removeItem(pendingStorage);
     setIsSuccess(true);
     fetchCart();
-    if (method === 'MOMO' && status === 'AWAITING_PAYMENT') navigate('/mock-payment?orderId=' + id);
+    if (method === 'VNPAY' && status === 'AWAITING_PAYMENT' && paymentUrl) window.location.assign(paymentUrl);
     else navigate('/payment-result?orderId=' + id);
   };
 
   const recover = async () => {
     try {
       const result = await checkoutApi.result(attempt.key);
-      finish(result.id, result.paymentMethod, result.status);
+      let paymentUrl;
+      if (result.paymentMethod === 'VNPAY' && result.status === 'AWAITING_PAYMENT') {
+        try { paymentUrl = (await orderApi.retryPayment(result.id)).paymentUrl; }
+        catch { setMessage('Đơn đã được tạo nhưng chưa mở lại được phiên VNPay. Hãy kiểm tra Đơn hàng của tôi.'); return; }
+      }
+      finish(result.id, result.paymentMethod, result.status, paymentUrl);
     } catch (error) {
       if (error.response?.status === 404 && Date.now() - attempt.createdAt < 24 * 60 * 60 * 1000) {
         // A concurrent request may still be committing. Retry only on another click, with the same key.
@@ -86,13 +94,13 @@ export default function Checkout() {
     setMessage('');
     try {
       if (recoveryRequired) { await recover(); return; }
-      const method = paymentMethod === 'cod' ? 'COD' : 'MOMO';
+      const method = { cod: 'COD', vnpay: 'VNPAY' }[paymentMethod];
       sessionStorage.setItem(pendingStorage, JSON.stringify(attempt));
       const response = await checkoutApi.checkout({
         ...formData, shippingMethod: 'standard', paymentMethod: method,
         cartItemIds: JSON.parse(selectionKey), voucherCode, expectedTotal: quote.total
       }, attempt.key);
-      finish(response.orderId, method, response.orderStatus);
+      finish(response.orderId, method, response.orderStatus, response.paymentUrl);
     } catch (error) {
       const data = error.response?.data;
       if (!error.response || error.response.status >= 500 ||
@@ -120,7 +128,9 @@ export default function Checkout() {
     }
   };
 
-  const isFormValid = Object.values(formData).every(value => value.trim() !== '') && paymentMethod !== '';
+  const paymentUnavailable = paymentMethod === 'vnpay' && !quote?.vnpay?.available;
+  const isFormValid = Object.values(formData).every(value => value.trim() !== '') && ['cod', 'vnpay'].includes(paymentMethod)
+    && !paymentUnavailable;
   const cartItems = (quote?.items || []).map(item => {
     const cartItem = cart?.items?.find(line => line.id === item.cartItemId);
     return { id: item.cartItemId, name: cartItem?.productName, price: item.unitPrice,
@@ -140,7 +150,9 @@ export default function Checkout() {
           <div className="checkout-form-side">
             <fieldset disabled={isProcessing} className="checkout-fields"><CheckoutForm formData={formData}
               onChange={event => setFormData(previous => ({ ...previous, [event.target.name]: event.target.value }))}
-              shippingFee={quote?.shippingFee} paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod} /></fieldset>
+              shippingFee={quote?.shippingFee} paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod}
+              vnpay={vnpayEligibility} paymentOptionsReady={Boolean(knownVnpay || quote)} /></fieldset>
+            {quote && paymentUnavailable && <p role="alert">VNPay không khả dụng với tổng tiền này. Vui lòng chọn lại phương thức thanh toán.</p>}
           </div>
           <div className="checkout-summary-side">
             <section className="promotion-voucher" aria-label="Mã giảm giá">

@@ -12,7 +12,7 @@ function quote(code = '', total = 390000) {
   const voucher = !code ? null : code === 'BAD' || code === 'SOLD' ? { code, applied: false, reason: code === 'BAD' ? 'NOT_FOUND' : 'SOLD_OUT', message: 'Mã không hợp lệ hoặc hết lượt.' } : code === 'AUTO' ? { code, applied: false, reason: 'NOT_BETTER_THAN_ORDER_DISCOUNT', message: 'Ưu đãi tự động có lợi hơn mã giảm giá.' } : { code, applied: true, reason: null };
   return { items: cart.items.map(i => ({ cartItemId: i.id, productId: i.productId, quantity: i.quantity, originalUnitPrice: i.productPrice, unitPrice: i.unitPrice, productDiscountPercent: i.productDiscountPercent, lineTotal: i.subTotal })), originalSubtotal: 400000, productDiscountTotal: 40000, subtotal: 360000,
     orderDiscount: { source: voucher?.applied ? 'VOUCHER' : code === 'AUTO' ? 'ORDER_DISCOUNT' : null, code, amount: voucher?.applied || code === 'AUTO' ? 30000 : 0, percent: 10 },
-    shippingFee: 30000, total: total - (voucher?.applied || code === 'AUTO' ? 30000 : 0), voucher };
+    shippingFee: 30000, total: total - (voucher?.applied || code === 'AUTO' ? 30000 : 0), voucher, vnpay: {enabled:true,available:true,reason:null} };
 }
 
 test('Promotion V1 browser acceptance (isolated API fixtures)', { timeout: 120000 }, async t => {
@@ -20,9 +20,10 @@ test('Promotion V1 browser acceptance (isolated API fixtures)', { timeout: 12000
   t.after(b.close);
   const { cdp, evaluate: js } = b;
   const requests = [], exceptions = [];
+  let lastMethod = 'VNPAY';
   let mode = 'normal', lookup = 'found', failPreview = false, soldCode = null;
   let program = { id: 1, name: 'Sale demo', description: 'Demo', startDate: '2026-01-01T00:00:00Z', endDate: '2030-01-01T00:00:00Z', status: 'ACTIVE', phase: 'RUNNING', vouchers: [], orderDiscounts: [], productDiscounts: [] };
-  const order = { id: 42, paymentMethod: 'MOMO', status: 'AWAITING_PAYMENT', createdAt: '2026-11-01T10:00:00', totalPrice: 360000, subtotalPrice: 360000, discountAmount: 30000, orderDiscountSource: 'VOUCHER', orderDiscountPercent: 10, voucherCode: 'OLD10', shippingFee: 30000,
+  const order = { id: 42, paymentMethod: 'VNPAY', paymentStatus: 'PENDING', refundStatus: 'NONE', status: 'AWAITING_PAYMENT', createdAt: '2026-11-01T10:00:00', totalPrice: 360000, subtotalPrice: 360000, discountAmount: 30000, orderDiscountSource: 'VOUCHER', orderDiscountPercent: 10, voucherCode: 'OLD10', shippingFee: 30000,
     items: [{ id: 1, productId: 1, productName: 'Giày sale', imageUrl: image, price: 160000, originalPrice: 200000, productDiscountPercent: 20, size: 'M', quantity: 1, subTotal: 160000 }] };
   cdp.on('Runtime.exceptionThrown', data => exceptions.push(data.exceptionDetails));
   cdp.on('Page.javascriptDialogOpening', () => cdp.send('Page.handleJavaScriptDialog', { accept: true }));
@@ -49,16 +50,17 @@ test('Promotion V1 browser acceptance (isolated API fixtures)', { timeout: 12000
         return await reply(quote(body.voucherCode));
       }
       if (path === '/checkout') {
+        lastMethod=body.paymentMethod;
         if (mode === 'lost') return await cdp.send('Fetch.failRequest', { requestId, errorReason: 'TimedOut' });
         if (mode === 'changed') { mode = 'normal'; return await reply({ code: 'PRICE_CHANGED', message: 'Giá đã thay đổi', breakdown: quote(body.voucherCode, 400000) }, 409); }
         if (mode === 'sold') { mode = 'normal'; soldCode = body.voucherCode; return await reply({ code: 'VOUCHER_SOLD_OUT', message: 'Mã đã hết lượt' }, 409); }
-        return await reply({ orderId: 42, orderStatus: 'AWAITING_PAYMENT', paymentUrl: '/mock-payment?orderId=42' }, 201);
+        return await reply({ orderId: 42, orderStatus: 'AWAITING_PAYMENT', paymentUrl: '/payment-result?orderId=42' }, 201);
       }
       if (path === '/checkout/result') return await reply(lookup === 'found' ? order : { message: 'Not found' }, lookup === 'found' ? 200 : 404);
+      if (path === '/orders/42/retry-payment') return await reply({orderId:42,paymentUrl:'/payment-result?orderId=42'});
       if (path === '/orders' || path === '/admin/orders') return await reply({ content: [order], totalPages: 1, totalElements: 1 });
       if (path === '/admin/orders/42') return await reply(order);
-      if (path.startsWith('/payments')) return await reply({ paymentMethod: 'COD', paymentStatus: 'PAID' });
-      if (path === '/mock-payments/42/simulate') return await reply({});
+      if (path.startsWith('/payments')) return await reply({ paymentMethod:lastMethod, paymentStatus:'PENDING' });
       if (path === '/admin/promotions' && request.method === 'GET') return await reply({ content: [program], totalPages: 1 });
       if (path === '/admin/promotions' && request.method === 'POST') { program = { ...program, ...body }; return await reply(program, 201); }
       if (path === '/admin/promotions/1' && request.method === 'GET') return await reply(program);
@@ -87,7 +89,7 @@ test('Promotion V1 browser acceptance (isolated API fixtures)', { timeout: 12000
   const apply = async code => { await fill('#voucher-code', code); await click('Áp dụng'); };
   const form = async () => {
     for (const [key, value] of Object.entries({ email: 'ui@test.local', firstName: 'Test', lastName: 'Buyer', address: 'Street', city: 'City', ward: 'Ward', phone: '0123456789' })) await fill(`[name="${key}"]`, value);
-    await js("document.querySelector('#payment-momo').click()");
+    await js("document.querySelector('#payment-vnpay').click()");
   };
   const screenshot = async name => {
     await mkdir('../backend/target', { recursive: true });
@@ -130,7 +132,7 @@ test('Promotion V1 browser acceptance (isolated API fixtures)', { timeout: 12000
     mode = 'changed'; const before = requests.filter(r => r.path === '/checkout' && r.method === 'POST').length;
     await click('Hoàn tất đặt hàng'); await waitText('Xác nhận lại và đặt hàng'); await delay(200);
     assert.equal(requests.filter(r => r.path === '/checkout' && r.method === 'POST').length, before + 1);
-    await click('Xác nhận lại và đặt hàng'); await waitText('Môi trường mô phỏng');
+    await click('Xác nhận lại và đặt hàng'); await waitText('Đang xử lý giao dịch');
     assert.equal(requests.filter(r => r.path === '/checkout' && r.method === 'POST').at(-1).body.expectedTotal, 400000);
   });
   await t.test('SOLD_OUT refreshes breakdown, blocks invalid voucher and requires confirmation', async () => {
@@ -140,14 +142,14 @@ test('Promotion V1 browser acceptance (isolated API fixtures)', { timeout: 12000
     const count = requests.filter(r => r.path === '/checkout' && r.method === 'POST').length;
     await click('Bỏ mã'); await waitText('Tiền hàng gốc');
     assert.equal(requests.filter(r => r.path === '/checkout' && r.method === 'POST').length, count);
-    await click('Xác nhận lại và đặt hàng'); await waitText('Môi trường mô phỏng');
+    await click('Xác nhận lại và đặt hàng'); await waitText('Đang xử lý giao dịch');
   });
   await t.test('lost response looks up the committed order, no duplicate POST', async () => {
     await navigate('/checkout'); await waitText('Tiền hàng gốc'); await form(); mode = 'lost';
     await click('Hoàn tất đặt hàng'); await waitText('Kiểm tra kết quả đặt hàng');
     await navigate('/checkout'); await waitText('Kiểm tra kết quả đặt hàng');
     const count = requests.filter(r => r.path === '/checkout' && r.method === 'POST').length;
-    await click('Kiểm tra kết quả đặt hàng'); await waitText('Môi trường mô phỏng');
+    await click('Kiểm tra kết quả đặt hàng'); await waitText('Đang xử lý giao dịch');
     assert.equal(requests.filter(r => r.path === '/checkout' && r.method === 'POST').length, count);
   });
   await t.test('missing key permits only confirmed retry with same key', async () => {
@@ -155,7 +157,7 @@ test('Promotion V1 browser acceptance (isolated API fixtures)', { timeout: 12000
     await click('Hoàn tất đặt hàng'); await waitText('Kiểm tra kết quả đặt hàng'); lookup = 'missing';
     const first = requests.filter(r => r.path === '/checkout' && r.method === 'POST').at(-1);
     await click('Kiểm tra kết quả đặt hàng'); await waitText('Xác nhận lại và đặt hàng'); mode = 'normal';
-    await click('Xác nhận lại và đặt hàng'); await waitText('Môi trường mô phỏng');
+    await click('Xác nhận lại và đặt hàng'); await waitText('Đang xử lý giao dịch');
     const last = requests.filter(r => r.path === '/checkout' && r.method === 'POST').at(-1);
     assert.ok(first.headers['Idempotency-Key']);
     assert.equal(last.headers['Idempotency-Key'], first.headers['Idempotency-Key']);
@@ -182,11 +184,10 @@ test('Promotion V1 browser acceptance (isolated API fixtures)', { timeout: 12000
     assert.equal(await js('document.querySelector(".checkout-btn").disabled'), false);
     Object.assign(cart, original);
   });
-  await t.test('MoMo mock SUCCESS FAIL PENDING controls keep their API calls', async () => {
-    for (const [scenario, label] of [['SUCCESS', 'Thanh toán thành công'], ['FAIL', 'Thanh toán thất bại'], ['PENDING', 'Đang xử lý (Pending)']]) {
-      await navigate('/mock-payment?orderId=42'); await waitText('Môi trường mô phỏng'); await click(label);
-      await until(() => requests.some(r => r.path === '/mock-payments/42/simulate' && r.body.scenario === scenario), scenario);
-    }
+  await t.test('removed mock route never presents payment simulation controls', async () => {
+    await navigate('/mock-payment?orderId=42'); await waitText('Giày sale');
+    assert.equal((await js('document.body.innerText')).includes('Môi trường mô phỏng'), false);
+    assert.equal(requests.some(r => r.path.includes('/mock-payments/')), false);
   });
   await t.test('admin CRUD, bulk products, status and history conflict', async () => {
     await navigate('/admin/promotions'); await waitText('Chi tiết #1'); await click('Chi tiết #1'); await waitText('Thêm voucher');
