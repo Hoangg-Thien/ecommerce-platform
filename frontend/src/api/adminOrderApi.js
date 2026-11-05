@@ -11,6 +11,7 @@ const adminOrderApi = {
     if (params.size !== undefined) query.append('size', params.size);
     if (params.status) query.append('status', params.status);
     if (params.email) query.append('email', params.email);
+    for (const key of ['paymentMethod', 'paymentStatus', 'refundStatus']) if (params[key]) query.append(key, params[key]);
     return axiosClient.get(`/admin/orders?${query.toString()}`);
   },
 

@@ -9,6 +9,7 @@ import Pagination from '../../../components/ui/Pagination';
 import adminOrderApi from '../../../api/adminOrderApi';
 import { useToast } from '../../../context/ToastContext';
 import './OrderManagement.css';
+import { paymentMethodLabel, paymentSummary, restrictVnpayTransitions } from '../../../utils/payment';
 
 // ---- Helpers ----
 const formatPrice = (n) =>
@@ -78,9 +79,12 @@ const COLUMNS = [
     label: 'Thanh toán',
     skeletonWidth: '70px',
     render: (row) => (
+      <div>
       <span className={`adm-order-payment adm-order-payment--${row.paymentMethod?.toLowerCase()}`}>
-        {row.paymentMethod === 'MOMO' ? 'MoMo' : 'COD'}
+        {paymentMethodLabel(row.paymentMethod)}
       </span>
+      {row.refundStatus && row.refundStatus !== 'NONE' && <div className="adm-order-review">{paymentSummary(row)}</div>}
+      </div>
     ),
   },
   {
@@ -103,6 +107,9 @@ export default function OrderManagement() {
   // Filter state
   const [filterStatus, setFilterStatus] = useState('');
   const [filterEmail, setFilterEmail] = useState('');
+  const [filterPaymentMethod, setFilterPaymentMethod] = useState('');
+  const [filterPaymentStatus, setFilterPaymentStatus] = useState('');
+  const [filterRefundStatus, setFilterRefundStatus] = useState('');
   const [emailInput, setEmailInput] = useState('');
 
   // Detail modal
@@ -122,6 +129,9 @@ export default function OrderManagement() {
         size: pagination.size,
         status: filterStatus || undefined,
         email: filterEmail || undefined,
+        paymentMethod: filterPaymentMethod || undefined,
+        paymentStatus: filterPaymentStatus || undefined,
+        refundStatus: filterRefundStatus || undefined,
       });
       setOrders(data?.content ?? []);
       setPagination((prev) => ({
@@ -136,11 +146,11 @@ export default function OrderManagement() {
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, filterEmail, pagination.size, showToast]);
+  }, [filterStatus, filterEmail, filterPaymentMethod, filterPaymentStatus, filterRefundStatus, pagination.size, showToast]);
 
   useEffect(() => {
     fetchOrders(0);
-  }, [filterStatus, filterEmail]);
+  }, [filterStatus, filterEmail, filterPaymentMethod, filterPaymentStatus, filterRefundStatus]);
 
   // ---- Open detail modal ----
   const openDetail = async (row) => {
@@ -171,7 +181,7 @@ export default function OrderManagement() {
       setPendingStatus(updated.status);
       // Cập nhật lại row trong bảng
       setOrders((prev) =>
-        prev.map((o) => (o.id === updated.id ? { ...o, status: updated.status } : o))
+        prev.map((o) => (o.id === updated.id ? { ...o, ...updated } : o))
       );
     } catch (err) {
       const msg = err?.response?.data?.message || 'Có lỗi xảy ra khi cập nhật';
@@ -244,6 +254,21 @@ export default function OrderManagement() {
 
         {/* Filter by status */}
         <div className="adm-order-filter-bar__filters">
+          <select className="admin-select adm-order-filter-bar__select" aria-label="Lọc phương thức thanh toán"
+            value={filterPaymentMethod} onChange={e => setFilterPaymentMethod(e.target.value)}>
+            <option value="">Tất cả phương thức</option>
+            {['COD', 'MOMO', 'VNPAY'].map(m => <option key={m} value={m}>{paymentMethodLabel(m)}</option>)}
+          </select>
+          <select className="admin-select adm-order-filter-bar__select" aria-label="Lọc trạng thái thanh toán"
+            value={filterPaymentStatus} onChange={e => setFilterPaymentStatus(e.target.value)}>
+            <option value="">Tất cả thanh toán</option>
+            <option value="PENDING">Chưa có kết quả cuối</option><option value="PAID">Đã thanh toán</option><option value="FAILED">Thất bại đã xác minh</option>
+          </select>
+          <select className="admin-select adm-order-filter-bar__select" aria-label="Lọc đối soát"
+            value={filterRefundStatus} onChange={e => setFilterRefundStatus(e.target.value)}>
+            <option value="">Tất cả đối soát</option><option value="RECONCILIATION_REQUIRED">Cần đối soát</option>
+            <option value="REQUIRED_MANUAL">Cần xử lý thủ công</option><option value="NONE">Không có yêu cầu</option>
+          </select>
           <select
             className="admin-select adm-order-filter-bar__select"
             value={filterStatus}
@@ -306,6 +331,7 @@ export default function OrderManagement() {
                 disabled={
                   updatingId === detailModal.order?.id ||
                   pendingStatus === detailModal.order?.status
+                  || !restrictVnpayTransitions(detailModal.order, NEXT_STATUS_OPTIONS[detailModal.order.status] ?? []).includes(pendingStatus)
                 }
               >
                 {updatingId === detailModal.order?.id ? 'Đang lưu...' : 'Lưu trạng thái'}
@@ -341,7 +367,7 @@ export default function OrderManagement() {
 // ---- Sub-component: nội dung modal chi tiết ----
 function OrderDetailContent({ order, pendingStatus, setPendingStatus, isUpdating }) {
   const isTerminal = TERMINAL_STATUSES.includes(order.status);
-  const nextOptions = NEXT_STATUS_OPTIONS[order.status] ?? [];
+  const nextOptions = restrictVnpayTransitions(order, NEXT_STATUS_OPTIONS[order.status] ?? []);
 
   return (
     <div className="order-detail-modal">
@@ -365,7 +391,7 @@ function OrderDetailContent({ order, pendingStatus, setPendingStatus, isUpdating
             <span className="order-detail-modal__meta-label">Thanh toán</span>
             <span className="order-detail-modal__meta-value">
               <span className={`adm-order-payment adm-order-payment--${order.paymentMethod?.toLowerCase()}`}>
-                {order.paymentMethod === 'MOMO' ? 'MoMo' : 'COD'}
+                {paymentMethodLabel(order.paymentMethod)}
               </span>
               {order.paymentStatus && (
                 <span style={{ marginLeft: 6 }}>
@@ -381,6 +407,14 @@ function OrderDetailContent({ order, pendingStatus, setPendingStatus, isUpdating
             </span>
           </div>
         </div>
+        {order.paymentMethod === 'VNPAY' && <div className="adm-order-review" role="status">
+          <p>{paymentSummary(order)}. Chưa có xác nhận hoàn tiền.</p>
+          {order.reason && <p>Lý do: {order.reason}</p>}
+          {order.expiresAt && <p>Hạn thanh toán: {formatDate(order.expiresAt)}</p>}
+          {order.providerTxnRef && <p>Mã tham chiếu: {order.providerTxnRef}</p>}
+          {order.providerTransactionNo && <p>Mã giao dịch VNPay: {order.providerTransactionNo}</p>}
+          {(order.responseCode || order.transactionStatus) && <p>Kết quả gateway: {order.responseCode ?? '—'} / {order.transactionStatus ?? '—'}</p>}
+        </div>}
       </div>
 
       {/* Danh sách sản phẩm */}

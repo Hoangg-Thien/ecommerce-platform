@@ -67,7 +67,18 @@
 .adm-order-filter-bar__filters {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
 }
+
+.adm-order-review {
+  color: var(--admin-text-secondary);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.adm-order-review p { margin: 4px 0; }
 
 .adm-order-filter-bar__select {
   height: 32px;
