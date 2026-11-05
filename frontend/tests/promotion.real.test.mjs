@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHmac } from 'node:crypto';
 import { browser, until, delay } from './browser.mjs';
 
 test('real Spring Boot + PostgreSQL + React promotion acceptance', { timeout: 140000 }, async t => {
@@ -7,6 +8,29 @@ test('real Spring Boot + PostgreSQL + React promotion acceptance', { timeout: 14
   assert.match(base || '', /^http:\/\/127\.0\.0\.1:\d+\/api\/v1$/); // supplied only by the isolated JUnit harness
   const b = await browser(); t.after(b.close);
   const { evaluate: js } = b;
+  const receipts = new Map();
+  let gatewayFields;
+  // Only the external gateway navigation is intercepted; application APIs use real HTTP.
+  await b.cdp.send('Fetch.enable', {patterns:[{urlPattern:'https://sandbox.vnpayment.vn/*'}]});
+  b.cdp.on('Fetch.requestPaused', async ({request,requestId}) => {
+    const url = new URL(request.url);
+    if (url.pathname === '/paymentv2/vpcpay.html') gatewayFields=Object.fromEntries(url.searchParams);
+    await b.cdp.send('Fetch.fulfillRequest',{requestId,responseCode:200,responseHeaders:[{name:'Content-Type',value:'text/html'}],body:Buffer.from('<h1>Gateway navigation fixture</h1>').toString('base64')});
+  });
+  const signed = (order,response='00',status='00') => {
+    const original=receipts.get(order); assert.ok(original);
+    assert.match(original.vnp_TxnRef || '', /^[a-zA-Z0-9]{1,100}$/);
+    assert.match(original.vnp_Amount || '', /^\d+$/);
+    const fields={vnp_TmnCode:'TESTCODE',vnp_TxnRef:original.vnp_TxnRef,vnp_Amount:original.vnp_Amount,
+      vnp_OrderInfo:original.vnp_OrderInfo,vnp_TransactionNo:String(100000+order),vnp_BankCode:'NCB',vnp_ResponseCode:response,vnp_TransactionStatus:status};
+    const params=new URLSearchParams(Object.entries(fields).sort(([a],[b])=>a.localeCompare(b,'en')));
+    params.set('vnp_SecureHash',createHmac('sha512','test-only-key').update(params.toString()).digest('hex'));
+    return params;
+  };
+  const notify = async (order,response='00',status='00') => {
+    const result=await fetch(base+'/payments/vnpay/ipn?'+signed(order,response,status));
+    assert.equal(result.status,200); return (await result.json()).RspCode;
+  };
   const exceptions = [];
   let refreshRequests = 0;
   await b.cdp.send('Network.enable');
@@ -37,12 +61,13 @@ test('real Spring Boot + PostgreSQL + React promotion acceptance', { timeout: 14
     const before = refreshRequests;
     await b.navigate('/checkout'); await waitText('Tiền hàng gốc'); await shipping();
     assert.equal(refreshRequests - before, 1, 'StrictMode reload must share exactly one refresh');
-    await js("document.querySelector('#payment-momo').click()");
+    await js("document.querySelector('#payment-vnpay').click()");
     if (voucher) { await fill('#voucher-code', voucher); await click('Áp dụng'); await waitText('Đã áp dụng mã ' + voucher); }
   };
   const place = async (label = 'Hoàn tất đặt hàng') => {
-    await click(label); await waitText('Môi trường mô phỏng');
-    return Number(await js('new URLSearchParams(location.search).get("orderId")'));
+    await click(label); await waitText('Gateway navigation fixture');
+    const fields={...gatewayFields}; await b.navigate('/orders'); await waitText('Đơn hàng của tôi');
+    const id=(await ok('get','/orders')).content[0].id; receipts.set(id,fields); return id;
   };
   const add = () => ok('post', '/carts/add', { variantId:1, quantity:1 });
 
@@ -85,30 +110,36 @@ test('real Spring Boot + PostgreSQL + React promotion acceptance', { timeout: 14
   assert.equal((await ok('get', '/orders/' + first)).totalPrice, 183000);
   await ok('put', root + '/product-discounts/' + rules[0].id, { discountPercent:25 });
   assert.equal((await ok('get', '/orders/' + first)).items[0].price, 170000, 'old snapshot stays 15%');
-  await click('Thanh toán thành công');
-  await until(async () => (await ok('get', '/payments/order/' + first)).paymentStatus === 'PAID', 'mock success');
+  const returned=await fetch(base+'/payments/vnpay/return?'+signed(first),{redirect:'manual'});
+  assert.equal(returned.status,303);
+  assert.equal((await ok('get','/payments/order/'+first)).paymentStatus,'PENDING','Return never confirms money');
+  assert.equal(await notify(first),'00'); assert.equal(await notify(first),'02');
+  await until(async () => (await ok('get', '/payments/order/' + first)).paymentStatus === 'PAID', 'signed fixture success');
   await ok('patch', '/admin/orders/' + first + '/status', { orderStatus:'CANCELLED' });
-  assert.equal((await ok('get', '/payments/order/' + first)).paymentStatus, 'PAID', 'paid mock cancellation keeps payment history');
+  assert.equal((await ok('get', '/payments/order/' + first)).paymentStatus, 'PAID', 'paid cancellation keeps payment history');
   assert.equal((await ok('get', root)).vouchers[0].usedQuantity, 0);
   console.log('PASS real admin, sale/cart timezone, PRICE_CHANGED, snapshots, SUCCESS and paid cancellation');
 
   await add(); await checkoutPage('SALE10'); const failed = await place();
-  await click('Thanh toán thất bại');
-  await until(async () => (await ok('get', '/orders/' + failed)).status === 'CANCELLED', 'mock fail');
+  assert.equal(await notify(failed,'24','02'),'00');
+  assert.equal((await ok('get','/payments/order/'+failed)).paymentStatus,'PENDING');
+  assert.equal((await ok('get','/payments/order/'+failed)).refundStatus,'RECONCILIATION_REQUIRED');
+  await ok('patch','/admin/orders/'+failed+'/status',{orderStatus:'CANCELLED'});
   assert.equal((await ok('get', root)).vouchers[0].usedQuantity, 0);
   await checkoutPage('SALE10'); const pending = await place();
-  await click('Đang xử lý (Pending)'); await delay(200);
+  await delay(200);
   assert.equal((await ok('get', '/orders/' + pending)).status, 'AWAITING_PAYMENT');
   await ok('patch', '/admin/orders/' + pending + '/status', { orderStatus:'CANCELLED' });
-  const late = await api('post', '/mock-payments/' + pending + '/simulate', { scenario:'SUCCESS' });
-  assert.equal(late.status, 400);
-  assert.equal((await ok('get', '/payments/order/' + pending)).paymentStatus, 'FAILED');
+  assert.equal(await notify(pending),'00');
+  const late=await ok('get','/payments/order/'+pending);
+  assert.equal(late.paymentStatus,'PAID'); assert.equal(late.refundStatus,'REQUIRED_MANUAL');
+  assert.equal((await ok('get','/orders/'+pending)).status,'CANCELLED');
   assert.equal((await ok('get', root)).vouchers[0].usedQuantity, 0);
   assert.equal((await api('delete', root + '/vouchers/' + voucher.id)).status, 409);
   assert.equal((await api('delete', root + '/order-discounts/' + tier.id)).status, 200); // unused tier
   await ok('patch', root + '/status', { status:'INACTIVE' });
   const plain = await ok('get', '/products/1'); assert.equal(plain.salePrice, 200000); assert.equal(plain.saleEndsAt, null);
   assert.equal((await ok('get', '/carts')).items[0].saleEndsAt, null);
-  console.log('PASS FAIL/PENDING, voucher reuse/release, late SUCCESS guard, history409, live cache after disable');
+  console.log('PASS UNKNOWN/PENDING, voucher reuse/release, late SUCCESS guard, history409, live cache after disable');
   assert.deepEqual(exceptions, []);
 });

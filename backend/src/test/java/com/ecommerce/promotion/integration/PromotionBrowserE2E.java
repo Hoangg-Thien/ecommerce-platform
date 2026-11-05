@@ -15,14 +15,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
         "spring.datasource.url=jdbc:tc:postgresql:17.9:///promotion_browser_e2e",
         "cors.allowed-origins=http://127.0.0.1:5179", "rate-limit.enabled=false",
-        "application.security.cookie.secure=false", "payment.momo.mock-enabled=true"
+        "application.security.cookie.secure=false", "payment.vnpay.enabled=true", "payment.vnpay.tmn-code=TESTCODE",
+        "payment.vnpay.hash-secret=test-only-key", "payment.vnpay.return-url=https://merchant.test/api/v1/payments/vnpay/return"
 })
 class PromotionBrowserE2E {
     @LocalServerPort int port;
     @Autowired JdbcTemplate jdbc;
     @Autowired PasswordEncoder passwords;
 
-    @Test void realBrowserCheckoutAdminAndMockLifecycle() throws Exception {
+    @Test void realBrowserCheckoutAdminAndSignedVnpayLifecycle() throws Exception {
         // Only the disposable Testcontainers database; never the developer's database.
         jdbc.execute("TRUNCATE idempotency_keys,voucher_usages,vouchers,product_discounts,order_discounts,promotion_programs,order_items,payments,orders,cart_items,carts,product_variants,products,refresh_tokens,users RESTART IDENTITY CASCADE");
         jdbc.update("INSERT INTO users(id,email,password,role) VALUES (1,'browser@test.local',?,'ADMIN')", passwords.encode("BrowserDemo123!"));

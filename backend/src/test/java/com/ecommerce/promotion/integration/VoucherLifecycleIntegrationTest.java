@@ -163,7 +163,7 @@ class VoucherLifecycleIntegrationTest {
         jdbc.update("UPDATE vouchers SET used_quantity=quantity");
         assertThatThrownBy(() -> tx.executeWithoutResult(s -> {
             jdbc.update("INSERT INTO orders(id,user_id,total_price,subtotal_price,status) VALUES (99,1,100000,100000,'AWAITING_PAYMENT')");
-            jdbc.update("INSERT INTO payments(order_id,amount,payment_status,payment_method) VALUES (99,100000,'PENDING','MOMO')");
+            jdbc.update("INSERT INTO payments(order_id,amount,payment_status,payment_method) VALUES (99,100000,'PENDING','VNPAY')");
             service.reserve(vouchers.getReferenceById(1L),1L,99L,BigDecimal.TEN);
         })).isInstanceOf(VoucherSoldOutException.class);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM orders WHERE id=99",Integer.class)).isZero();
