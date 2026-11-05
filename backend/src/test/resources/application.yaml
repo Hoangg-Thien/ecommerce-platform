@@ -14,9 +14,6 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
-payment:
-  momo:
-    mock-enabled: true
 
 application:
   security:
@@ -26,11 +23,3 @@ application:
 
 cors:
   allowed-origins: http://localhost:5173,http://localhost:3000
-
-momo:
-  partner-code: test_partner
-  access-key: test_access_key
-  secret-key: test_secret_key
-  api-url: https://test-payment.momo.vn/v2/gateway/api/create
-  redirect-url: http://localhost:8080/api/payment/momo/callback
-  ipn-url: http://localhost:8080/api/payment/momo/ipn
