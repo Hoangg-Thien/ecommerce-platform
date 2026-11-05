@@ -4,6 +4,8 @@ import com.ecommerce.order.entity.Order;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Instant;
+import com.ecommerce.payment.enums.RefundStatus;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -48,6 +50,26 @@ public class Payment {
     private String transactionId;  // MoMo return (null with COD)
     private String momoRequestId;  // requestId send to MoMo (null with COD)
     private String momoOrderId;    // orderId MoMo (null with COD)
+
+    @Column(unique = true, length = 100)
+    private String providerTxnRef;
+    @Column(length = 15)
+    private String providerTransactionNo;
+    @Column(length = 2)
+    private String responseCode;
+    @Column(length = 2)
+    private String transactionStatus;
+    private Instant paidAt;
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30)
+    private RefundStatus refundStatus;
+    @Column(length = 100)
+    private String reason;
+    private Instant expiresAt;
+    @Column(columnDefinition = "TEXT")
+    private String paymentUrl;
+    @Column(length = 20)
+    private String providerEnvironment;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

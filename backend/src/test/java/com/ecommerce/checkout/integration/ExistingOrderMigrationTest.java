@@ -23,7 +23,7 @@ class ExistingOrderMigrationTest {
                 statement.executeUpdate("INSERT INTO order_items(order_id,product_id,quantity,price) VALUES (1,1,2,100000)");
                 statement.executeUpdate("INSERT INTO idempotency_keys(id,created_at) VALUES ('legacy',now())");
                 var flyway = Flyway.configure().dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword()).load();
-                assertThat(flyway.migrate().migrationsExecuted).isEqualTo(4);
+                assertThat(flyway.migrate().migrationsExecuted).isEqualTo(5);
                 flyway.validate();
                 assertThat(flyway.migrate().migrationsExecuted).isZero();
                 try (var result = statement.executeQuery("SELECT order_id FROM idempotency_keys WHERE id='legacy'")) {
