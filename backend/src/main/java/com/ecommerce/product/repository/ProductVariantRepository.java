@@ -12,6 +12,13 @@ import com.ecommerce.product.entity.ProductVariant;
 
 @Repository
 public interface ProductVariantRepository extends JpaRepository<ProductVariant, Long> {
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        select v from ProductVariant v where exists (
+          select i.id from OrderItem i where i.order.id = :orderId and i.product.id = v.product.id and i.size = v.size
+        ) order by v.id
+        """)
+    List<ProductVariant> lockForOrder(@Param("orderId") Long orderId);
 
     // Dashboard: sản phẩm sắp hết hàng (stock < threshold)
     @Query("SELECT pv FROM ProductVariant pv JOIN FETCH pv.product p " +

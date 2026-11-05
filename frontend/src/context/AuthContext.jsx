@@ -11,25 +11,28 @@ export const AuthProvider = ({children}) => {
 
     // restore session from localstorage on browser refresh (f5)
     useEffect(() => {
+        let current = true;
         const initializeAuth = async () => {
             const storedUser = localStorage.getItem('user');
             
             if(storedUser){
                 try {
                     // Gọi refresh token để lấy accessToken mới vào bộ nhớ
-                    const res = await authApi.refreshToken();
-                    setAccessToken(res.accessToken);
+                    await authApi.refreshToken();
+                    if (!current) return;
                     setUser(JSON.parse(storedUser));
                 } catch (error) {
+                    if (!current) return;
                     console.error('Lỗi khôi phục phiên đăng nhập', error);
                     localStorage.removeItem('user');
                     setUser(null);
                 }
             }
-            setLoading(false);
+            if (current) setLoading(false);
         };
         
         initializeAuth();
+        return () => { current = false; };
     }, []);
 
     const login = async (credentials) => {

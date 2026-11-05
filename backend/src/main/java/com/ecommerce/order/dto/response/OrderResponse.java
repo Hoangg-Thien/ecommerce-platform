@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.ecommerce.order.enums.OrderStatus;
 import com.ecommerce.payment.enums.PaymentMethod;
+import com.ecommerce.promotion.enums.OrderDiscountSource;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,7 +22,18 @@ public class OrderResponse {
     private Long userId;
     private OrderStatus status;
     private BigDecimal totalPrice;
+    private BigDecimal subtotalPrice;
+    private BigDecimal discountAmount;
+    private OrderDiscountSource orderDiscountSource;
+    private BigDecimal orderDiscountPercent;
+    private String voucherCode;
+    private BigDecimal shippingFee;
     private PaymentMethod paymentMethod;
+    private com.ecommerce.payment.enums.PaymentStatus paymentStatus;
+    private com.ecommerce.payment.enums.RefundStatus refundStatus;
+    private String reason;
+    private java.time.Instant expiresAt;
+    private java.time.Instant paidAt;
     private List<OrderItemResponse> items;
     private LocalDateTime createdAt;
 }

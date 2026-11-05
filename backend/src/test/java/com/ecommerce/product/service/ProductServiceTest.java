@@ -44,6 +44,9 @@ class ProductServiceTest {
 
     @Spy
     private ProductMapper productMapper;
+    @Mock private ProductBaseCache baseCache;
+    @Mock private com.ecommerce.promotion.service.ProductSalePricingService salePricing;
+    @Mock private com.ecommerce.promotion.repository.ProductDiscountRepository productDiscounts;
 
     @InjectMocks
     private ProductService productService;
@@ -110,22 +113,23 @@ class ProductServiceTest {
 
     @Test
     void findById_WhenProductExists_ShouldReturnProductResponse() {
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        var base = productMapper.toProductResponse(product);
+        when(baseCache.findById(1L)).thenReturn(base);
 
         ProductResponse result = productService.findById(1L);
 
         assertNotNull(result);
         assertEquals(product.getId(), result.getId());
         assertEquals(product.getName(), result.getName());
-        verify(productRepository, times(1)).findById(1L);
+        verify(baseCache).findById(1L);
     }
 
     @Test
     void findById_WhenProductDoesNotExist_ShouldThrowException() {
-        when(productRepository.findById(1L)).thenReturn(Optional.empty());
+        when(baseCache.findById(1L)).thenThrow(new ResourceNotFoundException("Product",1L));
 
         assertThrows(ResourceNotFoundException.class, () -> productService.findById(1L));
-        verify(productRepository, times(1)).findById(1L);
+        verify(baseCache).findById(1L);
     }
 
     @Test

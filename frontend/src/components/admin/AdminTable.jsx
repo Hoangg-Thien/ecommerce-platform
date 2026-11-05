@@ -2,10 +2,10 @@ import { Inbox } from 'lucide-react';
 import './AdminTable.css';
 
 /**
- * AdminTable — Generic table với loading skeleton và empty state
+ * AdminTable — Generic dense table với loading skeleton và empty state
  *
  * Props:
- *   columns: [{ key, label, render?, className? }]
+ *   columns: [{ key, label, render?, className?, skeletonWidth? }]
  *   data: array of row objects
  *   isLoading: bool
  *   emptyMessage: string
@@ -55,7 +55,7 @@ export default function AdminTable({
               <td colSpan={columns.length}>
                 <div className="admin-table__empty">
                   <div className="admin-table__empty-icon">
-                    <Inbox size={26} />
+                    <Inbox size={20} />
                   </div>
                   <div className="admin-table__empty-title">{emptyMessage}</div>
                   {emptyDescription && (

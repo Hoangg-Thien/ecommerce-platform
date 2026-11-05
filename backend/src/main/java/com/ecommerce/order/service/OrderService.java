@@ -20,7 +20,6 @@ import com.ecommerce.common.exception.ResourceNotFoundException;
 import com.ecommerce.order.mapper.OrderMapper;
 import com.ecommerce.order.repository.OrderRepository;
 import com.ecommerce.user.repository.UserRepository;
-import com.ecommerce.payment.strategy.MomoPaymentStrategy;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +32,8 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final OrderMapper orderMapper;
-    private final MomoPaymentStrategy momoPaymentStrategy;
+    private final com.ecommerce.payment.service.VnpayService vnpayService;
+    private final com.ecommerce.payment.repository.PaymentRepository payments;
 
     @Transactional(readOnly = true)
     public PageResponse<OrderResponse> getUserOrders(String userEmail, Pageable pageable) {
@@ -61,29 +61,30 @@ public class OrderService {
     @Transactional
     public CheckoutResponse retryPayment(Long orderId, String userEmail){
         
-        Order order = orderRepository.findById(orderId)
+        boolean vnpay = orderRepository.findPaymentMethodById(orderId).orElse(null) == com.ecommerce.payment.enums.PaymentMethod.VNPAY;
+        Order order = (vnpay ? orderRepository.lockRootById(orderId) : orderRepository.findById(orderId))
         .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
 
         if(!order.getUser().getEmail().equals(userEmail)){
             throw new UnauthorizedAccessException("Không có quyền truy cập đơn hàng này");
         }
 
+        if (!vnpay) throw new IllegalStateException("Only VNPay orders support online payment retry");
+
         if(order.getStatus() != OrderStatus.AWAITING_PAYMENT){
             throw new IllegalStateException("Đơn hàng không ở trạng thái chờ thanh toán");
         }
 
-        Payment payment = order.getPayment();
+        Payment payment = vnpay ? payments.lockByOrderId(orderId).orElse(null) : order.getPayment();
         if(payment == null || payment.getPaymentStatus() == PaymentStatus.PAID){
             throw new IllegalStateException("Đơn hàng này đã được thanh toán hoặc không hợp lệ");
         }
 
-        payment.setPaymentStatus(PaymentStatus.PENDING);
+        if (order.getPaymentMethod() == com.ecommerce.payment.enums.PaymentMethod.VNPAY) {
+            return CheckoutResponse.builder().orderId(order.getId()).orderStatus(order.getStatus())
+                    .totalPrice(order.getTotalPrice()).paymentUrl(vnpayService.retryUrl(payment)).build();
+        }
 
-        String paymentUrl = momoPaymentStrategy.generatePaymentUrl(payment);
-
-        return CheckoutResponse.builder()
-        .orderId(order.getId())
-        .paymentUrl(paymentUrl)
-        .build();
+        throw new IllegalStateException("Only VNPay orders support online payment retry");
     }
 }

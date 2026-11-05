@@ -5,7 +5,6 @@ import ProductList from './pages/product-list/ProductList';
 import ProductDetail from './pages/product-detail/ProductDetail';
 import Cart from './pages/cart/Cart';
 import Checkout from './pages/checkout/Checkout';
-import MockPayment from './pages/checkout/MockPayment';
 import PaymentResult from './pages/payment-result/PaymentResult';
 import OrderList from './pages/order-list/OrderList';
 import { AuthProvider } from './context/AuthContext';
@@ -22,6 +21,7 @@ import ProductForm from './pages/admin/product/ProductForm';
 import OrderManagement from './pages/admin/order/OrderManagement';
 import UserManagement from './pages/admin/user/UserManagement';
 import Dashboard from './pages/admin/dashboard/Dashboard';
+import PromotionManagement from './pages/admin/promotion/PromotionManagement';
 
 function App() {
   return (
@@ -35,7 +35,6 @@ function App() {
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
-              <Route path="/mock-payment" element={<MockPayment />} />
               <Route path="/payment-result" element={<PaymentResult />} />
               <Route path="/orders" element={<OrderList />} />
               <Route path="/login" element={<Login />} />
@@ -120,6 +119,7 @@ function App() {
               />
 
               {/* Catch-all */}
+              <Route path="/admin/promotions" element={<ProtectedRoute requireAdmin><AdminLayout><PromotionManagement /></AdminLayout></ProtectedRoute>} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>

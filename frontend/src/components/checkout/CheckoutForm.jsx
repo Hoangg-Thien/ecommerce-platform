@@ -3,7 +3,7 @@ import Input from '../ui/Input';
 import RadioBox from '../ui/RadioBox';
 import './CheckoutForm.css';
 
-export default function CheckoutForm({ formData, onChange, shippingMethod, setShippingMethod, paymentMethod, setPaymentMethod }) {
+export default function CheckoutForm({ formData, onChange, shippingFee, paymentMethod, setPaymentMethod, vnpay, paymentOptionsReady = true }) {
   
   return (
     <div className="checkout-form-container">
@@ -104,21 +104,11 @@ export default function CheckoutForm({ formData, onChange, shippingMethod, setSh
             id="shipping-standard"
             name="shippingMethod"
             value="standard"
-            checked={shippingMethod === 'standard'}
-            onChange={(e) => setShippingMethod(e.target.value)}
+            checked
+            onChange={() => {}}
             label="Giao hàng tiêu chuẩn"
             description="3-5 Ngày làm việc"
-            priceLabel="Miễn phí"
-          />
-          <RadioBox
-            id="shipping-express"
-            name="shippingMethod"
-            value="express"
-            checked={shippingMethod === 'express'}
-            onChange={(e) => setShippingMethod(e.target.value)}
-            label="Giao hàng hỏa tốc"
-            description="1-2 Ngày làm việc"
-            priceLabel="30.000 ₫"
+            priceLabel={shippingFee == null ? 'Đang tính phí' : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(shippingFee)}
           />
         </div>
       </section>
@@ -131,16 +121,17 @@ export default function CheckoutForm({ formData, onChange, shippingMethod, setSh
         </div>
         
         <div className="section-content">
-          {/* Đã bỏ Credit / Debit Card theo yêu cầu */}
-          <RadioBox
-            id="payment-momo"
+          {paymentOptionsReady && <RadioBox
+            id="payment-vnpay"
             name="paymentMethod"
-            value="momo"
-            checked={paymentMethod === 'momo'}
+            value="vnpay"
+            checked={paymentMethod === 'vnpay'}
+            disabled={!vnpay?.enabled || !vnpay.available}
             onChange={(e) => setPaymentMethod(e.target.value)}
-            label="Ví điện tử MoMo"
+            label="VNPay Sandbox"
+            description={vnpay?.reason || (!vnpay?.enabled ? 'VNPay hiện chưa khả dụng. Vui lòng chọn COD.' : null)}
             icon={<Wallet size={20} />}
-          />
+          />}
           
           <RadioBox
             id="payment-cod"

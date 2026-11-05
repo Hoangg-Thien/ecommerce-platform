@@ -42,6 +42,7 @@ class AdminOrderServiceTest {
 
     @Mock
     private OrderRepository orderRepository;
+    @Mock private com.ecommerce.promotion.service.VoucherUsageService voucherUsageService;
 
     @Mock
     private ProductRepository productRepository;

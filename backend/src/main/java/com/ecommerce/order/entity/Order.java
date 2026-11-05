@@ -39,6 +39,33 @@ public class Order {
     @Column(nullable = false)
     private BigDecimal totalPrice;
 
+    @Column(nullable = false, precision = 38, scale = 2)
+    private BigDecimal subtotalPrice;
+
+    @Column(nullable = false, precision = 38, scale = 2)
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Column(length = 50)
+    private String voucherCode;
+
+    @Column(name = "order_discount_id")
+    private Long orderDiscountId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30)
+    private com.ecommerce.promotion.enums.OrderDiscountSource orderDiscountSource;
+
+    @Column(precision = 5, scale = 2)
+    private BigDecimal orderDiscountPercent;
+
+    @PrePersist
+    private void initializeLegacySnapshot() {
+        if (subtotalPrice == null && totalPrice != null) {
+            subtotalPrice = totalPrice.subtract(shippingFee == null ? BigDecimal.ZERO : shippingFee)
+                    .add(discountAmount);
+        }
+    }
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrderStatus status = OrderStatus.PENDING;

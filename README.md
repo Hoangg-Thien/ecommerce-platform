@@ -8,21 +8,37 @@ The project is built as a backend-engineering showcase rather than a plain CRUD 
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [System Architecture](#system-architecture)
-- [Database Design](#database-design)
-- [Authentication Flow](#authentication-flow)
-- [Checkout Flow](#checkout-flow)
-- [Product Search](#product-search)
-- [API Documentation](#api-documentation)
-- [Testing](#testing)
-- [Tech Stack](#tech-stack)
-- [Deployment](#deployment)
-- [Engineering Highlights](#engineering-highlights)
-- [Project Structure](#project-structure)
-- [Local Development](#local-development)
-- [Future Improvements](#future-improvements)
+- [E-Commerce Platform](#e-commerce-platform)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+  - [Key Features](#key-features)
+    - [Authentication \& Security](#authentication--security)
+    - [Product \& Inventory](#product--inventory)
+    - [Cart](#cart)
+    - [Promotions \& Vouchers](#promotions--vouchers)
+    - [Checkout](#checkout)
+    - [Orders](#orders)
+    - [Payment](#payment)
+    - [Reliability \& Concurrency](#reliability--concurrency)
+  - [System Architecture](#system-architecture)
+  - [Database Design](#database-design)
+  - [Authentication Flow](#authentication-flow)
+  - [Checkout Flow](#checkout-flow)
+  - [Promotion](#promotion)
+    - [Pricing rules](#pricing-rules)
+    - [Confirmation flow](#confirmation-flow)
+    - [Voucher lifecycle \& snapshots](#voucher-lifecycle--snapshots)
+    - [Limitations](#limitations)
+  - [Product Search](#product-search)
+  - [API Documentation](#api-documentation)
+  - [Testing](#testing)
+  - [Tech Stack](#tech-stack)
+  - [Deployment](#deployment)
+  - [Engineering Highlights](#engineering-highlights)
+  - [Project Structure](#project-structure)
+    - [Module Design Conventions \& Coupling](#module-design-conventions--coupling)
+  - [Local Development](#local-development)
+  - [Future Improvements](#future-improvements)
 
 ---
 
@@ -31,9 +47,9 @@ The project is built as a backend-engineering showcase rather than a plain CRUD 
 The system models a single-vendor online store with two roles:
 
 - **USER** — registers/logs in, browses products, manages a cart, checks out (COD or MoMo), views their own orders and payments, and can retry payment on an unpaid MoMo order.
-- **ADMIN** — manages products/categories and updates order status.
+- **ADMIN** — manages products, categories, promotions/vouchers and users, and updates order status.
 
-Core flow: browse products → add to cart → checkout → an `Order` + `Payment` are created. For **COD**, stock is deducted and the cart cleared immediately. For **MoMo**, the order is left `AWAITING_PAYMENT` and stock/cart are untouched until MoMo's asynchronous IPN callback confirms payment; unpaid MoMo orders are auto-cancelled by a scheduled job after 15 minutes.
+Core flow: browse products → add to cart → preview prices → checkout → an `Order` + `Payment` are created. For **COD**, stock is deducted and purchased cart lines cleared immediately. For **MoMo mock**, the order is left `AWAITING_PAYMENT` and stock/cart are untouched until mock SUCCESS; a scheduled job scans every five minutes for unpaid MoMo orders older than fifteen minutes. No real money is collected.
 
 ## Key Features
 
@@ -41,6 +57,7 @@ Core flow: browse products → add to cart → checkout → an `Order` + `Paymen
 - Register/login with BCrypt-hashed passwords, stateless JWT access tokens (default 15 min).
 - Refresh tokens (7 days) are **hashed with SHA-256 and stored server-side**, not just signed JWTs — this enables real revocation, not just expiry.
 - Refresh-token **rotation on every use**: the old token is revoked and a new one issued.
+- Each refresh JWT has a random UUID `jti`, preventing duplicate hashes when tokens are issued within one second. Frontend session restoration and Axios retries share a single refresh Promise; delayed unauthorized responses reuse the refreshed session. Access-token claims and lifetimes are unchanged.
 - **Reuse detection**: if a revoked refresh token is presented again, all of that user's tokens are revoked immediately (`RefreshTokenService.verifyNotRevoked`).
 - Refresh token delivered as an `HttpOnly`, `Secure` (prod), `SameSite` cookie scoped to `/api/v1/auth/refresh` — never exposed to JS.
 - A daily scheduled job (`RefreshTokenCleanupScheduler`, 2 AM) purges expired/revoked tokens from the database.
@@ -50,15 +67,21 @@ Core flow: browse products → add to cart → checkout → an `Order` + `Paymen
 ### Product & Inventory
 - Products belong to a `Category`; each product has one or more **`ProductVariant`** rows (size + stock), not a single flat stock count.
 - Paginated, sortable product listing, filterable by `categoryId`.
-- `GET` product-by-id and category-list responses are cached with Caffeine (30 min TTL), evicted on any write.
+- `GET` product-by-id and category-list responses are cached with Caffeine (30 min TTL), evicted on any write. Only base catalog data is cached; live sale prices are composed per request (see [Promotion](#promotion)).
 - Stock is enforced with **optimistic locking** (`@Version` on `Product` and `ProductVariant`) — verified by a concurrency test that races two checkouts against the last unit of stock.
 
 ### Cart
 - One cart per user, created lazily. Cart lines reference a specific `ProductVariant` (product + size), unique per cart.
 - Add-to-cart merges quantity into an existing line and re-validates against live stock; quantity update and item removal are also supported.
 
+### Promotions & Vouchers
+- Admins manage promotion programs at `/admin/promotions`: product discounts, automatic order-discount tiers and vouchers with usage quotas.
+- The backend is the only source of price: it recalculates every checkout, ignores any client-supplied shipping fee and applies at most one order discount (the larger saving wins).
+- Price confirmation: the client sends `expectedTotal`; a mismatch returns `409 PRICE_CHANGED` with the new breakdown and nothing is committed.
+- Vouchers are reserved inside the checkout transaction and released exactly once when the order is cancelled; orders keep an immutable pricing snapshot. Details in [Promotion](#promotion).
+
 ### Checkout
-- Idempotent by design: the client sends an `Idempotency-Key` header (enforced by a custom `@Idempotent` annotation + `IdempotencyInterceptor`), and the key is inserted into a unique-constrained `idempotency_keys` table inside the same transaction — a duplicate key is rejected as a conflicting/duplicate request before any order is built.
+- Idempotent by design: the client sends an `Idempotency-Key` header (enforced by a custom `@Idempotent` annotation + `IdempotencyInterceptor`), and the key is inserted into a unique-constrained `idempotency_keys` table inside the same transaction — a duplicate key is rejected as a conflicting/duplicate request before any order is built. The key is linked to the committed order (Flyway V5), so a client that lost the response can recover the result with `GET /api/v1/checkout/result` using the same key (owner-only).
 - Stock is re-validated per cart line at checkout time, in the same DB transaction that will (for COD) deduct it.
 - Payment-method-specific behavior (order status, stock deduction, cart clearing, external gateway call) is delegated to a **Strategy** implementation (`CodPaymentStrategy` / `MomoPaymentStrategy`) selected by a factory — `CheckoutService` itself has no payment-specific branching.
 - A daily scheduled job (`IdempotencyKeyCleanupScheduler`) deletes idempotency keys older than 24 hours.
@@ -71,13 +94,14 @@ Core flow: browse products → add to cart → checkout → an `Order` + `Paymen
 ### Payment
 - Two methods behind a common `PaymentStrategy` interface: **COD** and **MoMo**.
 - **MoMo runs in mock mode** (`payment.momo.mock-enabled: true` by default): checkout redirects to a local `/mock-payment` endpoint (`MockPaymentController` / `MockPaymentService`) instead of calling MoMo's real API. No live MoMo sandbox account was used — the project has not been exercised against MoMo's actual servers.
-- The MoMo client code itself (`MomoServiceImpl`) implements the real request/response contract from MoMo's docs — building the payment request payload and computing/verifying the HMAC-SHA256 signature exactly as MoMo's API requires — so the integration is "spec-correct" and would call the real `MOMO_API_URL` if `mock-enabled` were switched off and real credentials supplied. But as shipped and actually run, all payment flows in this project go through the mock endpoint, not MoMo's servers.
-- **Late/duplicate IPN handling** (`MomoIpnService`): if a success callback arrives *after* the order was already auto-cancelled by the timeout scheduler, the service detects the conflict and triggers an automatic refund flow (`PaymentRefundService`) instead of silently double-processing or losing the payment. This logic is exercised by unit tests against the mocked IPN payload — it has not been validated against a real MoMo IPN callback.
+- The legacy MoMo client contains request/signature handling and can call an external endpoint if mock mode is disabled. That branch has not been verified against a real gateway and must not be treated as production-safe. Dev and demo prod explicitly keep `mock-enabled=true`.
+- **Late/duplicate success handling**: fulfillment checks `CANCELLED` before changing payment or stock. Admin cancellation closes pending payment; late mock SUCCESS cannot resurrect the order. Legacy IPN behavior is regression-tested, but the real-gateway branch is not audited or certified for production.
+- Cancelling a `PAID` mock order leaves the payment `PAID` as history and releases its voucher; there is no real refund.
 - The outbound MoMo refund HTTP call is a stub (logs only) — the refund *state machine* (`PENDING → REFUNDING → REFUNDED`) and triggering logic are fully implemented, but no real refund request is ever sent to MoMo.
 
 ### Reliability & Concurrency
 - Optimistic locking (`@Version`) on `Product`, `ProductVariant`, `Order`, and `Payment`.
-- Side-effect transactions (order-timeout cancellation, refund processing) run with `Propagation.REQUIRES_NEW` so they don't get rolled back by, or entangled with, the caller's transaction.
+- Timeout cancellation uses an independent transaction per order. Simulated refund processing uses `Propagation.REQUIRED`, so order/payment/voucher and refund state roll back together on a conflict. No refund HTTP request is sent.
 - Two scheduled jobs: `PaymentTimeoutScheduler` (every 5 min, cancels MoMo orders unpaid for 15+ min) and cleanup schedulers for stale refresh tokens and idempotency keys.
 
 ## System Architecture
@@ -120,13 +144,18 @@ Key entities and relationships:
 | `ProductVariant` | N—1 `Product` | size + stock, unique on `(product_id, size_value)`, own `@Version` |
 | `Cart` | 1—N `CartItem` | one cart per user |
 | `CartItem` | N—1 `ProductVariant`, N—1 `Cart` | unique on `(cart_id, product_variant_id)` |
-| `Order` | N—1 `User`, 1—N `OrderItem`, 1—1 `Payment` | `@Version`, snapshots shipping info |
-| `OrderItem` | N—1 `Order`, N—1 `Product` | snapshots `size` and `price` at purchase time |
+| `Order` | N—1 `User`, 1—N `OrderItem`, 1—1 `Payment` | `@Version`, snapshots shipping info and promotion pricing (subtotal, discount, voucher code, source, percent) |
+| `OrderItem` | N—1 `Order`, N—1 `Product` | snapshots `size`, `price`, `original_price` and product-discount percent at purchase time |
 | `Payment` | 1—1 `Order` | `@Version`, stores MoMo `transactionId`/`momoOrderId`/`momoRequestId` |
+| `PromotionProgram` | 1—N `Voucher`, `OrderDiscount`, `ProductDiscount` | active window stored as `TIMESTAMPTZ`; ACTIVE/INACTIVE set by admin, SCHEDULED/RUNNING/ENDED derived |
+| `Voucher` | N—1 `PromotionProgram` | unique code, percent + cap + minimum amount, quota with `used_quantity` |
+| `OrderDiscount` | N—1 `PromotionProgram` | automatic tier: minimum order amount → percent |
+| `ProductDiscount` | N—1 `PromotionProgram`, N—1 `Product` | percentage rule per product |
+| `VoucherUsage` | N—1 `Voucher`, N—1 `User`, 1—1 `Order` | `APPLIED`/`RELEASED`; unique per order, one `APPLIED` per voucher/user (partial unique index) |
 | `RefreshToken` | N—1 `User` | stores SHA-256 **hash** of the token, plus `revoked` flag and expiry |
-| `IdempotencyKey` | standalone | primary key is the client-supplied key string |
+| `IdempotencyKey` | links committed `Order` | primary key is the client-supplied key string; owner-checked result lookup |
 
-Schema is version-controlled with **Flyway** migrations (`V1__init_schema.sql`, `V2__remove_product_id_from_cart_items.sql`, `V3__product_search.sql`); `ddl-auto` is `update` in dev and `validate` in production, so the running schema is always checked against the migration history rather than silently auto-generated in prod.
+Schema is version-controlled with **Flyway**: V1 initial schema, V2 variant-based cart, V3 product search, V4 promotion schema/snapshots, V5 checkout key → order link. Dev, prod and PostgreSQL tests use `ddl-auto=validate`. Never edit applied migrations, use `update` to bypass an error, or reset an existing database without explicit permission. V4 rejects abnormal historical amounts for manual review rather than silently rewriting them.
 
 ## Authentication Flow
 
@@ -147,16 +176,51 @@ POST /api/v1/checkout   (header: Idempotency-Key)
     │
     ▼
 1. Insert Idempotency-Key into DB (unique constraint) — duplicate ⇒ reject
-2. Load user's cart, reject if empty
+2. Load user's cart and the selected lines (`cartItemIds`; null/empty = whole cart), reject if none
 3. Per cart line: re-check ProductVariant.stock ≥ requested quantity
-4. Build Order + OrderItem (snapshot price & size), sum total
-5. Delegate to PaymentStrategy:
+4. Recalculate promotions/shipping, compare expectedTotal; mismatch ⇒ 409 PRICE_CHANGED + breakdown
+5. Build Order + OrderItem with immutable pricing snapshots
+6. Delegate to PaymentStrategy:
      COD  → status=PENDING, create Payment, deduct stock per variant, clear matching cart items
      MoMo → status=AWAITING_PAYMENT, create Payment(PENDING), call/mock MoMo, DO NOT touch stock/cart
-6. Return CheckoutResponse (orderId, status, total, paymentUrl for MoMo)
+7. Reserve winning voucher after order has an ID; link idempotency key to order in this transaction
+8. Return CheckoutResponse (orderId, status, total, local paymentUrl for MoMo mock)
 ```
 
 Everything runs inside a single `@Transactional` method in `CheckoutService`; stock checks, order creation, and (for COD) stock deduction happen atomically. Concurrent checkouts against the same limited-stock variant are resolved by optimistic locking — verified with a dedicated `OrderConcurrencyTest` that fires two simultaneous HTTP checkouts at the last unit of stock and asserts exactly one succeeds.
+
+## Promotion
+
+Demo-store promotions: product discounts, automatic order-discount tiers and vouchers, managed by admins at `/admin/promotions`. Out of scope: real payments/refunds, flash-sale stock reservation, stackable vouchers and distance-based shipping. Request/response examples, validation rules and the demo script are in [docs/PROMOTION.md](docs/PROMOTION.md).
+
+### Pricing rules
+
+1. **Product discount**: the highest percentage wins (ties broken by rule ID). The discount is rounded **per unit** (`BigDecimal`, integer VND, `HALF_UP`) and then multiplied by quantity.
+2. **Subtotal** covers only the selected cart lines (`cartItemIds` null or `[]` = whole cart; unknown or foreign IDs are rejected).
+3. **One order discount at most**: the larger saving between the best automatic tier and a valid voucher is applied; a voucher wins ties, and a voucher that loses consumes no quota.
+4. Minimum amount and cap are respected and the discount never exceeds the subtotal. **Shipping** is a server-side flat fee (`app.shipping.flat-fee`, default 30,000 VND), added last and never discounted; the client value is ignored.
+5. A program is effective when `start <= now < end` (injected `Clock`, stored as `TIMESTAMPTZ`).
+
+Example: 200,000 × 2 with a 20% product discount, a 5% automatic tier and `SALE10` (10%, capped at 30,000), shipping 30,000 → subtotal 320,000, voucher saving 30,000 (beats the 16,000 tier), **total 320,000 VND**.
+
+### Confirmation flow
+
+- `POST /api/v1/checkout/preview` returns the full breakdown with no side effects; an invalid voucher yields `applied=false` plus a reason instead of an error.
+- `POST /api/v1/checkout` recalculates everything. `expectedTotal` is a required comparison value, never the amount charged: a mismatch returns **409 `PRICE_CHANGED`** with the new breakdown and nothing is committed, and the UI asks the customer to confirm the new price. Losing a voucher race returns **409 `VOUCHER_SOLD_OUT`** and rolls everything back.
+- After a lost response, the UI calls `GET /api/v1/checkout/result` with the **same `Idempotency-Key`**. Only the owner can read a committed result; anything else is `404`, which does not prove an in-flight transaction will never commit, so retries keep the same key and fetch a fresh preview first. Keys are purged after 24 hours; no response-replay layer or order guessing is used.
+
+### Voucher lifecycle & snapshots
+
+- The winning voucher is reserved **after the order has an ID**, in the same transaction: conditional quota increment, usage insert and key-to-order link commit together, and any failure rolls back order, payment, stock/cart and key.
+- `APPLIED → RELEASED` happens once when an order actually becomes `CANCELLED` (failed payment or out-of-stock fulfilment, timeout, admin cancel); repeats are no-ops and `DONE` never releases.
+- Orders and items snapshot original/final prices, discount source and percent, voucher code, shipping and total. Admin edits affect only new previews and checkouts.
+- `ProductBaseCache` caches base catalog data only; sale prices are composed live per request, so disabling, editing or expiring a program takes effect without waiting for the TTL. `price` stays the original price; `salePrice` / `unitPrice` carry the discounted price and `saleEndsAt` the end time.
+
+### Limitations
+
+- Preview reserves neither price, stock nor quota. If only the composition of discounts changes while the total stays equal, no `PRICE_CHANGED` is emitted and checkout stores the actual composition. Pending MoMo orders do not reserve inventory.
+- Passing tests, including the Chrome end-to-end run, do not establish production-gateway readiness; no coverage percentage is claimed. Evidence and executed counts: [docs/PROMOTION-ACCEPTANCE.md](docs/PROMOTION-ACCEPTANCE.md).
+- Token-refresh single-flight is per browser JavaScript context, not coordinated across tabs; server-side rotation and reuse detection are unchanged.
 
 ## Product Search
 
@@ -194,18 +258,20 @@ Interactive docs are available via springdoc-openapi at `/swagger-ui.html` and `
 | **Products** | `GET /api/v1/products` (supports `q`, `categoryId`, `page`, `size`, `sortBy ∈ {id,name,price,relevance}`, `sortDir`), `GET /api/v1/products/{id}`, `POST/PUT/DELETE /api/v1/products/{id}` (ADMIN) |
 | **Categories** | `GET /api/v1/categories`, `GET /api/v1/categories/{id}`, `POST/PUT/DELETE /api/v1/categories/{id}` (ADMIN) |
 | **Cart** | `GET /api/v1/carts`, `POST /api/v1/carts/add`, `PUT /api/v1/carts/update`, `DELETE /api/v1/carts/{itemId}` |
-| **Checkout** | `POST /api/v1/checkout` (requires `Idempotency-Key` header) |
-| **Orders** | `GET /api/v1/orders` (paginated), `GET /api/v1/orders/{id}`, `PATCH /api/v1/orders/{id}/status` (ADMIN), `POST /api/v1/orders/{id}/retry-payment` |
+| **Checkout** | `POST /api/v1/checkout/preview`, `POST /api/v1/checkout` (requires `Idempotency-Key`), `GET /api/v1/checkout/result` (same `Idempotency-Key`; owner-only) |
+| **Orders** | `GET /api/v1/orders` (paginated), `GET /api/v1/orders/{id}`, `POST /api/v1/orders/{id}/retry-payment` |
 | **Payments** | `POST /api/v1/payments/momo/ipn` (public, HMAC-verified), `GET /api/v1/payments/momo/return` (public), `GET /api/v1/payments/order/{orderId}` (owner-only) |
 | **Mock Payment** | `POST /api/v1/mock-payments/{orderId}/simulate` — only active when `payment.momo.mock-enabled=true` |
+| **Admin** | `GET /api/v1/admin/orders` (filter by `status`, `email`), `GET /api/v1/admin/orders/{id}`, `PATCH /api/v1/admin/orders/{id}/status`; `GET /api/v1/admin/users`, `GET /api/v1/admin/users/{id}`, `PATCH /api/v1/admin/users/{id}/role`; `GET /api/v1/admin/dashboard`; `/api/v1/admin/promotions/**` (programs, vouchers, tiers, product discounts — see [docs/PROMOTION.md](docs/PROMOTION.md)) |
 
 ## Testing
 
-**213 `@Test` methods across 29 test classes** (verified directly from source), split into:
+Tests are split into the groups below. Promotion adds pricing, migration, voucher-lifecycle, concurrency, browser and authentication regressions; executed counts and acceptance results are recorded in [Promotion acceptance](docs/PROMOTION-ACCEPTANCE.md).
 
 - **Unit tests** (Mockito) — services, JWT logic, both payment strategies, MoMo signature/IPN logic, refund logic, schedulers, and `SearchTextUtilsTest` (normalization, diacritics removal, LIKE wildcard escaping).
 - **Integration tests** (`@SpringBootTest` + `MockMvc`) — `AuthControllerTest`, `ProductControllerTest` (search param mapping & validation), `ProductSearchIntegrationTest` (full-stack search against real PostgreSQL with Flyway V3 migration covering unaccent, case-insensitivity, ranking, wildcard escaping, category filtering, pagination, and schema verification), `CheckoutControllerTest`, `PaymentControllerTest`, `AdminEndpointSecurityTest`, `OrderTimeoutIntegrationTest`, `RateLimitFilterTest`.
 - **Concurrency tests** — `ProductConcurrencyTest` and `OrderConcurrencyTest`, using `ExecutorService`/`CountDownLatch` to force two threads to race the same stock row and assert single-winner semantics.
+- **Browser tests** (Chrome, opt-in) — `PromotionBrowserE2E` (real HTTP server + disposable Testcontainers PostgreSQL) and `npm run test:promotion` / `tests/auth-refresh.browser.test.mjs` in `frontend/`. They are not part of the default `mvn test` or CI; see [docs/PROMOTION-ACCEPTANCE.md](docs/PROMOTION-ACCEPTANCE.md).
 - Tests run against Testcontainers (PostgreSQL 17.9) for isolated integration testing with Flyway migrations and schema validation.
 
 No coverage percentage is claimed here since no coverage tool (e.g. Jacoco) is configured in `pom.xml`.
@@ -221,7 +287,7 @@ No coverage percentage is claimed here since no coverage tool (e.g. Jacoco) is c
 | **API Docs** | springdoc-openapi (Swagger UI) |
 | **Utilities** | Lombok |
 | **Frontend** | React 19, React Router 7, Vite 8, Axios, lucide-react (icons) |
-| **Testing** | JUnit 5, Mockito, MockMvc, Spring Security Test, H2 (PG-compatibility mode), Testcontainers (PostgreSQL) |
+| **Testing** | JUnit 5, Mockito, MockMvc, Spring Security Test, Testcontainers (PostgreSQL) |
 | **Infrastructure** | Docker (multi-stage build, non-root runtime user, G1GC + container-aware memory flags), GitHub Actions CI (`mvn test`/`mvn package` for backend, `npm run build` for frontend), Render (backend API + frontend hosting) |
 
 ## Deployment
@@ -239,13 +305,14 @@ PostgreSQL
 - The backend `Dockerfile` is a two-stage build: Maven builds the JAR in a temurin-21 build image, then the JAR is copied into a minimal `eclipse-temurin:21-jre-alpine` runtime image running as a non-root user, with `JAVA_OPTS` tuned for constrained-memory containers (`-XX:MaxRAMPercentage=75.0`, G1GC).
 - `application-prod.yaml` activates on `SPRING_PROFILES_ACTIVE=prod`: HikariCP pool tuning, `ddl-auto: validate` (schema changes only via Flyway), secure/`SameSite=None` refresh cookies, and reverse-proxy-aware IP resolution (`rate-limit.trust-proxy: true`) for correct rate-limit keys behind Render's proxy.
 - `docker-compose.yml` in the repo provisions PostgreSQL only, for local development; it does not define a backend service. `.env.prod.example` documents the production environment variables (Supabase/managed Postgres URL, JWT secret, MoMo config keys) that are configured directly in Render's dashboard rather than committed to the repo; in this deployment `payment.momo.mock-enabled` is left `true`, so no real MoMo credentials are actually required or used.
-- CI (`backendci.yml`, `frontendci.yml`) runs build/test verification on push and PR; it does not itself publish images or trigger deployment — deployment to Render is configured on Render's side against the repository.
+- Backend CI (`backendci.yml`) runs `mvn test` and packages the JAR on push and PR; frontend CI (`frontendci.yml`) runs `npm ci` and `npm run build` on pushes that touch `frontend/`. Neither publishes images or triggers deployment — deployment to Render is configured on Render's side against the repository.
 
 ## Engineering Highlights
 
-- **Idempotent checkout** implemented at the database level (unique-constrained key table inside the transaction), not just an in-memory or cache-based check — safe across app restarts and multiple instances.
+- **Idempotent checkout** implemented at the database level (unique-constrained key table inside the transaction), not just an in-memory or cache-based check — safe across app restarts and multiple instances. A committed key is linked to its order, so a lost response can be recovered via `GET /api/v1/checkout/result` without guessing orders.
 - **Refresh-token rotation with reuse detection**: tokens are hashed at rest, rotated on every refresh, and a replayed/revoked token triggers a full account-wide token revocation — a materially stronger model than "JWT refresh token, no DB check."
-- **Payment reconciliation under race conditions**: the MoMo IPN handler explicitly reasons about the case where a successful payment notification arrives *after* the order was already auto-cancelled by the timeout job, and routes it into a refund flow instead of either double-fulfilling the order or losing the customer's money silently. This is implemented and unit-tested against simulated IPN payloads (the project runs against mocked MoMo, not a live sandbox).
+- **Payment consistency under race conditions**: late success cannot revive cancelled orders; voucher release is idempotent and simulated refund state shares its caller's transaction. Optimistic conflicts roll back consistently. Tests use MoMo mock, not a live sandbox.
+- **Server-authoritative promotion pricing**: every checkout is recalculated from live rules; `expectedTotal` only detects stale prices (`409 PRICE_CHANGED`), vouchers are reserved with a conditional increment in the order transaction, and orders keep immutable pricing snapshots.
 - **Concurrency correctness is tested, not assumed**: optimistic-locking behavior under simultaneous checkouts is verified with real multi-threaded integration tests against the live HTTP endpoint, not just unit-level mocking.
 - **Per-endpoint-group rate limiting** with different keys (IP for pre-auth endpoints, user identity for authenticated ones) and different budgets per group, implemented directly with Bucket4j + Caffeine rather than a single blanket filter.
 
@@ -259,6 +326,7 @@ ecommerce-platform/
 ├── docker-compose.yml
 ├── .env.example / .env.prod.example
 ├── .github/workflows/          # backendci.yml, frontendci.yml
+├── docs/                       # Promotion acceptance evidence, promotion API details
 ├── backend/
 │   ├── pom.xml
 │   └── src/
@@ -272,6 +340,7 @@ ecommerce-platform/
 │       │   ├── order/          # Order placement, items, cancellation, order admin
 │       │   ├── payment/        # Payment state machine, COD & MoMo strategies, IPN & refund, schedulers
 │       │   ├── checkout/       # Idempotent checkout orchestration
+│       │   ├── promotion/      # Programs, vouchers, tiers & product discounts, pricing calculator, voucher usage
 │       │   ├── dashboard/      # Admin metrics & statistics aggregations
 │       │   ├── common/         # Cross-cutting infrastructure: exceptions, rate limiting, idempotency, cache config
 │       │   └── bootstrap/      # DatabaseSeeder (initial data population)
@@ -284,22 +353,23 @@ ecommerce-platform/
 │               ├── scheduler/  # Scheduler unit tests
 │               ├── search/     # Search text & specification unit tests
 │               └── integration/# SpringBootTest MockMvc & Testcontainers tests
-└── frontend/                   # React 19 + Vite client
+└── frontend/                   # React 19 + Vite client (tests/: opt-in Chrome browser tests)
 ```
 
 ### Module Design Conventions & Coupling
 
 - **Encapsulation & High Cohesion**: Each business capability is self-contained. Adding or modifying a feature touches only files within that module.
-- **Shared Infrastructure (`common`)**: Contains purely cross-cutting utilities (`GlobalExceptionHandler`, `@Idempotent` / `IdempotencyInterceptor`, Bucket4j rate limiting, `CacheConfig`). It has **zero dependencies** on business domain modules.
+- **Shared Infrastructure (`common`)**: Contains exception handling, idempotency, rate limiting and cache configuration. Checkout-result queries and promotion error translation introduce explicit domain coupling here.
 - **Data Seeding (`bootstrap`)**: Populates seed data at startup. No module ever imports classes from `bootstrap`.
 - **Known Coupling (Monolith Domain Relationships)**:
   - `order ↔ payment`: `order` checks payment status and allows payment retries; `payment` (MoMo IPN, timeout scheduler, refund service) updates order statuses and variant stock upon payment events.
   - `user ↔ order`: `user` exposes user order history; `order` associates placed orders with customer accounts.
+  - `checkout → promotion / payment / order`: checkout orchestrates cart, user, order, payment and promotion; `voucher_usages` reference orders and users.
   These bidirectional references reflect natural business relationships within a single monolithic database schema.
 
 ## Local Development
 
-**Prerequisites**: Java 21, Maven (or the bundled `mvnw`), Docker (for PostgreSQL), Node 20 (for the frontend).
+**Prerequisites**: Java 21, Maven (or the bundled `mvnw`), Docker (for PostgreSQL/Testcontainers), Node 20.19+ or 22.12+ (Vite 8; verified with Node 24). Browser tests additionally require Chrome.
 
 ```bash
 # 1. Start PostgreSQL
@@ -313,12 +383,12 @@ cd backend
 ./mvnw spring-boot:run
 # API on http://localhost:8080
 
-# 4. Run tests (H2 in-memory, no external DB needed)
+# 4. Run tests (Docker running; PostgreSQL Testcontainers, isolated from local DB)
 ./mvnw test
 
 # 5. Run the frontend (from frontend/)
 cd ../frontend
-npm install
+npm ci
 npm run dev
 ```
 
@@ -327,5 +397,6 @@ npm run dev
 - Implement the real MoMo refund HTTP call (the state machine and trigger logic already exist).
 - Add a code path to transition a COD `Payment` out of `PENDING` (e.g., on delivery confirmation).
 - Add Jacoco (or similar) for a real test-coverage metric.
+- Fix the existing frontend ESLint baseline (9 errors) and review the `npm audit` findings.
 - Add a backend service definition to `docker-compose.yml` for a fully containerized local stack.
 - Move rate-limit buckets to a shared store (e.g. `bucket4j-redis`) if the backend is ever scaled to multiple instances, since the current implementation is in-memory per instance.

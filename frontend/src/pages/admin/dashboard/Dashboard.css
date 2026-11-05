@@ -1,149 +1,105 @@
-/* Dashboard.css */
+/* =============================================
+   Dashboard.css — Work tool admin dashboard
+   ============================================= */
 
-/* ========== Stats Grid ========== */
+.dash-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ========== KPI Stat Cards ========== */
 .dash-stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 4px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
 }
 
-/* ---- Stat Card ---- */
 .dash-stat-card {
-  background: var(--admin-surface);
-  border: 1px solid var(--admin-border);
-  border-radius: var(--admin-r-lg);
-  padding: 20px 22px;
+  padding: 16px 18px;
   display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  transition: box-shadow var(--admin-tr), transform var(--admin-tr);
-  position: relative;
-  overflow: hidden;
-}
-
-.dash-stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  border-radius: var(--admin-r-lg) var(--admin-r-lg) 0 0;
-  background: var(--card-accent, var(--admin-primary));
-}
-
-.dash-stat-card:hover {
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  transform: translateY(-1px);
-}
-
-.dash-stat-card__icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.dash-stat-card__body {
-  flex: 1;
-  min-width: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  text-align: left;
 }
 
 .dash-stat-card__label {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--admin-text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
+  letter-spacing: 0.04em;
 }
 
 .dash-stat-card__value {
-  font-size: 26px;
-  font-weight: 800;
+  font-size: 22px;
+  font-weight: 600;
   color: var(--admin-text-primary);
-  line-height: 1.1;
-  letter-spacing: -0.5px;
+  line-height: 1.2;
+  letter-spacing: -0.3px;
+  font-variant-numeric: tabular-nums;
 }
 
 .dash-stat-card__sub {
   font-size: 12px;
-  color: var(--admin-text-secondary);
-  margin-top: 4px;
+  color: var(--admin-text-muted);
 }
 
-.dash-stat-card__sub--up {
-  color: var(--admin-success);
-}
-
-.dash-stat-card__sub--warn {
-  color: var(--admin-warning);
-}
-
-.dash-stat-card__sub--danger {
-  color: var(--admin-error);
-}
-
-/* Color variants */
-.dash-stat-card--revenue { --card-accent: #FF5B00; }
-.dash-stat-card--orders  { --card-accent: #3B82F6; }
-.dash-stat-card--users   { --card-accent: #8B5CF6; }
-.dash-stat-card--products{ --card-accent: #10B981; }
-
-.dash-stat-card--revenue .dash-stat-card__icon { background: #FFF0E6; color: #FF5B00; }
-.dash-stat-card--orders .dash-stat-card__icon  { background: #EFF6FF; color: #3B82F6; }
-.dash-stat-card--users .dash-stat-card__icon   { background: #F5F3FF; color: #8B5CF6; }
-.dash-stat-card--products .dash-stat-card__icon{ background: #ECFDF5; color: #10B981; }
-
-/* ========== Row: 2 cols ========== */
-.dash-row {
+/* ========== Grid 2 columns ========== */
+.dash-grid-2col {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 16px;
 }
 
 @media (max-width: 900px) {
-  .dash-row { grid-template-columns: 1fr; }
+  .dash-grid-2col {
+    grid-template-columns: 1fr;
+  }
 }
 
-/* ========== Section Card ========== */
-.dash-section {
-  background: var(--admin-surface);
-  border: 1px solid var(--admin-border);
-  border-radius: var(--admin-r-lg);
+/* ========== Section Cards ========== */
+.dash-card {
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.dash-section__header {
+.dash-card__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--admin-border);
+  background: var(--admin-surface);
 }
 
-.dash-section__title {
-  font-size: 14px;
-  font-weight: 700;
+.dash-card__title {
+  font-size: 13.5px;
+  font-weight: 600;
   color: var(--admin-text-primary);
   margin: 0;
+  text-align: left;
 }
 
-.dash-section__link {
-  font-size: 12.5px;
+.dash-card__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
   color: var(--admin-primary);
-  font-weight: 600;
+  font-weight: 500;
   text-decoration: none;
   transition: color var(--admin-tr);
 }
 
-.dash-section__link:hover { color: var(--admin-primary-hover); }
+.dash-card__link:hover {
+  color: var(--admin-primary-hover);
+  text-decoration: underline;
+}
 
-/* ========== Order Status Bar ========== */
+/* ========== Order Status Grid ========== */
 .dash-status-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -151,76 +107,131 @@
   background: var(--admin-border);
 }
 
-.dash-status-item {
+.dash-status-tile {
   background: var(--admin-surface);
-  padding: 14px 16px;
-  text-align: center;
+  padding: 14px 12px;
+  text-align: left;
 }
 
-.dash-status-item__count {
-  font-size: 22px;
-  font-weight: 800;
-  line-height: 1;
-  margin-bottom: 4px;
-}
-
-.dash-status-item__label {
-  font-size: 11px;
+.dash-status-tile__count {
+  font-size: 18px;
   font-weight: 600;
-  color: var(--admin-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
+  color: var(--admin-text-primary);
+  line-height: 1.2;
+  margin-bottom: 2px;
+  font-variant-numeric: tabular-nums;
 }
 
-/* color per status */
-.dash-status-item--await  .dash-status-item__count { color: #F59E0B; }
-.dash-status-item--pending .dash-status-item__count { color: #6B7280; }
-.dash-status-item--shipping .dash-status-item__count { color: #3B82F6; }
-.dash-status-item--done   .dash-status-item__count { color: #10B981; }
-.dash-status-item--cancelled .dash-status-item__count { color: #EF4444; }
-.dash-status-item--total .dash-status-item__count { color: var(--admin-text-primary); }
+.dash-status-tile__label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--admin-text-secondary);
+}
 
-/* ========== Top Products ========== */
+/* ========== Inventory Alerts ========== */
+.dash-inventory-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-inventory-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--admin-border);
+  gap: 12px;
+}
+
+.dash-inventory-row:last-child {
+  border-bottom: none;
+}
+
+.dash-inventory-row__info {
+  text-align: left;
+}
+
+.dash-inventory-row__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--admin-text-primary);
+}
+
+.dash-inventory-row__desc {
+  font-size: 12px;
+  color: var(--admin-text-muted);
+  margin-top: 2px;
+}
+
+.dash-inventory-row__badge {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--admin-r-sm);
+  border: 1px solid transparent;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-inventory-row__badge--warn {
+  background: var(--admin-warning-subtle);
+  color: var(--admin-warning);
+  border-color: var(--admin-warning-border);
+}
+
+.dash-inventory-row__badge--danger {
+  background: var(--admin-error-subtle);
+  color: var(--admin-error);
+  border-color: var(--admin-error-border);
+}
+
+/* ========== Lists (Top Products / Recent Orders) ========== */
+.dash-list {
+  display: flex;
+  flex-direction: column;
+}
+
 .dash-top-product {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 12px 20px;
+  gap: 10px;
+  padding: 8px 16px;
   border-bottom: 1px solid var(--admin-border);
-  transition: background var(--admin-tr);
+  height: 42px;
+  box-sizing: border-box;
+  text-align: left;
 }
 
-.dash-top-product:last-child { border-bottom: none; }
+.dash-top-product:last-child {
+  border-bottom: none;
+}
 
-.dash-top-product:hover { background: var(--admin-bg); }
+.dash-top-product:hover {
+  background: var(--admin-surface-hover);
+}
 
 .dash-top-product__rank {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--admin-bg);
+  width: 20px;
+  height: 20px;
+  border-radius: var(--admin-r-xs);
+  background: var(--admin-surface-subtle);
   border: 1px solid var(--admin-border);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--admin-text-secondary);
   flex-shrink: 0;
 }
 
-.dash-top-product__rank--1 { background: #FEF3C7; border-color: #F59E0B; color: #92400E; }
-.dash-top-product__rank--2 { background: #F1F5F9; border-color: #94A3B8; color: #334155; }
-.dash-top-product__rank--3 { background: #FEF0E7; border-color: #FDBA74; color: #9A3412; }
-
 .dash-top-product__img {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  overflow: hidden;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--admin-r-xs);
   border: 1px solid var(--admin-border);
+  overflow: hidden;
+  background: var(--admin-surface-subtle);
   flex-shrink: 0;
-  background: var(--admin-bg);
 }
 
 .dash-top-product__img img {
@@ -230,8 +241,8 @@
 }
 
 .dash-top-product__name {
-  font-size: 13.5px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--admin-text-primary);
   flex: 1;
   min-width: 0;
@@ -241,124 +252,82 @@
 }
 
 .dash-top-product__sold {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--admin-primary);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--admin-text-secondary);
   flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
-/* ========== Recent Orders ========== */
+/* Recent Orders */
 .dash-recent-order {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 11px 20px;
+  gap: 10px;
+  padding: 8px 16px;
   border-bottom: 1px solid var(--admin-border);
-  transition: background var(--admin-tr);
+  height: 42px;
+  box-sizing: border-box;
+  text-align: left;
 }
 
-.dash-recent-order:last-child { border-bottom: none; }
-.dash-recent-order:hover { background: var(--admin-bg); }
+.dash-recent-order:last-child {
+  border-bottom: none;
+}
+
+.dash-recent-order:hover {
+  background: var(--admin-surface-hover);
+}
 
 .dash-recent-order__id {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12.5px;
+  font-weight: 600;
   color: var(--admin-text-primary);
-  width: 52px;
+  width: 48px;
   flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
 
 .dash-recent-order__email {
-  flex: 1;
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--admin-text-secondary);
+  flex: 1;
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.dash-recent-order__status {
+  flex-shrink: 0;
+}
+
 .dash-recent-order__total {
   font-size: 13px;
-  font-weight: 700;
-  color: var(--admin-text-primary);
-  flex-shrink: 0;
-}
-
-/* ========== Inventory Alert ========== */
-.dash-inventory-alert {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 20px;
-  gap: 12px;
-}
-
-.dash-inventory-alert__info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.dash-inventory-alert__icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.dash-inventory-alert__icon--warn {
-  background: #FFFBEB;
-  color: #D97706;
-  border: 1px solid #FDE68A;
-}
-
-.dash-inventory-alert__icon--danger {
-  background: #FEF2F2;
-  color: #DC2626;
-  border: 1px solid #FECACA;
-}
-
-.dash-inventory-alert__label {
-  font-size: 13.5px;
   font-weight: 600;
   color: var(--admin-text-primary);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
-.dash-inventory-alert__desc {
-  font-size: 12px;
-  color: var(--admin-text-secondary);
-  margin-top: 1px;
-}
-
-.dash-inventory-alert__count {
-  font-size: 24px;
-  font-weight: 800;
-}
-
-.dash-inventory-alert__count--warn { color: #D97706; }
-.dash-inventory-alert__count--danger { color: #DC2626; }
-
-/* ========== Skeleton ========== */
+/* Skeleton Loading */
 .dash-skeleton {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
   background-size: 200% 100%;
-  animation: dash-shimmer 1.4s infinite;
-  border-radius: 6px;
+  animation: dash-skeleton-pulse 1.4s ease infinite;
 }
 
-@keyframes dash-shimmer {
+@keyframes dash-skeleton-pulse {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
 
-/* ========== Empty ========== */
+/* Empty State */
 .dash-empty {
-  text-align: center;
-  padding: 32px 20px;
+  text-align: left;
+  padding: 24px 16px;
+  font-size: 12.5px;
   color: var(--admin-text-secondary);
-  font-size: 13.5px;
 }

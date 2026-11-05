@@ -28,6 +28,9 @@ class OrderCancellationServiceTest {
 
     @Mock
     private OrderRepository orderRepository;
+    @Mock private com.ecommerce.promotion.service.VoucherUsageService voucherUsageService;
+    @Mock private com.ecommerce.payment.repository.PaymentRepository paymentRepository;
+    @org.mockito.Spy private java.time.Clock clock = java.time.Clock.systemUTC();
 
     @InjectMocks
     private OrderCancellationService orderCancellationService;
@@ -45,7 +48,8 @@ class OrderCancellationServiceTest {
     void cancelExpiredOrder_AlreadyCancelled_ShouldDoNothing() {
         // Arrange
         order.setStatus(OrderStatus.CANCELLED);
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findPaymentMethodById(1L)).thenReturn(Optional.of(com.ecommerce.payment.enums.PaymentMethod.VNPAY));
+        when(orderRepository.lockRootById(1L)).thenReturn(Optional.of(order));
 
         // Act
         orderCancellationService.cancelExpiredOrder(1L);
@@ -62,15 +66,21 @@ class OrderCancellationServiceTest {
         Payment payment = new Payment();
         payment.setPaymentStatus(PaymentStatus.PENDING);
         order.setPayment(payment);
+        order.setPaymentMethod(com.ecommerce.payment.enums.PaymentMethod.VNPAY);
+        payment.setExpiresAt(clock.instant().minusSeconds(900));
+        when(paymentRepository.lockByOrderId(1L)).thenReturn(Optional.of(payment));
+        order.setCreateAt(java.time.LocalDateTime.now(clock).minusHours(1));
         
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.findPaymentMethodById(1L)).thenReturn(Optional.of(com.ecommerce.payment.enums.PaymentMethod.VNPAY));
+        when(orderRepository.lockRootById(1L)).thenReturn(Optional.of(order));
 
         // Act
         orderCancellationService.cancelExpiredOrder(1L);
 
         // Assert
         assertEquals(OrderStatus.CANCELLED, order.getStatus());
-        assertEquals(PaymentStatus.FAILED, payment.getPaymentStatus());
+        assertEquals(PaymentStatus.PENDING, payment.getPaymentStatus());
+        assertEquals(com.ecommerce.payment.enums.RefundStatus.RECONCILIATION_REQUIRED, payment.getRefundStatus());
         verify(orderRepository).save(order);
     }
 }

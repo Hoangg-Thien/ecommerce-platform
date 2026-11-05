@@ -31,6 +31,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CartServiceTest {
+    @Mock private com.ecommerce.promotion.service.ProductSalePricingService salePricing;
 
     @Mock
     private CartRepository cartRepository;

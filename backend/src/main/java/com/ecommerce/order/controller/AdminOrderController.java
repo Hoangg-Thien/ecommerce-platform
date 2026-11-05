@@ -31,14 +31,17 @@ public class AdminOrderController {
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size,
         @RequestParam(required = false) OrderStatus status,
-        @RequestParam(required = false) String email
+        @RequestParam(required = false) String email,
+        @RequestParam(required = false) com.ecommerce.payment.enums.PaymentMethod paymentMethod,
+        @RequestParam(required = false) com.ecommerce.payment.enums.PaymentStatus paymentStatus,
+        @RequestParam(required = false) com.ecommerce.payment.enums.RefundStatus refundStatus
     ) {
         if (page < 0) page = 0;
         if (size <= 0) size = 10;
         if (size > 100) size = 100;
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createAt").descending());
-        PageResponse<AdminOrderResponse> result = adminOrderService.getAllOrders(status, email, pageable);
+        PageResponse<AdminOrderResponse> result = adminOrderService.getAllOrders(status, email, paymentMethod, paymentStatus, refundStatus, pageable);
         return ResponseEntity.ok(result);
     }
 

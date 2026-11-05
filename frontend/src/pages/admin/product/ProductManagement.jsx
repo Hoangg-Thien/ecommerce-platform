@@ -1,30 +1,36 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Search, Package, SlidersHorizontal } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Package, SlidersHorizontal, X } from 'lucide-react';
 import AdminTable from '../../../components/admin/AdminTable';
 import ConfirmModal from '../../../components/ui/ConfirmModal';
 import Pagination from '../../../components/ui/Pagination';
-import '../../../components/admin/AdminModal.css';
 import productApi from '../../../api/productApi';
 import categoryApi from '../../../api/categoryApi';
 import { useToast } from '../../../context/ToastContext';
 import './ProductManagement.css';
 
 const formatPrice = (price) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price ?? 0);
 
 const buildColumns = (onEdit, onDelete) => [
   {
     key: 'image',
     label: '',
-    skeletonWidth: '48px',
+    skeletonWidth: '36px',
     render: (row) => (
       <div className="adm-prod-thumb">
         {row.imageUrl ? (
-          <img src={row.imageUrl} alt={row.name} onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+          <img
+            src={row.imageUrl}
+            alt={row.name}
+            onError={(e) => {
+              e.target.style.display = 'none';
+              if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+            }}
+          />
         ) : null}
         <div className="adm-prod-thumb__fallback" style={{ display: row.imageUrl ? 'none' : 'flex' }}>
-          <Package size={20} />
+          <Package size={16} />
         </div>
       </div>
     ),
@@ -32,7 +38,7 @@ const buildColumns = (onEdit, onDelete) => [
   {
     key: 'name',
     label: 'Sản phẩm',
-    skeletonWidth: '70%',
+    skeletonWidth: '60%',
     render: (row) => (
       <div>
         <div className="adm-prod-name">{row.name}</div>
@@ -43,7 +49,8 @@ const buildColumns = (onEdit, onDelete) => [
   {
     key: 'price',
     label: 'Giá',
-    skeletonWidth: '50%',
+    className: 'col-currency',
+    skeletonWidth: '80px',
     render: (row) => (
       <span className="adm-prod-price">{formatPrice(row.price)}</span>
     ),
@@ -51,7 +58,8 @@ const buildColumns = (onEdit, onDelete) => [
   {
     key: 'variants',
     label: 'Biến thể',
-    skeletonWidth: '40px',
+    className: 'col-number',
+    skeletonWidth: '50px',
     render: (row) => (
       <span className="adm-prod-variant-count">
         {row.variants?.length ?? 0} size
@@ -61,22 +69,23 @@ const buildColumns = (onEdit, onDelete) => [
   {
     key: 'stock',
     label: 'Tồn kho',
+    className: 'col-number',
     skeletonWidth: '40px',
     render: (row) => {
       const total = row.stock ?? 0;
       const low = total < 10;
       return (
         <span className={`adm-prod-stock ${low ? 'adm-prod-stock--low' : ''}`}>
-          {total}
+          {total.toLocaleString('vi-VN')}
         </span>
       );
     },
   },
   {
     key: 'actions',
-    label: 'Thao tác',
+    label: '',
     className: 'col-actions',
-    skeletonWidth: '60px',
+    skeletonWidth: '50px',
     render: (row) => (
       <div className="admin-table__action-group">
         <button
@@ -85,7 +94,7 @@ const buildColumns = (onEdit, onDelete) => [
           aria-label={`Sửa ${row.name}`}
           title="Chỉnh sửa"
         >
-          <Pencil size={15} />
+          <Pencil size={13} />
         </button>
         <button
           className="admin-table__action-btn danger"
@@ -93,7 +102,7 @@ const buildColumns = (onEdit, onDelete) => [
           aria-label={`Xoá ${row.name}`}
           title="Xoá"
         >
-          <Trash2 size={15} />
+          <Trash2 size={13} />
         </button>
       </div>
     ),
@@ -158,7 +167,7 @@ export default function ProductManagement() {
       setProducts(res.content ?? []);
       setTotalPages(res.totalPages ?? 0);
       setTotalElements(res.totalElements ?? 0);
-    } catch (err) {
+    } catch {
       showToast('Không thể tải danh sách sản phẩm', 'error');
     } finally {
       setIsLoading(false);
@@ -207,25 +216,29 @@ export default function ProductManagement() {
   return (
     <div className="admin-page">
       {/* Page Header */}
-      <div className="admin-page__header">
+      <div className="admin-page-header">
         <div>
-          <h1 className="admin-page__title">Sản phẩm</h1>
-          <p className="admin-page__subtitle">{totalElements} sản phẩm</p>
+          <h1 className="admin-page-title">Sản phẩm</h1>
+          <p className="admin-page-desc">
+            {totalElements > 0
+              ? `${totalElements.toLocaleString('vi-VN')} sản phẩm trong danh mục`
+              : 'Chưa có sản phẩm nào'}
+          </p>
         </div>
         <button
           id="btn-add-product"
           className="admin-btn admin-btn--primary"
           onClick={() => navigate('/admin/products/new')}
         >
-          <Plus size={16} />
-          Thêm sản phẩm
+          <Plus size={14} />
+          <span>Thêm sản phẩm</span>
         </button>
       </div>
 
       {/* Filter Bar */}
       <div className="product-filter-bar">
         <form className="product-filter-bar__search" onSubmit={handleSearch}>
-          <Search size={16} className="product-filter-bar__search-icon" />
+          <Search size={14} className="product-filter-bar__search-icon" />
           <input
             id="product-search-input"
             className="product-filter-bar__search-input"
@@ -235,19 +248,25 @@ export default function ProductManagement() {
             onChange={(e) => setSearchInput(e.target.value)}
           />
           {searchInput && (
-            <button type="button" className="product-filter-bar__search-clear" onClick={() => { setSearchInput(''); setSearch(''); setPage(0); }}>
-              ✕
+            <button
+              type="button"
+              className="product-filter-bar__search-clear"
+              onClick={() => { setSearchInput(''); setSearch(''); setPage(0); }}
+              aria-label="Xoá tìm kiếm"
+            >
+              <X size={13} />
             </button>
           )}
         </form>
 
         <div className="product-filter-bar__filters">
-          <SlidersHorizontal size={15} style={{ color: 'var(--admin-text-secondary)', flexShrink: 0 }} />
+          <SlidersHorizontal size={14} style={{ color: 'var(--admin-text-muted)', flexShrink: 0 }} />
           <select
             id="product-category-filter"
             className="admin-select product-filter-bar__select"
             value={selectedCategory}
             onChange={handleCategoryChange}
+            aria-label="Lọc theo danh mục"
           >
             <option value="">Tất cả danh mục</option>
             {categories.map((c) => (
@@ -268,11 +287,13 @@ export default function ProductManagement() {
       />
 
       {/* Pagination */}
-      <Pagination
-        currentPage={page}
-        totalPages={totalPages}
-        onPageChange={setPage}
-      />
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
+      )}
 
       {/* Delete Confirm */}
       <ConfirmModal

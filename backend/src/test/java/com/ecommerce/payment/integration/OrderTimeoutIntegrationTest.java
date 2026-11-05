@@ -63,8 +63,8 @@ class OrderTimeoutIntegrationTest {
     }
 
     @Test
-    @DisplayName("Integration Test: Expired MoMo order should be CANCELLED and stock remains unchanged")
-    void testSchedulerCancelsExpiredOrderAndLeavesStockIntact() {
+    @DisplayName("Integration Test: Expired MoMo order stays unchanged and stock remains unchanged")
+    void testSchedulerNeverChangesRetiredMomoPending() {
         // 1. Create a Product
         Product product = new Product();
         product.setName("Test Product");
@@ -108,12 +108,12 @@ class OrderTimeoutIntegrationTest {
                 LocalDateTime.now().minusDays(1), order.getId());
 
         // 4. Act: run scheduler
-        scheduler.cancelExpiredMomoPayments();
+        scheduler.cancelExpiredOnlinePayments();
 
         // 5. Assert: check order status and product stock
         Order updatedOrder = orderRepository.findById(order.getId()).orElseThrow();
-        assertEquals(OrderStatus.CANCELLED, updatedOrder.getStatus());
-        assertEquals(PaymentStatus.FAILED, updatedOrder.getPayment().getPaymentStatus());
+        assertEquals(OrderStatus.AWAITING_PAYMENT, updatedOrder.getStatus());
+        assertEquals(PaymentStatus.PENDING, updatedOrder.getPayment().getPaymentStatus());
 
         com.ecommerce.product.entity.ProductVariant updatedVariant = productVariantRepository.findById(variant.getId()).orElseThrow();
         assertEquals(100, updatedVariant.getStock(), "Stock should remain unchanged");

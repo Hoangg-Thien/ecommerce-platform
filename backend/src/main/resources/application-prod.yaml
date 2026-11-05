@@ -19,6 +19,7 @@ spring:
         format_sql: false
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+
 logging:
   level:
     root: INFO

@@ -9,7 +9,8 @@ export default function RadioBox({
   label, 
   description, 
   priceLabel,
-  icon
+  icon,
+  disabled = false
 }) {
   return (
     <label className={`radio-box ${checked ? 'radio-box-checked' : ''}`} htmlFor={id}>
@@ -20,6 +21,7 @@ export default function RadioBox({
           name={name} 
           value={value} 
           checked={checked} 
+          disabled={disabled}
           onChange={onChange}
           className="radio-box-input"
         />

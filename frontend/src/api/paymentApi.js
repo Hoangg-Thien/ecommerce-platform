@@ -3,8 +3,8 @@ import axiosClient from './axiosClient';
 const paymentApi = {
 
     // polling for order status
-    getPaymentStatus: (orderId) => {
-        return axiosClient.get(`/payments/order/${orderId}`);
+    getPaymentStatus: (orderId, signal) => {
+        return axiosClient.get(`/payments/order/${orderId}`, { signal });
     }
 };
 

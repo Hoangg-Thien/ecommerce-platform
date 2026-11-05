@@ -11,7 +11,6 @@ import com.ecommerce.cart.entity.CartItem;
 import com.ecommerce.order.entity.Order;
 import com.ecommerce.order.entity.OrderItem;
 import com.ecommerce.payment.entity.Payment;
-import com.ecommerce.product.entity.Product;
 import com.ecommerce.product.entity.ProductVariant;
 import com.ecommerce.order.enums.OrderStatus;
 import com.ecommerce.payment.enums.PaymentStatus;
@@ -19,7 +18,7 @@ import com.ecommerce.cart.repository.CartRepository;
 import com.ecommerce.cart.repository.CartItemRepository;
 import com.ecommerce.order.repository.OrderRepository;
 import com.ecommerce.payment.repository.PaymentRepository;
-import com.ecommerce.product.repository.ProductRepository;
+import com.ecommerce.promotion.service.VoucherUsageService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,65 +32,39 @@ public class PaymentFulfillmentService {
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
-    private final ProductRepository productRepository;
-    private final PaymentRefundService paymentRefundService;
+    private final VoucherUsageService voucherUsageService;
+    private final com.ecommerce.product.repository.ProductVariantRepository variants;
 
-    @Transactional
-    public void processSuccess(Payment payment, String transactionId) {
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public void processVnpaySuccess(Payment payment) {
         Order order = payment.getOrder();
-
-        // VALIDATE STOCK TRƯỚC TIÊN
-        for (OrderItem orderItem : order.getItems()) {
-            Product product = orderItem.getProduct();
-            ProductVariant variant = product.getVariantBySize(orderItem.getSize())
-            .orElse(null);
-
-            if (variant == null || variant.getStock() < orderItem.getQuantity()) {
-                log.warn("Out of stock during IPN process for Order {}. Product: {}, Required: {}, Available: {}",
-                        order.getId(), product.getName(), orderItem.getQuantity(), variant != null ? variant.getStock() : 0);
-
-                // Lưu transactionId để biết mã mà refund
-                payment.setTransactionId(transactionId);
-
-                // Đánh rớt đơn hàng vì không có hàng để giao
-                payment.setPaymentStatus(PaymentStatus.FAILED);
-                order.setStatus(OrderStatus.CANCELLED);
-                orderRepository.save(order);
-
-                // Kích hoạt tự động hoàn tiền lại cho khách
-                log.info("Triggering automatic refund for Order {} due to OUT OF STOCK", order.getId());
-                paymentRefundService.processRefund(payment.getId());
-
-                return;
-            }
+        if (order.getStatus() != OrderStatus.AWAITING_PAYMENT) {
+            payment.setRefundStatus(com.ecommerce.payment.enums.RefundStatus.REQUIRED_MANUAL);
+            payment.setReason(order.getStatus() == OrderStatus.CANCELLED ? "LATE_PAID_AFTER_CANCEL" : "ORDER_STATE_REQUIRES_REVIEW");
+            return;
         }
-
-        // Cập nhật Payment thành công
-        payment.setPaymentStatus(PaymentStatus.PAID);
-        payment.setTransactionId(transactionId);
-        paymentRepository.save(payment);
-
-        // Cập nhật Order thành công
-        if (order.getStatus() == OrderStatus.CANCELLED) {
-            log.error("Fatal: Trying to set CONFIRMED on CANCELLED order {}.", order.getId());
-            return; // cancel roi ko duoc confirmed
+        var lockedVariants = variants.lockForOrder(order.getId());
+        var locked = new java.util.LinkedHashMap<OrderItem,ProductVariant>();
+        for (OrderItem item : order.getItems())
+            locked.put(item, lockedVariants.stream().filter(v -> v.getProduct().getId().equals(item.getProduct().getId())
+                    && v.getSize().equals(item.getSize())).findFirst().orElse(null));
+        if (locked.entrySet().stream().anyMatch(e -> e.getValue() == null || e.getValue().getStock() < e.getKey().getQuantity())) {
+            order.setStatus(OrderStatus.CANCELLED);
+            payment.setRefundStatus(com.ecommerce.payment.enums.RefundStatus.REQUIRED_MANUAL);
+            payment.setReason("OUT_OF_STOCK");
+            orderRepository.save(order);
+            voucherUsageService.releaseByOrderId(order.getId());
+            return;
         }
-
+        locked.forEach((item, variant) -> variant.setStock(variant.getStock() - item.getQuantity()));
         order.setStatus(OrderStatus.CONFIRMED);
-        orderRepository.save(order);
+        payment.setRefundStatus(com.ecommerce.payment.enums.RefundStatus.NONE);
+        payment.setReason(null);
+        clearPurchasedCart(order);
+    }
 
-        // Trừ stock
-        for (OrderItem orderItem : order.getItems()) {
-            Product product = orderItem.getProduct();
-            ProductVariant variant = product.getVariantBySize(orderItem.getSize())
-            .orElse(null);
-            if (variant != null) {
-                variant.setStock(variant.getStock() - orderItem.getQuantity());
-                productRepository.save(product);
-            }
-        }
-
-        // Xóa cart (xóa các CartItem trong database)
+    private void clearPurchasedCart(Order order) {
+        // shortcut: product+size removes the line even if quantity changed during payment; preserve MVP cart semantics.
         Cart cart = cartRepository.findByUserId(order.getUser().getId()).orElse(null);
         if (cart != null) {
            List <CartItem> itemsToRemove = cart.getItems().stream()
@@ -105,12 +78,14 @@ public class PaymentFulfillmentService {
         cart.getItems().removeAll(itemsToRemove);
         }
 
-        log.info("Payment SUCCESS for order {}. TransactionId: {}", order.getId(), transactionId);
     }
 
     @Transactional
     public void processFailure(Payment payment, String reason) {
         Order order = payment.getOrder();
+        if (order.getStatus() == OrderStatus.CANCELLED
+                || order.getStatus() == OrderStatus.DONE
+                || payment.getPaymentStatus() != PaymentStatus.PENDING) return;
 
         // Set fail
         payment.setPaymentStatus(PaymentStatus.FAILED);
@@ -118,6 +93,7 @@ public class PaymentFulfillmentService {
 
         order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
+        voucherUsageService.releaseByOrderId(order.getId());
 
         log.info("Payment FAILED for order {}. Reason: {}", order.getId(), reason);
     }

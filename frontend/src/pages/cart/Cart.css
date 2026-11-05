@@ -10,6 +10,7 @@
 }
 
 .cart-header {
+  flex-wrap: wrap;
   display: flex;
   align-items: baseline;
   gap: 12px;
@@ -36,6 +37,7 @@
 }
 
 .cart-items-section {
+  min-width: 0;
   flex: 1;
 }
 

@@ -1,103 +1,78 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
 import paymentApi from '../../api/paymentApi';
 import Button from '../../components/ui/Button';
 import { useCart } from '../../context/CartContext';
-import { CheckCircle2, XCircle, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { paymentOutcome } from '../../utils/payment';
+import { CheckCircle2, XCircle, CircleHelp } from 'lucide-react';
 import './PaymentResult.css';
 
 export default function PaymentResult() {
   const [searchParams] = useSearchParams();
+  const orderId = searchParams.get('orderId');
+  return <PaymentResultBody key={orderId || 'invalid'} orderId={orderId} />;
+}
+
+function PaymentResultBody({ orderId }) {
   const navigate = useNavigate();
   const { fetchCart } = useCart();
-  
-  const orderId = searchParams.get('orderId');
-  const [status, setStatus] = useState('PENDING'); // PENDING, SUCCESS, FAILED
-  const [isLoading, setIsLoading] = useState(true);
+  const refreshCart = useRef(fetchCart);
+  useEffect(() => { refreshCart.current = fetchCart; }, [fetchCart]);
+  const [result, setResult] = useState({ status: 'PENDING' });
 
   useEffect(() => {
-    if (!orderId) {
-      navigate('/');
-      return;
-    }
-
-    const checkPaymentStatus = async () => {
+    let active = true, timer, attempts = 0;
+    const abort = new AbortController();
+    const check = async () => {
+      if (!orderId || !/^\d+$/.test(orderId)) { setResult({ status: 'UNVERIFIED' }); return; }
       try {
-        const response = await paymentApi.getPaymentStatus(orderId);
-        const payment = response;
-        
-        if (payment.paymentStatus === 'PAID' || payment.paymentMethod === 'COD') {
-          setStatus('SUCCESS');
-          fetchCart(); // Cập nhật lại giỏ hàng trên Header
-        } else if (payment.paymentStatus === 'FAILED' || payment.paymentStatus === 'CANCELLED') {
-          setStatus('FAILED');
-        } else {
-          // Nếu vẫn PENDING (do IPN của MoMo chưa gọi kịp), chờ 2 giây rồi check lại (Polling)
-          setTimeout(checkPaymentStatus, 2000);
+        const payment = await paymentApi.getPaymentStatus(orderId, abort.signal);
+        if (!active) return;
+        const status = paymentOutcome(payment);
+        setResult({ status, paid: payment.paymentStatus === 'PAID', method: payment.paymentMethod });
+        if (status !== 'PENDING') {
+          if (status === 'COD' || status === 'PAID') refreshCart.current();
           return;
         }
-      } catch (error) {
-        console.error('Không tìm thấy giao dịch', error);
-        setStatus('FAILED');
-      } finally {
-        setIsLoading(false);
+      } catch {
+        if (!active) return;
+        // A network/auth error says nothing about whether VNPay received money.
       }
+      attempts++;
+      if (attempts >= 8) { setResult({ status: 'UNVERIFIED' }); return; }
+      timer = setTimeout(check, Math.min(2000 * 2 ** (attempts - 1), 8000));
     };
+    check();
+    return () => { active = false; abort.abort(); clearTimeout(timer); };
+  }, [orderId]);
 
-    checkPaymentStatus();
-  }, [orderId, navigate]);
-
+  const messages = {
+    COD: ['Đặt hàng COD thành công', 'Đơn đã được ghi nhận. Bạn thanh toán khi nhận hàng.'],
+    PAID: [result.method === 'VNPAY' ? 'VNPay đã xác nhận thanh toán' : 'Thanh toán thành công',
+      result.method === 'MOMO' ? 'Kết quả MoMo mô phỏng đã được ghi nhận.' : 'Đơn hàng của bạn đã được ghi nhận thanh toán thành công.'],
+    MANUAL: [result.paid ? 'Đã thanh toán, cần xử lý thủ công' : 'Giao dịch cần đối soát',
+      'Hệ thống cần xác minh hoặc xử lý đơn này. Chưa có xác nhận hoàn tiền. Vui lòng liên hệ hỗ trợ.'],
+    FAILED: ['Thanh toán thất bại', 'Backend đã ghi nhận kết quả thanh toán thất bại. Hãy kiểm tra đơn trước khi đặt lại.'],
+    UNVERIFIED: ['Chưa xác minh được thanh toán', 'Không thể kết luận giao dịch thất bại. Bạn có thể xem đơn hàng hoặc quay lại kiểm tra sau.'],
+    PENDING: ['Đang xử lý giao dịch...', 'Đang chờ kết quả từ backend. Bạn có thể đóng trang và kiểm tra lại trong Đơn hàng của tôi.'],
+  };
+  const [title, message] = messages[result.status];
   return (
     <MainLayout>
-      <div className="payment-result-page">
-        <div className="payment-result-card">
-          {isLoading || status === 'PENDING' ? (
-            <>
-              <div className="result-icon-wrapper pending">
-                <div className="spinner"></div>
-              </div>
-              <h1 className="result-title">Đang xử lý giao dịch...</h1>
-              <p className="result-message">
-                Vui lòng đợi trong giây lát và không đóng trình duyệt lúc này.
-              </p>
-            </>
-          ) : status === 'SUCCESS' ? (
-            <>
-              <div className="result-icon-wrapper success">
-                <CheckCircle2 size={40} />
-              </div>
-              <h1 className="result-title">Đặt hàng thành công!</h1>
-              <p className="result-message">
-                Cảm ơn bạn đã mua sắm. Đơn hàng <strong>#{orderId}</strong> của bạn đã được ghi nhận.
-              </p>
-              <div className="result-actions">
-                <Button onClick={() => navigate('/orders')} variant="primary" className="btn">
-                  <ShoppingBag size={18} style={{ marginRight: '8px' }} /> Xem đơn hàng
-                </Button>
-                <Button onClick={() => navigate('/')} variant="outline" className="btn">
-                  Tiếp tục mua sắm
-                </Button>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="result-icon-wrapper failed">
-                <XCircle size={40} />
-              </div>
-              <h1 className="result-title">Thanh toán thất bại</h1>
-              <p className="result-message">
-                Rất tiếc, giao dịch của bạn đã bị từ chối hoặc đã bị hủy. Vui lòng thử lại với phương thức thanh toán khác.
-              </p>
-              <div className="result-actions">
-                <Button onClick={() => navigate('/cart')} variant="primary" className="btn">
-                  <ArrowLeft size={18} style={{ marginRight: '8px' }} /> Quay lại giỏ hàng
-                </Button>
-              </div>
-            </>
-          )}
+      <div className="payment-result-page"><div className="payment-result-card" aria-live="polite">
+        <div className={`result-icon-wrapper ${result.status === 'FAILED' ? 'failed' : ['PAID', 'COD'].includes(result.status) ? 'success' : 'pending'}`}>
+          {result.status === 'PENDING' ? <div className="spinner" /> : result.status === 'FAILED' ? <XCircle size={40} />
+            : ['PAID', 'COD'].includes(result.status) ? <CheckCircle2 size={40} /> : <CircleHelp size={40} />}
         </div>
-      </div>
+        <h1 className="result-title">{title}</h1>
+        <p className="result-message">{message}</p>
+        {orderId && <p>Đơn hàng #{orderId}</p>}
+        <div className="result-actions">
+          <Button onClick={() => navigate('/orders')} variant="primary">Xem đơn hàng</Button>
+          <Button onClick={() => navigate('/')} variant="outline">Tiếp tục mua sắm</Button>
+        </div>
+      </div></div>
     </MainLayout>
   );
 }

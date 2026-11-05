@@ -12,7 +12,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: true
     properties:
       # jakarta.persistence.schema-generation.scripts.action: create
@@ -36,17 +36,30 @@ application:
       refresh-token:
         expiration: 604800000 # 7 days
 
-momo:
-  partner-code: ${MOMO_PARTNER_CODE:}
-  access-key: ${MOMO_ACCESS_KEY:}
-  secret-key: ${MOMO_SECRET_KEY:}
-  api-url: ${MOMO_API_URL:https://test-payment.momo.vn/v2/gateway/api/create}
-  redirect-url: ${MOMO_REDIRECT_URL:}
-  ipn-url: ${MOMO_IPN_URL:}
+app:
+  shipping:
+    flat-fee: ${SHIPPING_FLAT_FEE:30000}
 
 payment:
-  momo:
-    mock-enabled: true
+  vnpay:
+    enabled: ${VNPAY_ENABLED:false}
+    tmn-code: ${VNPAY_TMN_CODE:}
+    hash-secret: ${VNPAY_HASH_SECRET:}
+    pay-url: ${VNPAY_PAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+    return-url: ${VNPAY_RETURN_URL:}
+    frontend-origin: ${VNPAY_FRONTEND_ORIGIN:http://localhost:5173}
+
+# Avoid signed query strings / JDBC bind values in framework diagnostics.
+logging:
+  level:
+    org.springframework.web: INFO
+    org.hibernate.orm.jdbc.bind: WARN
+    org.springframework.jdbc.core: INFO
+
+server:
+  tomcat:
+    accesslog:
+      enabled: false
 
 rate-limit:
   enabled: true
@@ -88,9 +101,4 @@ rate-limit:
   order-read:
     capacity: 60
     refill-tokens: 60
-    refill-duration-seconds: 60
-
-  mock-payment:
-    capacity: 10
-    refill-tokens: 10
     refill-duration-seconds: 60

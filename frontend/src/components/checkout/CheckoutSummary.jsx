@@ -2,8 +2,8 @@ import { Lock } from 'lucide-react';
 import Button from '../ui/Button';
 import './CheckoutSummary.css';
 
-export default function CheckoutSummary({ cartItems, subtotal, shippingFee, onCompleteOrder, isProcessing, isFormValid = true }) {
-  const total = subtotal + shippingFee;
+export default function CheckoutSummary({ cartItems, subtotal, originalSubtotal, productDiscountTotal, discountSource, voucherCode, canSubmit = true, shippingFee, orderDiscount = 0, total: serverTotal, actionLabel = 'Hoàn tất đặt hàng', onCompleteOrder, isProcessing, isFormValid = true }) {
+  const total = serverTotal;
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -39,6 +39,12 @@ export default function CheckoutSummary({ cartItems, subtotal, shippingFee, onCo
       <div className="summary-divider"></div>
       
       <div className="summary-content">
+        <div className="summary-row"><span>Tiền hàng gốc</span><span>{formatPrice(originalSubtotal)}</span></div>
+        {productDiscountTotal > 0 && <div className="summary-row"><span>Giảm sản phẩm</span><span>−{formatPrice(productDiscountTotal)}</span></div>}
+        {orderDiscount > 0 && <div className="summary-row">
+          <span className="summary-label">{discountSource === 'VOUCHER' ? `Mã ${voucherCode}` : 'Ưu đãi tự động'}:</span>
+          <span className="summary-value">-{formatPrice(orderDiscount)}</span>
+        </div>}
         <div className="summary-row">
           <span className="summary-label">Tạm tính: </span>
           <span className="summary-value">{formatPrice(subtotal)}</span>
@@ -62,11 +68,11 @@ export default function CheckoutSummary({ cartItems, subtotal, shippingFee, onCo
       <Button 
         variant="primary" 
         onClick={onCompleteOrder}
-        disabled={isProcessing || !isFormValid}
+        disabled={isProcessing || !isFormValid || !canSubmit}
         isLoading={isProcessing}
         className="complete-order-btn"
       >
-        <span>Hoàn tất đặt hàng</span>
+        <span>{actionLabel}</span>
       </Button>
 
       {!isFormValid && (

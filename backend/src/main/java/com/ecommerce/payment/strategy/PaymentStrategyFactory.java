@@ -11,12 +11,13 @@ import lombok.RequiredArgsConstructor;
 public class PaymentStrategyFactory {
 
     private final CodPaymentStrategy codPaymentStrategy;
-    private final MomoPaymentStrategy momoPaymentStrategy;
+    private final VnpayPaymentStrategy vnpayPaymentStrategy;
 
     public PaymentStrategy getPaymentStrategy(PaymentMethod paymentMethod){
         return switch(paymentMethod){
             case COD -> codPaymentStrategy;
-            case MOMO -> momoPaymentStrategy;
+            case MOMO -> throw new IllegalArgumentException("MOMO is a historical payment method only");
+            case VNPAY -> vnpayPaymentStrategy;
         };
     }
 }

@@ -51,7 +51,7 @@ class RateLimitFilterTest {
         @PostMapping("/api/v1/auth/refresh")  public String refresh()  { return "ok"; }
         @PostMapping("/api/v1/auth/logout")   public String logout()   { return "ok"; }
         @GetMapping("/api/v1/products")       public String products() { return "ok"; }
-        @PostMapping("/api/v1/payments/momo/ipn") public String momoIpn() { return "ok"; }
+        @GetMapping("/api/v1/payments/vnpay/ipn") public String vnpayIpn() { return "ok"; }
         @PostMapping("/api/v1/checkout")      public String checkout() { return "ok"; }
         @PostMapping("/api/v1/carts/add")     public String cartAdd()  { return "ok"; }
     }
@@ -95,7 +95,6 @@ class RateLimitFilterTest {
         // Sensitive/checkout — capacity 2
         p.setSensitive(new RateLimitProperties.GroupLimit(2, 2, 60));
         p.setCheckout(new RateLimitProperties.GroupLimit(2, 2, 60));
-        p.setMockPayment(new RateLimitProperties.GroupLimit(2, 2, 60));
         p.setOrderRead(new RateLimitProperties.GroupLimit(2, 2, 60));
 
         return p;
@@ -221,14 +220,14 @@ class RateLimitFilterTest {
         }
     }
 
-    // --- Test 8: MoMo IPN → bypass, never rate limited ----------------------
+    // --- Test 8: VNPay IPN → bypass, never rate limited ----------------------
 
     @Test
-    @DisplayName("8. MoMo IPN endpoint → bypass, never rate limited")
-    void momoIpn_isBypassEndpoint_neverRateLimited() throws Exception {
+    @DisplayName("8. VNPay IPN endpoint → bypass, never rate limited")
+    void vnpayIpn_isBypassEndpoint_neverRateLimited() throws Exception {
         // Send many requests — should never 429
         for (int i = 0; i < 10; i++) {
-            mockMvc.perform(post("/api/v1/payments/momo/ipn")
+            mockMvc.perform(get("/api/v1/payments/vnpay/ipn")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{}"))
                     .andExpect(status().isOk());

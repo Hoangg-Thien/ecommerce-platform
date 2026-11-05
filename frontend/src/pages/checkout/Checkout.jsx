@@ -1,140 +1,179 @@
-import { useState, useEffect } from 'react';
+import { voucherBlocksCheckout } from '../../utils/promotion';
+import '../../components/promotion/promotion.css';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
 import CheckoutForm from '../../components/checkout/CheckoutForm';
 import CheckoutSummary from '../../components/checkout/CheckoutSummary';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 import checkoutApi from '../../api/checkoutApi';
+import orderApi from '../../api/orderApi';
 import { generateIdempotencyKey } from '../../utils/generateIdempotencyKey';
 import './Checkout.css';
 
+function readPending(pendingStorage) {
+  try { return JSON.parse(sessionStorage.getItem(pendingStorage)); } catch { return null; }
+}
+
 export default function Checkout() {
   const navigate = useNavigate();
-  const { cart, isLoading: isCartLoading, fetchCart } = useCart();
   const location = useLocation();
-  const selectedItems = location.state?.selectedItems || [];
-
-  const [formData, setFormData] = useState({
-    email: '',
-    firstName: '',
-    lastName: '',
-    address: '',
-    city: '',
-    ward: '',
-    phone: ''
-  });
-
-  const [shippingMethod, setShippingMethod] = useState('standard');
+  const { cart, isLoading: isCartLoading, fetchCart } = useCart();
+  const { user } = useAuth();
+  const pendingStorage = `pending-checkout:${user?.id ?? 'guest'}`;
+  const [formData, setFormData] = useState({ email: '', firstName: '', lastName: '', address: '', city: '', ward: '', phone: '' });
   const [paymentMethod, setPaymentMethod] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [attempt] = useState(() => readPending(pendingStorage) || { key: generateIdempotencyKey(), createdAt: Date.now() });
+  const [recoveryRequired, setRecoveryRequired] = useState(() => Boolean(readPending(pendingStorage)));
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  const [message, setMessage] = useState('');
+  const [previewState, setPreviewState] = useState(null);
+  const [voucherInput, setVoucherInput] = useState('');
+  const [voucherCode, setVoucherCode] = useState('');
+  const [previewAttempt, setPreviewAttempt] = useState(0);
+  const inFlight = useRef(false);
+  const selectionKey = JSON.stringify(location.state?.selectedItems || []);
+  const cartKey = JSON.stringify(cart?.items || []);
+  const previewKey = selectionKey + cartKey + voucherCode + previewAttempt;
+  const quote = previewState?.key === previewKey ? previewState.quote : null;
+  const knownVnpay = quote?.vnpay ?? previewState?.quote?.vnpay;
+  const vnpayEligibility = knownVnpay && { ...knownVnpay, available: Boolean(quote?.vnpay?.available) };
 
-  // Sinh Idempotency Key 1 lần duy nhất khi load trang Checkout (chống double click)
-  const [idempotencyKey] = useState(() => generateIdempotencyKey());
-
-  // Bắt buộc phải có giỏ hàng mới cho vào trang này
   useEffect(() => {
-    if (!isSuccess && !isCartLoading && (!cart || !cart.items || cart.items.length === 0)) {
-      navigate('/checkout');
-    }
-  }, [cart, isCartLoading, navigate, isSuccess]);
+    if (!isSuccess && !recoveryRequired && !isCartLoading && cart?.items?.length === 0) navigate('/cart');
+  }, [cart, isCartLoading, navigate, isSuccess, recoveryRequired]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  useEffect(() => {
+    if (!cartKey || cartKey === '[]' || recoveryRequired || isSuccess) return;
+    const controller = new AbortController();
+    const key = selectionKey + cartKey + voucherCode + previewAttempt;
+    checkoutApi.preview({ cartItemIds: JSON.parse(selectionKey), voucherCode }, controller.signal)
+      .then(result => { if (!controller.signal.aborted) setPreviewState({ key, quote: result }); })
+      .catch(error => { if (!controller.signal.aborted) setPreviewState({ key, error: error.response?.data?.message || 'Không thể tính giá. Vui lòng thử lại.' }); });
+    return () => controller.abort();
+  }, [selectionKey, cartKey, voucherCode, previewAttempt, recoveryRequired, isSuccess]);
+
+  const finish = (id, method, status, paymentUrl) => {
+    sessionStorage.removeItem(pendingStorage);
+    setIsSuccess(true);
+    fetchCart();
+    if (method === 'VNPAY' && status === 'AWAITING_PAYMENT' && paymentUrl) window.location.assign(paymentUrl);
+    else navigate('/payment-result?orderId=' + id);
+  };
+
+  const recover = async () => {
+    try {
+      const result = await checkoutApi.result(attempt.key);
+      let paymentUrl;
+      if (result.paymentMethod === 'VNPAY' && result.status === 'AWAITING_PAYMENT') {
+        try { paymentUrl = (await orderApi.retryPayment(result.id)).paymentUrl; }
+        catch { setMessage('Đơn đã được tạo nhưng chưa mở lại được phiên VNPay. Hãy kiểm tra Đơn hàng của tôi.'); return; }
+      }
+      finish(result.id, result.paymentMethod, result.status, paymentUrl);
+    } catch (error) {
+      if (error.response?.status === 404 && Date.now() - attempt.createdAt < 24 * 60 * 60 * 1000) {
+        // A concurrent request may still be committing. Retry only on another click, with the same key.
+        setPreviewState(null);
+        setRecoveryRequired(false);
+        setNeedsConfirmation(true);
+        setMessage('Chưa tìm thấy kết quả. Kiểm tra giá rồi bấm xác nhận lại; hệ thống giữ nguyên mã yêu cầu.');
+      } else {
+        setMessage('Chưa xác minh được kết quả đặt hàng. Vui lòng kiểm tra Đơn hàng của tôi trước khi đặt tiếp.');
+      }
+    }
   };
 
   const handlePlaceOrder = async () => {
+    if (inFlight.current) return;
+    if (!recoveryRequired && (!quote || !isFormValid || voucherBlocksCheckout(quote.voucher))) return;
+    inFlight.current = true;
     setIsProcessing(true);
+    setMessage('');
     try {
-      const payload = {
-        ...formData,
-        shippingMethod: shippingMethod,
-        shippingFee: shippingMethod === 'express' ? 30000 : 0,
-        paymentMethod: paymentMethod === 'cod' ? 'COD' : (paymentMethod === 'momo' ? 'MOMO' : paymentMethod),
-        cartItemIds: selectedItems
-      };
-
-      console.log('Sending Idempotency-Key:', idempotencyKey);
-      const response = await checkoutApi.checkout(payload, idempotencyKey);
-
-      setIsSuccess(true);
-      fetchCart();
-
-      // Nếu là COD -> Chuyển thẳng tới trang thành công
-      if (payload.paymentMethod === 'COD') {
-        navigate(`/payment-result?orderId=${response.orderId}`);
-      }
-      else if (payload.paymentMethod === 'MOMO' && (response.paymentUrl || response.payUrl)) {
-        const url = response.paymentUrl || response.payUrl;
-        if (url.startsWith('/')) {
-            navigate(url);
-        } else {
-            window.location.href = url;
-        }
-      }
+      if (recoveryRequired) { await recover(); return; }
+      const method = { cod: 'COD', vnpay: 'VNPAY' }[paymentMethod];
+      sessionStorage.setItem(pendingStorage, JSON.stringify(attempt));
+      const response = await checkoutApi.checkout({
+        ...formData, shippingMethod: 'standard', paymentMethod: method,
+        cartItemIds: JSON.parse(selectionKey), voucherCode, expectedTotal: quote.total
+      }, attempt.key);
+      finish(response.orderId, method, response.orderStatus, response.paymentUrl);
     } catch (error) {
-      console.error('Lỗi khi đặt hàng', error);
-      alert(error.response?.data?.message || 'Có lỗi xảy ra, thử lại sau!');
+      const data = error.response?.data;
+      if (!error.response || error.response.status >= 500 ||
+          data?.message === 'Request is already processing or completed') {
+        setRecoveryRequired(true);
+        setMessage('Chưa nhận được kết quả. Bấm kiểm tra kết quả trước khi thử lại.');
+      } else {
+        sessionStorage.removeItem(pendingStorage);
+        if (data?.code === 'PRICE_CHANGED' || data?.code === 'VOUCHER_SOLD_OUT') {
+          setPreviewState(null);
+          setNeedsConfirmation(true);
+          try {
+            const updated = data.breakdown || await checkoutApi.preview({ cartItemIds: JSON.parse(selectionKey), voucherCode });
+            setPreviewState({ key: previewKey, quote: updated });
+          } catch {
+            setPreviewState({ key: previewKey, error: 'Không thể lấy giá mới. Vui lòng thử lại.' });
+            return;
+          }
+        }
+        setMessage(data?.message || 'Không thể đặt hàng. Vui lòng kiểm tra thông tin.');
+      }
     } finally {
+      inFlight.current = false;
       setIsProcessing(false);
     }
   };
 
-  if (!cart) return null;
-
-  // Format items for CheckoutSummary
-  const cartItemsFormatted = cart.items
-  .filter(item => selectedItems.length === 0 || selectedItems.includes(item.id))
-  .map(item => ({
-    id: item.id,
-    name: item.productName,
-    price: item.productPrice,
-    image: item.imageUrl,
-    quantity: item.quantity,
-    size: item.size
-  }));
-
-  const subtotal = cartItemsFormatted.reduce((total, item) => total + (item.price * item.quantity), 0);
-  const shippingFee = shippingMethod === 'express' ? 30000 : 0;
-
-  // Kiểm tra xem tất cả các field đã được nhập và phương thức thanh toán đã được chọn chưa
-  const isFormValid = Object.values(formData).every(value => value.trim() !== '') && paymentMethod !== '';
+  const paymentUnavailable = paymentMethod === 'vnpay' && !quote?.vnpay?.available;
+  const isFormValid = Object.values(formData).every(value => value.trim() !== '') && ['cod', 'vnpay'].includes(paymentMethod)
+    && !paymentUnavailable;
+  const cartItems = (quote?.items || []).map(item => {
+    const cartItem = cart?.items?.find(line => line.id === item.cartItemId);
+    return { id: item.cartItemId, name: cartItem?.productName, price: item.unitPrice,
+      image: cartItem?.imageUrl, size: cartItem?.size, quantity: item.quantity };
+  });
 
   return (
     <MainLayout>
-      <div className="checkout-page">
-        <div className="checkout-container">
-          <div className="checkout-header">
-            <h1 className="checkout-title">Thanh toán</h1>
-            <p className="checkout-subtitle">Vui lòng điền thông tin để hoàn tất đơn hàng.</p>
+      <div className="checkout-page"><div className="checkout-container">
+        <div className="checkout-header"><h1 className="checkout-title">Thanh toán</h1>
+          <p className="checkout-subtitle">Vui lòng điền thông tin để hoàn tất đơn hàng.</p></div>
+        {message && <p role="alert">{message}</p>}
+        {recoveryRequired ? <div>
+          <button disabled={isProcessing} onClick={handlePlaceOrder}>Kiểm tra kết quả đặt hàng</button>
+          <button onClick={() => navigate('/orders')}>Đơn hàng của tôi</button>
+        </div> : <div className="checkout-layout">
+          <div className="checkout-form-side">
+            <fieldset disabled={isProcessing} className="checkout-fields"><CheckoutForm formData={formData}
+              onChange={event => setFormData(previous => ({ ...previous, [event.target.name]: event.target.value }))}
+              shippingFee={quote?.shippingFee} paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod}
+              vnpay={vnpayEligibility} paymentOptionsReady={Boolean(knownVnpay || quote)} /></fieldset>
+            {quote && paymentUnavailable && <p role="alert">VNPay không khả dụng với tổng tiền này. Vui lòng chọn lại phương thức thanh toán.</p>}
           </div>
-
-          <div className="checkout-layout">
-            <div className="checkout-form-side">
-              <CheckoutForm
-                formData={formData}
-                onChange={handleInputChange}
-                shippingMethod={shippingMethod}
-                setShippingMethod={setShippingMethod}
-                paymentMethod={paymentMethod}
-                setPaymentMethod={setPaymentMethod}
-              />
-            </div>
-
-            <div className="checkout-summary-side">
-              <CheckoutSummary
-                cartItems={cartItemsFormatted}
-                subtotal={subtotal}
-                shippingFee={shippingFee}
-                onCompleteOrder={handlePlaceOrder}
-                isProcessing={isProcessing}
-                isFormValid={isFormValid}
-              />
-            </div>
+          <div className="checkout-summary-side">
+            <section className="promotion-voucher" aria-label="Mã giảm giá">
+              <label htmlFor="voucher-code">Mã giảm giá</label>
+              <form onSubmit={event => { event.preventDefault(); setVoucherCode(voucherInput.trim().toUpperCase()); setPreviewAttempt(n => n + 1); setMessage(''); }}>
+                <input id="voucher-code" value={voucherInput} maxLength={50} disabled={isProcessing}
+                  onChange={event => setVoucherInput(event.target.value)} placeholder="Nhập mã ưu đãi" />
+                <button disabled={isProcessing || !voucherInput.trim()}>Áp dụng</button>
+                {voucherCode && <button type="button" disabled={isProcessing} onClick={() => { setVoucherCode(''); setVoucherInput(''); setMessage(''); }}>Bỏ mã</button>}
+              </form>
+              {quote?.voucher && <p role="status">{quote.voucher.applied ? 'Đã áp dụng mã ' + quote.voucher.code : quote.voucher.message}</p>}
+              {voucherBlocksCheckout(quote?.voucher) && <p>Hãy bỏ mã hoặc nhập mã hợp lệ để tiếp tục.</p>}
+            </section>
+            {quote ? <CheckoutSummary cartItems={cartItems} subtotal={quote.subtotal} originalSubtotal={quote.originalSubtotal} productDiscountTotal={quote.productDiscountTotal} discountSource={quote.orderDiscount.source} voucherCode={quote.orderDiscount.code}
+              shippingFee={quote.shippingFee} orderDiscount={quote.orderDiscount.amount} total={quote.total}
+              actionLabel={needsConfirmation ? 'Xác nhận lại và đặt hàng' : 'Hoàn tất đặt hàng'}
+              onCompleteOrder={handlePlaceOrder} isProcessing={isProcessing} isFormValid={isFormValid} canSubmit={!voucherBlocksCheckout(quote.voucher)} />
+              : previewState?.key === previewKey && previewState.error ? <div role="alert">{previewState.error} <button onClick={() => setPreviewAttempt(n => n + 1)}>Thử lại giá</button></div> : <p role="status">Đang lấy giá từ hệ thống…</p>}
           </div>
-        </div>
-      </div>
+        </div>}
+      </div></div>
     </MainLayout>
   );
 }

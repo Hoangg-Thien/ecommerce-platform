@@ -1,3 +1,5 @@
+import OrderPricing from '../../components/promotion/OrderPricing';
+import SalePrice from '../../components/promotion/SalePrice';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
@@ -7,6 +9,7 @@ import OrderStatusBadge from '../../components/order/OrderStatusBadge';
 import orderApi from '../../api/orderApi';
 import { useAuth } from '../../context/AuthContext';
 import './OrderList.css';
+import { paymentMethodLabel, paymentSummary, canRetryVnpay } from '../../utils/payment';
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('vi-VN', {
@@ -52,6 +55,7 @@ export default function OrderList() {
   }, [currentPage, user]);
 
   const handleRetryPayment = async(orderId) => {
+    setIsRetrying(true);
     try {
       const response = await orderApi.retryPayment(orderId);
       if(response.paymentUrl){
@@ -182,7 +186,11 @@ export default function OrderList() {
               <div className="order-modal-info">
                 <p><strong>Ngày đặt:</strong> {new Date(selectedOrder.createdAt).toLocaleDateString('vi-VN')} {new Date(selectedOrder.createdAt).toLocaleTimeString('vi-VN')}</p>
                 <p><strong>Trạng thái:</strong> <OrderStatusBadge status={selectedOrder.status} /></p>
-                <p><strong>Thanh toán:</strong> {selectedOrder.paymentMethod === 'COD' ? 'Thanh toán khi nhận hàng (COD)' : selectedOrder.paymentMethod}</p>
+                <p><strong>Phương thức:</strong> {paymentMethodLabel(selectedOrder.paymentMethod)}</p>
+                <p><strong>Thanh toán:</strong> {paymentSummary(selectedOrder)}</p>
+                {selectedOrder.paymentMethod === 'VNPAY' && selectedOrder.refundStatus && selectedOrder.refundStatus !== 'NONE'
+                  && <p role="status">Đơn cần được đối soát hoặc xử lý thủ công. Chưa có xác nhận hoàn tiền.</p>}
+                {selectedOrder.expiresAt && <p>Hạn thanh toán: {new Date(selectedOrder.expiresAt).toLocaleString('vi-VN')}</p>}
               </div>
               
               <h3 style={{marginTop: '20px', marginBottom: '10px', fontSize: '16px'}}>Danh sách sản phẩm</h3>
@@ -197,7 +205,7 @@ export default function OrderList() {
                     <div className="order-modal-item-details">
                       <div className="order-modal-item-name">{item.productName}</div>
                       <div className="order-modal-item-price-qty">
-                        <div>Đơn giá: {formatPrice(item.price)}</div>
+                        <div>Đơn giá: <SalePrice price={item.originalPrice ?? item.price} salePrice={item.price} discountPercent={item.productDiscountPercent} /></div>
                         <div>Size: {item.size}</div>
                         <div>Số lượng: {item.quantity}</div>
                       </div>
@@ -206,6 +214,7 @@ export default function OrderList() {
                 ))}
               </div>
 
+              <OrderPricing order={selectedOrder} />
               <div className="order-modal-summary">
                 <div className="order-modal-summary-row total">
                   <span>Tổng cộng:</span>
@@ -214,15 +223,17 @@ export default function OrderList() {
               </div>
             </div>
            <div className="order-modal-footer">
-            {selectedOrder.status === 'AWAITING_PAYMENT' && selectedOrder.paymentMethod === 'MOMO' && (
+            {selectedOrder.status === 'AWAITING_PAYMENT' && canRetryVnpay(selectedOrder) && (
               <Button 
-                variant="momo" 
+                variant="primary"
                 onClick={() => handleRetryPayment(selectedOrder.id)}
                 disabled={isRetrying}
                 >
-                {isRetrying ? 'Đang xử lý...' : 'Thanh toán lại (MoMo)'}
+                {isRetrying ? 'Đang xử lý...' : 'Mở lại VNPay Sandbox'}
               </Button>
             )}
+            {selectedOrder.paymentMethod === 'VNPAY' && <Button variant="outline"
+              onClick={() => navigate('/payment-result?orderId=' + selectedOrder.id)}>Kiểm tra thanh toán</Button>}
             <Button variant="primary" onClick={() => setSelectedOrder(null)}>Đóng</Button>
           </div>
           </div>

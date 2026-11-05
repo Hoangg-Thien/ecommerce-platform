@@ -15,5 +15,6 @@ public class CartResponse {
     private Long id;
     private Long userId;
     private List<CartItemResponse> items;
-    private BigDecimal totalPrice; // extoring money from the entire cart
+    private BigDecimal totalPrice; // Product discounts only; excludes order discounts and shipping.
+    private BigDecimal originalTotalPrice;
 }

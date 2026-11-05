@@ -1,3 +1,4 @@
+import SalePrice from '../../components/promotion/SalePrice';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -52,12 +53,7 @@ export default function ProductDetail() {
     fetchDetail();
   }, [id, navigate]);
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(price);
-  };
+
 
   const handleAddToCart = async () => {
     // Check login
@@ -125,7 +121,7 @@ export default function ProductDetail() {
           <div className="product-info-col">
             <span className="product-category">{product.categoryName || 'Sản phẩm'}</span>
             <h1 className="product-title">{product.name}</h1>
-            <div className="product-price">{formatPrice(product.price)}</div>
+            <div className="product-price"><SalePrice {...product} /></div>
 
             <p className="product-desc">{product.description}</p>
 

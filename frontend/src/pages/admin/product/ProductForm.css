@@ -1,36 +1,31 @@
-/* ProductForm.css */
+/* =============================================
+   ProductForm.css — Work tool product create/edit
+   ============================================= */
 
 .product-form-page {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  max-width: 900px;
+  gap: 16px;
+  max-width: 860px;
 }
 
-/* ---- Page header ---- */
-.product-form-page .admin-page__header {
-  align-items: center;
-}
-
-/* ---- Card ---- */
+/* Card */
 .product-form-card {
-  background: var(--admin-surface);
-  border-radius: var(--admin-r-lg);
-  border: 1px solid var(--admin-border);
-  box-shadow: var(--admin-shadow-sm);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-/* ---- Tabs ---- */
+/* Tabs */
 .product-form-tabs {
   display: flex;
   border-bottom: 1px solid var(--admin-border);
-  background: #FAFAFA;
+  background: var(--admin-surface-subtle);
 }
 
 .product-form-tab {
-  padding: 14px 24px;
-  font-size: 14px;
+  padding: 10px 16px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--admin-text-secondary);
   cursor: pointer;
@@ -38,16 +33,16 @@
   background: none;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
-  transition: all var(--admin-tr);
-  font-family: 'Inter', sans-serif;
+  transition: color var(--admin-tr), background var(--admin-tr);
+  font-family: inherit;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .product-form-tab:hover {
-  color: var(--admin-primary);
-  background: var(--admin-primary-light);
+  color: var(--admin-text-primary);
+  background: var(--admin-surface-hover);
 }
 
 .product-form-tab.active {
@@ -58,29 +53,38 @@
 }
 
 .product-form-tab__badge {
-  background: var(--admin-primary);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  min-width: 18px;
-  height: 18px;
-  border-radius: 20px;
-  padding: 0 5px;
-  display: flex;
+  background: var(--admin-surface-subtle);
+  border: 1px solid var(--admin-border);
+  color: var(--admin-text-secondary);
+  font-size: 10.5px;
+  font-weight: 600;
+  min-width: 16px;
+  height: 16px;
+  border-radius: var(--admin-r-xs);
+  padding: 0 4px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  font-variant-numeric: tabular-nums;
 }
 
-/* ---- Tab Content ---- */
+.product-form-tab__badge--error {
+  background: var(--admin-error);
+  border-color: var(--admin-error);
+  color: #ffffff;
+}
+
+/* Tab Content */
 .product-form-body {
-  padding: 28px;
+  padding: 20px 24px;
+  text-align: left;
 }
 
-/* ---- Grid ---- */
+/* Grid */
 .product-form-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 16px;
 }
 
 @media (max-width: 640px) {
@@ -89,32 +93,33 @@
   }
 }
 
-/* ---- Variant Table ---- */
+/* Variant Table */
 .variant-table-container {
-  border: 1.5px solid var(--admin-border);
-  border-radius: var(--admin-r-md);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-r-sm);
   overflow: hidden;
 }
 
 .variant-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13.5px;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
 }
 
 .variant-table thead {
-  background: #FAFAFA;
+  background: var(--admin-surface-subtle);
   border-bottom: 1px solid var(--admin-border);
 }
 
 .variant-table thead th {
-  padding: 10px 14px;
-  text-align: left;
-  font-size: 11.5px;
+  padding: 8px 12px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--admin-text-secondary);
+  letter-spacing: 0.05em;
+  color: var(--admin-text-muted);
 }
 
 .variant-table thead th:last-child {
@@ -122,7 +127,8 @@
 }
 
 .variant-table tbody tr {
-  border-bottom: 1px solid var(--admin-border);
+  border-bottom: 1px solid var(--admin-border-subtle);
+  height: 42px;
 }
 
 .variant-table tbody tr:last-child {
@@ -130,7 +136,7 @@
 }
 
 .variant-table tbody td {
-  padding: 10px 14px;
+  padding: 6px 12px;
   vertical-align: middle;
 }
 
@@ -139,77 +145,32 @@
 }
 
 .variant-input {
-  padding: 7px 10px;
-  border: 1.5px solid var(--admin-border);
-  border-radius: var(--admin-r-sm);
-  font-size: 13.5px;
-  font-family: 'Inter', sans-serif;
-  color: var(--admin-text-primary);
-  background: var(--admin-surface);
-  outline: none;
-  transition: border-color var(--admin-tr), box-shadow var(--admin-tr);
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.variant-input:focus {
-  border-color: var(--admin-primary);
-  box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.10);
-}
-
-.variant-input.error {
-  border-color: var(--admin-error);
+  height: 30px;
 }
 
 .variant-select {
-  padding: 7px 32px 7px 10px;
-  border: 1.5px solid var(--admin-border);
-  border-radius: var(--admin-r-sm);
-  font-size: 13.5px;
-  font-family: 'Inter', sans-serif;
-  color: var(--admin-text-primary);
-  background: var(--admin-surface);
-  outline: none;
-  cursor: pointer;
-  transition: border-color var(--admin-tr);
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  min-width: 90px;
+  height: 30px;
 }
 
-.variant-select:focus {
-  border-color: var(--admin-primary);
-  box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.10);
-}
-
-.variant-select.error {
-  border-color: var(--admin-error);
-}
-
-/* ---- Variant empty state ---- */
+/* Variant empty state */
 .variant-empty {
-  text-align: center;
-  padding: 36px 24px;
+  text-align: left;
+  padding: 24px 0;
   color: var(--admin-text-secondary);
-  font-size: 14px;
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
 }
 
-/* ---- Form footer ---- */
+/* Form footer */
 .product-form-footer {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 20px 28px;
+  gap: 8px;
+  padding: 12px 24px;
   border-top: 1px solid var(--admin-border);
-  background: #FAFAFA;
-}
-
-/* ---- Variant error ---- */
-.variant-error-text {
-  font-size: 11.5px;
-  color: var(--admin-error);
-  margin-top: 3px;
+  background: var(--admin-surface-subtle);
 }
